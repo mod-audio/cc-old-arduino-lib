@@ -5,6 +5,7 @@
 #include "utils.h"
 
 extern STimer timerSERIAL;
+extern STimer timerLED;
 
 
 class Device{
@@ -444,8 +445,8 @@ public:
 
 		switch(function){
 			case FUNC_CONNECTION:
-				checksum += checkSum(this->url_id.msg, this->url_id.lenght);
-				send(this->url_id.msg);
+				checksum += checkSum(this->url_id.msg, this->url_id.length);
+				send(this->url_id.msg, this->url_id.length);
 				checksum += this->channel;
 				send(this->channel);
 				checksum += PROTOCOL_VERSION_BYTE1;
@@ -464,7 +465,7 @@ public:
 			break;
 
 			default:
-				
+
 			break;
 		}
 
@@ -473,6 +474,60 @@ public:
 		sflush();
 
 	}
+
+	void connectDevice(){
+		static bool ledpos = 0;
+		// pinMode(13, OUTPUT);
+		bool timer_flag = false;
+		if(this->state == CONNECTING){
+			
+			if(!timerLED.working){
+				pinMode(USER_LED, OUTPUT);
+				timerLED.start();
+				timerLED.setPeriod(CONNECTING_LED_PERIOD);
+			}
+			else{
+				checkConnectLED();
+			}
+
+			timerA.setPeriod(1000); //// VOLTAR DEPOIS
+			// timerA.setPeriod(random(RANDOM_CONNECT_RANGE_BOTTOM, RANDOM_CONNECT_RANGE_TOP));
+
+			while(!timer_flag){
+
+				timer_flag = timerA.check();
+
+				if(timer_flag){
+					
+					timerA.reset();
+					
+					if(!Serial.available()){ 
+						sendMessage(FUNC_CONNECTION)///faltou testar isso aqui;
+					}
+				}
+				// Serial.print("");
+				// digitalWrite(13,ledpos?HIGH:LOW);
+				ledpos^=1;
+				// else{
+				// 	Serial.print("+++");
+				// }
+			}
+		}
+		else {
+			digitalWrite(USER_LED,HIGH);
+			timerLED.stop();
+		}
+	}
+
+	void checkConnectLED(){
+		static bool ledpos = 0;
+		if(timerLED.check()){
+			digitalWrite(USER_LED,ledpos);
+			ledpos^= 1;
+			timerLED.reset();
+		}
+	}
+
 
 };
 

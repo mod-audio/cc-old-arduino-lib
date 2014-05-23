@@ -4,6 +4,7 @@
 #include "actuator.h"
 #include "utils.h"
 
+extern STimer timerA;
 extern STimer timerSERIAL;
 extern STimer timerLED;
 
@@ -17,6 +18,8 @@ public:
 	char channel; 				// differentiate 2 identical devices
 	char actuators_count;		// quantity of actuators in the device
 	char state;					// state in which the device is, protocol-wise
+
+
 
 	char read_buffer[MAX_DATA_SIZE];
 
@@ -32,7 +35,6 @@ public:
 		static Word msg_total_size{MAX_DATA_SIZE};
 
 		static uint16_t counter_read = 0;	// Index of serial input buffer
-		// static uint16_t counter_read2 = 0; 	// Index of program msg buffer, its a 'translation' of serial input buffer, thus is equal or smaller in size
 
 		static bool bff = false; // indicates if a special character is waiting for translation
 
@@ -44,9 +46,6 @@ public:
 			timerSERIAL.reset();
 		}
 		
-
-
-
 		if(Serial.available() == 0) return;
 
 		digitalWrite(13, HIGH);
@@ -55,14 +54,17 @@ public:
 			
 			read_buffer[counter_read] = Serial.read();
 
-			switch(counter_read){
-				case POS_DEST:
-					if((read_buffer[counter_read] != this->id) && this->state != CONNECTING){
-						waitMessage();
-					}
-				break;
+				if(counter_read == POS_DEST){
 
-				case POS_DATA_SIZE2:
+					if((this->state != CONNECTING) && (read_buffer[POS_DEST] != this->id)){
+						waitMessage();
+						return;
+					}
+
+				}
+
+				else if(counter_read == POS_DATA_SIZE2){
+
 					msg_data_size.data8[0] = (int) read_buffer[POS_DATA_SIZE1];
 					msg_data_size.data8[1] = (int) read_buffer[POS_DATA_SIZE2];
 
@@ -80,29 +82,49 @@ public:
 						
 						return;
 					}
-				break;
-			}
 
-			if(counter_read == msg_total_size.data16-1){
+				}
+				else if(counter_read == msg_total_size.data16-1){
 
-				digitalWrite(13,LOW);
-				// msg_received = true;
+					digitalWrite(13,LOW);
+					// msg_received = true;
+				
+					print("MSG COMPLETA: ");
+					// for (int kk = 0; kk < counter_read; ++kk){
+					// 	print(read_buffer[kk]);
+					// }
+
+					Str mano(read_buffer, msg_total_size.data16);
+
+					parse(&mano);
+
+					counter_read = 0;
+
+					waitMessage();
+
+					return;
+
+				}
+
+			// if(counter_read == msg_total_size.data16-1){
+
+			// 	digitalWrite(13,LOW);
+			// 	// msg_received = true;
 			
-				print("MSG COMPLETA: ");
-				// for (int kk = 0; kk < counter_read; ++kk){
-				// 	print(read_buffer[kk]);
-				// }
+			// 	print("MSG COMPLETA: ");
+			// 	// for (int kk = 0; kk < counter_read; ++kk){
+			// 	// 	print(read_buffer[kk]);
+			// 	// }
 
-				Str mano(read_buffer, msg_total_size.data16);
-				parse(&mano);
+			// 	Str mano(read_buffer, msg_total_size.data16);
+			// 	parse(&mano);
 
-				counter_read = 0;
+			// 	counter_read = 0;
 
-				waitMessage();
+			// 	waitMessage();
 
-				return;
-
-			}
+			// 	return;
+			// }
 
 			counter_read++;
 
@@ -479,6 +501,8 @@ public:
 		static bool ledpos = 0;
 		// pinMode(13, OUTPUT);
 		bool timer_flag = false;
+
+
 		if(this->state == CONNECTING){
 			
 			if(!timerLED.working){
@@ -490,19 +514,21 @@ public:
 				checkConnectLED();
 			}
 
-			timerA.setPeriod(1000); //// VOLTAR DEPOIS
-			// timerA.setPeriod(random(RANDOM_CONNECT_RANGE_BOTTOM, RANDOM_CONNECT_RANGE_TOP));
+			// timerA.setPeriod(1000); //// VOLTAR DEPOIS
+			timerA.setPeriod(random(RANDOM_CONNECT_RANGE_BOTTOM, RANDOM_CONNECT_RANGE_TOP));
 
 			while(!timer_flag){
 
 				timer_flag = timerA.check();
+
+
 
 				if(timer_flag){
 					
 					timerA.reset();
 					
 					if(!Serial.available()){ 
-						sendMessage(FUNC_CONNECTION)///faltou testar isso aqui;
+						sendMessage(FUNC_CONNECTION);
 					}
 				}
 				// Serial.print("");

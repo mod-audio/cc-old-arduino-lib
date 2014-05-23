@@ -34,110 +34,104 @@ public:
 		static Word msg_data_size;
 		static Word msg_total_size{MAX_DATA_SIZE};
 
-		static uint16_t counter_read = 0;	// Index of serial input buffer
+		static uint16_t read_counter = 0;	// Index of serial input buffer
 
 		static bool bff = false; // indicates if a special character is waiting for translation
 
 	 	int last_input;
 
 		if(timerSERIAL.check()){
-			counter_read = 0;
+			read_counter = 0;
 			msg_total_size.data16 = MAX_DATA_SIZE;
 			timerSERIAL.reset();
 		}
 		
-		if(Serial.available() == 0) return;
+		if(SBYTESAVAILABLE() == 0) return;
 
-		digitalWrite(13, HIGH);
+		// digitalWrite(13, HIGH);
 
-	    while(Serial.available() && counter_read < msg_total_size.data16 && !msg_received){
+	    while(SBYTESAVAILABLE() && read_counter < msg_total_size.data16 && !msg_received){
 			
-			read_buffer[counter_read] = Serial.read();
+			read_buffer[read_counter] = SREAD();
 
-				if(counter_read == POS_DEST){
+				if(read_counter == POS_SYNC){
+					if (read_buffer[POS_SYNC] != BYTE_SYNC){
+						return;
+					}
+					else{
+						if(SBYTESAVAILABLE()){
+							read_counter++;
+							read_buffer[read_counter] = SREAD();
+						}
+						else{
+							return;
+						}
+					}
+				}
+				
+				if(read_buffer[read_counter] == BYTE_ESCAPE){
+					if(SBYTESAVAILABLE()){
+						inputChar = SREAD();
+
+						switch(inputChar){
+							case BYTE_ESCAPE:
+								read_buffer[read_counter] = BYTE_ESCAPE ;
+							break;
+
+							case ~BYTE_SYNC:
+								read_buffer[read_counter] = BYTE_SYNC ;
+							break;
+						}
+					}
+					else{
+						return;
+					}
+				}
+
+				if(read_counter == POS_DEST){
 
 					if((this->state != CONNECTING) && (read_buffer[POS_DEST] != this->id)){
-						waitMessage();
 						return;
 					}
 
 				}
-
-				else if(counter_read == POS_DATA_SIZE2){
+				else if(read_counter == POS_DATA_SIZE2){
 
 					msg_data_size.data8[0] = (int) read_buffer[POS_DATA_SIZE1];
 					msg_data_size.data8[1] = (int) read_buffer[POS_DATA_SIZE2];
 
-					msg_total_size.data16 = (int) msg_data_size.data16 + 6; // data size + header + checksum
-
-					// print("msg size: ");
-					// print(msg_total_size.data16);
+					msg_total_size.data16 = (int) msg_data_size.data16 + HEADER_SIZE; // data size + header + checksum
 
 					if((int) msg_total_size.data16 > MAX_DATA_SIZE){
-						erro(("Message size bigger than max data size. "));
+						ERROR(("Message size bigger than max data size."));
+
 						msg_data_size.data16 = 0;
-						// msg_total_size.data16 = MAX_DATA_SIZE;
-						counter_read = 0;
-						waitMessage();
+						read_counter = POS_SYNC;
 						
 						return;
 					}
 
 				}
-				else if(counter_read == msg_total_size.data16-1){
+				else if(read_counter == msg_total_size.data16-1){
 
-					digitalWrite(13,LOW);
-					// msg_received = true;
-				
-					print("MSG COMPLETA: ");
-					// for (int kk = 0; kk < counter_read; ++kk){
-					// 	print(read_buffer[kk]);
-					// }
+					PRINT("MSG COMPLETA: ");
 
 					Str mano(read_buffer, msg_total_size.data16);
 
 					parse(&mano);
 
-					counter_read = 0;
-
-					waitMessage();
+					read_counter = POS_SYNC;
+					msg_data_size.data16 = 0;
+					msg_total_size.data16 = MAX_DATA_SIZE;
 
 					return;
 
 				}
 
-			// if(counter_read == msg_total_size.data16-1){
-
-			// 	digitalWrite(13,LOW);
-			// 	// msg_received = true;
-			
-			// 	print("MSG COMPLETA: ");
-			// 	// for (int kk = 0; kk < counter_read; ++kk){
-			// 	// 	print(read_buffer[kk]);
-			// 	// }
-
-			// 	Str mano(read_buffer, msg_total_size.data16);
-			// 	parse(&mano);
-
-			// 	counter_read = 0;
-
-			// 	waitMessage();
-
-			// 	return;
-			// }
-
-			counter_read++;
-
+			read_counter++;
 	    }
 
 	}
-
-	void waitMessage(){
-		// wait for message to end.
-	}
-
-
-
 
 
 	void parse(Str* msg){ // in_msg is what the device receives from host, encrypted
@@ -149,40 +143,40 @@ public:
 		summ = checkSum(msg->msg, len-1);
 
 		if( msg->msg[len-1] != summ ) {
-			erro("Checksum changed:");
+			ERROR("Checksum changed:");
 
-			dprint("In msg: (");
-			dprint(msg->msg[len-1]);
-			dprint(") ");
+			DPRINT("In msg: (");
+			DPRINT(msg->msg[len-1]);
+			DPRINT(") ");
 			
-			dprint("Calculated: (");
-			dprint(summ);
-			dprint(") ");
+			DPRINT("Calculated: (");
+			DPRINT(summ);
+			DPRINT(") ");
 
 			return;
 		}
 
-		if(this->state == CONNECTING){
+		if(this->state == CONNECTING){ // connection response, checks URL and channel to associate address to device id.
 			if(msg->msg[POS_FUNC] == FUNC_CONNECTION){
 
 				Str url( &msg->msg[POS_DATA_SIZE2+2] , msg->msg[POS_DATA_SIZE2+1] );
 
-				print("||||");
+				PRINT("||||");
 				for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
-					print(url.msg[xx]);
-				print("||||");
+					PRINT(url.msg[xx]);
+				PRINT("||||");
 				for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
-					print(this->url_id.msg[xx]);
-				print("||||");
+					PRINT(this->url_id.msg[xx]);
+				PRINT("||||");
 
 				if( (url == this->url_id) && (msg->msg[msg->length-4] == this->channel) ){
 					this->id = msg->msg[POS_DEST];
 					this->state = WAITING_DESCRIPTOR_REQUEST;
-					print("AE CARAIO");
+					PRINT("AE CARAIO");
 					return;
 				}
 				else{
-					erro("URL or Channel doesn't match.");
+					ERROR("URL or Channel doesn't match.");
 					return;
 				}
 			}
@@ -193,12 +187,12 @@ public:
 			switch(msg->msg[POS_FUNC]){
 				
 				case FUNC_CONNECTION:
-					erro("Device already connected.");
+					ERROR("Device already connected.");
 				break;
 				
 				case FUNC_DEVICE_DESCRIPTOR:
 					if(this->state != WAITING_DESCRIPTOR_REQUEST){
-						erro("Not waiting descriptor request.")
+						ERROR("Not waiting descriptor request.")
 					}
 					else{
 						sendMessage(FUNC_DEVICE_DESCRIPTOR);
@@ -229,7 +223,7 @@ public:
 		// 	convert.data8[1] = msg->msg[5];
 
 		// 	if(convert.data16 >= MAX_DATA_SIZE){
-		// 		erro("Message too long.");
+		// 		ERROR("Message too long.");
 		// 		return;
 		// 	}
 
@@ -240,17 +234,17 @@ public:
 		// 			dev->state = WAITING_DESCRIPTOR_REQUEST;
 		// 		}
 		// 		else{
-		// 			erro("Device is not waiting connection message.");
+		// 			ERROR("Device is not waiting connection message.");
 		// 			return;
 		// 		}
 		// 	}
 		// 	else{
 		// 		if((char) msg->msg[2] != (char) dev->destination_address){
-		// 			erro("This message was not sent from the host.");
+		// 			ERROR("This message was not sent from the host.");
 		// 			return;
 		// 		}
 		// 		if((char) msg->msg[1] != (char) dev->origin_address){ // case addresses don't match
-		// 			erro("This message is not intended for this device.");
+		// 			ERROR("This message is not intended for this device.");
 		// 			return;
 		// 		}
 		// 		switch(msg->msg[3]){
@@ -261,7 +255,7 @@ public:
 		// 					dev->state = WAITING_CONTROL_ADDRESSING;
 		// 				}
 		// 				else{
-		// 					erro("Device is not waiting descriptor request.");
+		// 					ERROR("Device is not waiting descriptor request.");
 		// 					return;
 		// 				}
 		// 			break;
@@ -353,19 +347,19 @@ public:
 									
 		// 						}
 		// 						else{
-		// 							erro("This actuator is already being used.");
+		// 							ERROR("This actuator is already being used.");
 		// 							sendMsg(CONTROL_ADDRESSING,-1);
 		// 							return;
 		// 						}
 		// 					}
 		// 					else{
-		// 						erro("Wrong device channel.");
+		// 						ERROR("Wrong device channel.");
 		// 						sendMsg(CONTROL_ADDRESSING,-1);
 		// 						return;
 		// 					}
 		// 				}
 		// 				else{
-		// 					erro("Device is not waiting control addressing.");
+		// 					ERROR("Device is not waiting control addressing.");
 		// 					return;
 		// 				}
 		// 			break;
@@ -375,7 +369,7 @@ public:
 		// 					sendMsg(DATA_REQUEST);
 		// 				}
 		// 				else{
-		// 					erro("Device is not waiting data request.");
+		// 					ERROR("Device is not waiting data request.");
 		// 					return;
 		// 				}
 		// 			break;
@@ -393,27 +387,27 @@ public:
 		// 							}
 		// 						}
 		// 						else{
-		// 							erro("This actuator is not addressed.");
+		// 							ERROR("This actuator is not addressed.");
 		// 							return;
 		// 						}
 		// 					}
 		// 					else{
-		// 						erro("This device is not on this channel.");
+		// 						ERROR("This device is not on this channel.");
 		// 						return;
 		// 					}
 		// 				}
 		// 				else{
-		// 					erro("There is no control addressed.");
+		// 					ERROR("There is no control addressed.");
 		// 					return;
 		// 				}
-		// 				erro("Number of controls addressed: ");
-		// 				print(dev->controls_addressed);
+		// 				ERROR("Number of controls addressed: ");
+		// 				PRINT(dev->controls_addressed);
 		// 			break;
 		// 		}
 		// 	}
 
 		// else{
-		// 	erro("Invalid message received.");
+		// 	ERROR("Invalid message received.");
 		// }
 		// if(timerB.working){
 		// 	timerB.reset();
@@ -449,6 +443,9 @@ public:
 				data_size.data16 = 0;
 			break;
 		}
+
+		checksum += BYTE_SYNC;
+		SWRITE(BYTE_SYNC); // so it doesn't get converted
 
 		checksum += HOST_ADDRESS;
 		send(HOST_ADDRESS);
@@ -493,7 +490,7 @@ public:
 
 		send(checksum);
 
-		sflush();
+		SFLUSH();
 
 	}
 
@@ -531,11 +528,11 @@ public:
 						sendMessage(FUNC_CONNECTION);
 					}
 				}
-				// Serial.print("");
+				// Serial.PRINT("");
 				// digitalWrite(13,ledpos?HIGH:LOW);
 				ledpos^=1;
 				// else{
-				// 	Serial.print("+++");
+				// 	Serial.PRINT("+++");
 				// }
 			}
 		}

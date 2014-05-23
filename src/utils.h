@@ -71,6 +71,12 @@
 // #define BAUD_RATE       230400
 #define BAUD_RATE       500000
 
+/*
+************************************************************************************************************************
+*           Protocol wise
+************************************************************************************************************************
+*/
+
 #define FUNC_CONNECTION				0x01
 #define FUNC_DEVICE_DESCRIPTOR		0x02
 #define FUNC_CONTROL_ADDRESSING		0x03
@@ -78,9 +84,11 @@
 #define FUNC_CONTROL_UNADDRESSING	0x05	
 #define FUNC_ERROR					0xFF	
 
-#define PROTOCOL_VERSION_BYTE1	0x01
-#define PROTOCOL_VERSION_BYTE2	0x00	
+#define PROTOCOL_VERSION_BYTE1		0x01
+#define PROTOCOL_VERSION_BYTE2		0x00	
 
+#define BYTE_SYNC					'\xAA'
+#define BYTE_ESCAPE					'\x1B'
 
 /*
 ************************************************************************************************************************
@@ -108,26 +116,44 @@
 *           MACROS
 ************************************************************************************************************************
 */
-#ifndef print(__str)
-#define print(__str) Serial.print(__str)
-#endif
-#ifndef swrite(__char)
-#define swrite(__char) Serial.write(__char)
-#endif
-#ifndef dprint(__str)
-#define dprint(__str) if(DEBUG_FLAG) print(__str)
-#endif
-#ifndef erro(__str)
-#define erro(__str) if(DEBUG_FLAG) {print(F("[ERROR]: << ")); print(F(__str)); print(F(" >> "));} 
-#endif
-#ifndef warn(__str)
-#define warn(__str) if(DEBUG_FLAG) {print(F("[WARNING]: << ")); print(F(__str)); print(F(" >> "));} 
-#endif
-#ifndef sflush()
-#define sflush() Serial.flush()
-#endif
 
 
+// serial related MACROS
+
+
+#ifndef SWRITE(__char) // sends one byte 
+#define SWRITE(__char) Serial.write(__char)
+#endif
+
+#ifndef SREAD() //returns next byte in serial's input buffer
+#define SREAD() Serial.read()
+#endif
+
+#ifndef SBYTESAVAILABLE() //returns how many bytes there are avaible at the serial's input buffer 
+#define SBYTESAVAILABLE() Serial.available()
+#endif
+
+#ifndef SFLUSH() // Waits for the transmission of outgoing serial data to complete. If the bytes are sent imediately after the sWrite func, then this is useless
+#define SFLUSH() Serial.flush()
+#endif
+
+#ifndef PRINT(__str) // normal printing
+#define PRINT(__str) Serial.print(__str)
+#endif
+
+// debug msgs
+
+#ifndef DPRINT(__str) // debug printing
+#define DPRINT(__str) if(DEBUG_FLAG) PRINT(__str)
+#endif
+
+#ifndef ERROR(__str) // error msg
+#define ERROR(__str) if(DEBUG_FLAG) {PRINT(F("[ERROR]: << ")); PRINT(F(__str)); PRINT(F(" >> "));} 
+#endif
+
+#ifndef WARN(__str) // warning msg
+#define WARN(__str) if(DEBUG_FLAG) {PRINT(F("[WARNING]: << ")); PRINT(F(__str)); PRINT(F(" >> "));} 
+#endif
 
 /*
 ************************************************************************************************************************
@@ -135,7 +161,7 @@
 ************************************************************************************************************************
 */
 
-enum{POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2};
+enum{POS_SYNC, POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2, NOT_USABLE_CHECKSUM, HEADER_SIZE};
 enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ADDRESSING, WAITING_DATA_REQUEST};
 enum{DESTINATION = 1, ORIGIN};
 
@@ -322,12 +348,18 @@ int freeRam () {
 }
 
 void send(char byte){ // this function sends bytes via swrite
-	swrite(byte);
+	if(byte == BYTE_SYNC){
+		SWRITE(BYTE_ESCAPE);
+		SWRITE(~byte);
+	}
+	else{
+		SWRITE(byte);
+	}
 }
 
 void send(char* msg, int length){ //same thing for strings
 	for (int i = 0; i < length; ++i){
-		swrite(msg[i]);		
+		send(msg[i]);		
 	}
 }
 

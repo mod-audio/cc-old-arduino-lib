@@ -17,17 +17,18 @@
 
 /*
 ************************************************************************************************************************
-*           Mask Properties
+*           Mode properties
 ************************************************************************************************************************
 */
 
-#define TAP_TEMPO		0X02    //Masks
-#define ENUMERATION		0X04
-#define SCALE_POINTS	0X08
-#define TRIGGER			0X10
-#define TOGGLED			0X20
-#define LOGARITHMIC		0X40
-#define INTEGER			0X80
+#define PROPERTY_INTEGER      0b10000000
+#define PROPERTY_LOGARITHM    0b01000000
+#define PROPERTY_TOGGLE       0b00100000
+#define PROPERTY_TRIGGER      0b00010000
+#define PROPERTY_SCALE_POINTS 0b00001000
+#define PROPERTY_ENUMERATION  0b00000100
+#define PROPERTY_TAP_TEMPO    0b00000010
+#define PROPERTY_BYPASS       0b00000001
 
 /*
 ************************************************************************************************************************
@@ -174,11 +175,18 @@ enum{DESTINATION = 1, ORIGIN};
 union Value{
 	float f;
 	char c[4];
+
+	Value(float f):f(f){}
+	Value(char c0, char c1, char c2, char c3):c{c0,c1,c2,c3}{}
+
 };
 
 union u_Word{
 	uint16_t data16;
 	uint8_t data8[2];
+
+	u_Word(uint16_t x):data16(x){}
+	u_Word(uint8_t x, uint8_t y):data8{x,y}{}
 };
 
 union Word{
@@ -364,13 +372,24 @@ void send(char* msg, int length){ //same thing for strings
 }
 
 unsigned char checkSum(char* msg, int length){
-	unsigned char checksum;
+	unsigned char checksum = 0;
 
 	for (int i = 0; i < length; ++i){
 		checksum += msg[i];
 	}
 
 	return checksum;
+}
+
+template<typename T> int IdToIndex(int id, int counter_limit, T** container){
+	for (int i = 0; i < counter_limit; ++i)
+	{
+		if(container[i]->id == id){
+			return i;
+		}
+		else
+			-1;
+	}
 }
 
 void isr_timer(){

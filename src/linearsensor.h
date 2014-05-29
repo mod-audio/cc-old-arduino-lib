@@ -7,22 +7,21 @@
 class LinearSensor: public Actuator
 {
 public:
-	// Str 		name;
 	int 			minimum = 0;
 	int 			maximum = 1023;
 	char 			addressing_id;
-	int 			slots = 1;
 	Addressing* 	addressing;
 
-	LinearSensor(char* name): Actuator(name, 1, 3){
-		Mode *mode = new Mode("");
+	LinearSensor(char* name, char id): Actuator(name, id, 1, 1, 3){
+		Mode *mode = addMode("linear");
 		mode->expects(PROPERTY_TOGGLE, false);
 		mode->expects(PROPERTY_TRIGGER, false);
 		mode->expects(PROPERTY_SCALE_POINTS, false);
 		mode->expects(PROPERTY_ENUMERATION, false);
 		mode->expects(PROPERTY_TAP_TEMPO, false);
 		mode->expects(PROPERTY_BYPASS, false);
-   		this->modes = mode;
+
+		
 	}
 	~LinearSensor(){}
 
@@ -41,6 +40,7 @@ public:
 
 		scaleMin = this->addressing->minimum.f;
 	    scaleMax = this->addressing->maximum.f;
+
 		// Convert the sensor scale to the parameter scale
 	    if (this->addressing->port_properties & PROPERTY_LOGARITHM) {
 	    	scaleMin = log(scaleMin)/log(2);
@@ -48,7 +48,7 @@ public:
 	    } 
 
 	    // Parameter is linear
-		int	value = (sensor - this->minimum) * (this->addressing->maximum.f - this->addressing->minimum.f);
+		float value = (sensor - this->minimum) * (this->addressing->maximum.f - this->addressing->minimum.f);
 	    value /= (this->maximum - this->minimum);
 	    value += this->addressing->minimum.f;
 	    

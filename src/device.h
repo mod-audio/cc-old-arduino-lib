@@ -16,15 +16,42 @@ public:
 	Str url_id; 				// device URL
 	char id;					// address given by the host
 	char channel; 				// differentiate 2 identical devices
-	char actuators_count;		// quantity of actuators in the device
+	char actuators_total_count;	// quantity of actuators in the device
+	char actuators_counter;		// quantity of actuators in the device
 	char state;					// state in which the device is, protocol-wise
 
-
+	Actuator**	acts;			// vector which holds all actuators pointers
 
 	char read_buffer[MAX_DATA_SIZE];
 
-	Device(char* url_id, char* label, char actuators_count, char channel) : url_id(url_id), label(label), actuators_count(actuators_count), state(CONNECTING), channel(channel){}
+	Device(char* url_id, char* label, char actuators_total_count, char channel) : url_id(url_id), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
+		this->acts = new Actuator*[actuators_total_count];
+	}
 
+	~Device(){
+		delete[] acts;
+	}
+
+	void addActuator(Actuator* actuator_class){
+		if(actuators_counter >= actuators_total_count){
+			ERROR("Actuators limit overflow!");
+		}
+		else{
+			acts[actuators_counter] = actuator_class;
+
+			actuators_counter++;
+
+		}
+	}
+
+	Actuator* searchActuator(int id){
+		for (int i = 0; i < actuators_counter; ++i){
+			if(acts[i]->id == id)
+				return acts[i];
+			else
+				return NULL;
+		}
+	}
 
 	void serialRead(){
 
@@ -200,7 +227,57 @@ public:
 				break;
 				
 				case FUNC_CONTROL_ADDRESSING:
-					
+					if(this->state != WAITING_CONTROL_ADDRESSING){
+						ERROR("Not waiting control addressing.");
+					}
+					else{
+
+						Actuator* act;
+
+						if(!(act = searchActuator(msg->msg[POS_DATA_SIZE2+1]))){
+							ERROR("Actuator does not exist.");
+							return;
+						}
+						else{
+
+							if(!((msg->msg[POS_DATA_SIZE2+2] && msg->msg[POS_DATA_SIZE2+5]) == msg->msg[POS_DATA_SIZE2+3])){
+								ERROR("Mode not supported in this actuator.");
+							}
+							else{
+
+								unsigned char param_id = msg->msg[POS_DATA_SIZE2+4];
+
+								unsigned char label_size = msg->msg[POS_DATA_SIZE2+6];
+								unsigned char value_pos = POS_DATA_SIZE2 + 7 + label_size;
+								unsigned char s_p_count_pos = value_pos + 19 + msg->msg[value_pos+18];
+
+
+
+								Addressing* addr = new Addressing(msg->msg[POS_DATA_SIZE2+7], msg->msg[POS_DATA_SIZE2+6],
+								 								msg->msg[value_pos+19], msg->msg[value_pos+18],
+																{msg->msg[POS_DATA_SIZE2+2],msg->msg[POS_DATA_SIZE2+3]},
+																msg->msg[POS_DATA_SIZE2+5],
+																{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
+																{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
+																{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
+																{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
+																msg->msg[value_pos+16],msg->msg[value_pos+17],msg->msg[s_p_count_pos]);
+
+								act->address(param_id, addr);
+
+								if(msg->msg[s_p_count_pos]){
+									addr->add
+								}
+
+
+							}
+						}
+
+
+
+
+
+					}
 				break;
 				
 				case FUNC_DATA_REQUEST:
@@ -414,7 +491,7 @@ public:
 		// }
 	}
 
-	void sendMessage(int function, int error_function = 0, int error_code = 1, Str error_msg = ""){
+	void sendMessage(char function, char byte1 = 0 /*used as function_error*/, char byte2 = 1 /*used as error code*/, Str error_msg = ""){
 
 		unsigned char checksum = 0;
 		Word data_size;
@@ -426,9 +503,13 @@ public:
 			break;
 			
 			case FUNC_DEVICE_DESCRIPTOR:
-				// TODO device descriptor size
+				//labelsize (1) + label(n) + actuators_total_count(n) + actuators_total_count(n) * actuators_description_sizes(n)
+				data_size.data16 = 1 + this->label.length + 1;
+				for (int i = 0; i < actuators_counter; ++i){
+					data_size.data16 += acts[i]->descriptorSize();
+				}
+
 			break;
-			
 			
 			case FUNC_DATA_REQUEST:
 				// TODO data_size.data16 = 0;
@@ -439,10 +520,23 @@ public:
 				data_size.data16 = error_msg.length + 3;
 			break;
 
-			default:
+			case FUNC_CONTROL_ADDRESSING:
+				// response bytes
+				data_size.data16 = 2;
+			break;
+
+			case FUNC_CONTROL_UNADDRESSING:
 				data_size.data16 = 0;
 			break;
+
+			//TODO implementar função de erro
+			// case FUNC_ERROR:
+			// 	data_size.data16 = 0;
+			// break;
 		}
+
+
+		// MESSAGE HEADER
 
 		checksum += BYTE_SYNC;
 		SWRITE(BYTE_SYNC); // so it doesn't get converted
@@ -464,28 +558,57 @@ public:
 
 		switch(function){
 			case FUNC_CONNECTION:
+
 				checksum += checkSum(this->url_id.msg, this->url_id.length);
 				send(this->url_id.msg, this->url_id.length);
+				
 				checksum += this->channel;
 				send(this->channel);
+				
 				checksum += PROTOCOL_VERSION_BYTE1;
 				send(PROTOCOL_VERSION_BYTE1);
+				
 				checksum += PROTOCOL_VERSION_BYTE2;
 				send(PROTOCOL_VERSION_BYTE2);
+
 			break;
 			
 			case FUNC_DEVICE_DESCRIPTOR:
+
+				checksum += (unsigned char) this->label.length;
+				send(this->label.length);
+
+				checksum += checkSum(this->label.msg, this->label.length);
+				send(this->label.msg, this->label.length);
+
+				checksum += (unsigned char) this->actuators_total_count;
+				send(this->actuators_total_count);
+
+				for(int i = 0; i < actuators_total_count; i++){
+					this->acts[i]->sendDescriptor(&checksum);
+				}
+
+			break;
+
+			case FUNC_CONTROL_ADDRESSING: //control addressing and unaddressing
+
+				checksum += (unsigned char) byte1;
+				send(byte1);
+				checksum += (unsigned char) byte2;
+				send(byte2);
+
 			break;
 			
 			case FUNC_DATA_REQUEST:
 			break;
 			
+			case FUNC_CONTROL_UNADDRESSING: //control addressing and unaddressing
+
+			break;
+			
 			case FUNC_ERROR:
 			break;
 
-			default:
-
-			break;
 		}
 
 		send(checksum);
@@ -528,12 +651,7 @@ public:
 						sendMessage(FUNC_CONNECTION);
 					}
 				}
-				// Serial.PRINT("");
-				// digitalWrite(13,ledpos?HIGH:LOW);
 				ledpos^=1;
-				// else{
-				// 	Serial.PRINT("+++");
-				// }
 			}
 		}
 		else {

@@ -1,14 +1,7 @@
 #ifndef MODE_H
 #define MODE_H
 
-#define PROPERTY_INTEGER      0b10000000
-#define PROPERTY_LOGARITHM    0b01000000
-#define PROPERTY_TOGGLE       0b00100000
-#define PROPERTY_TRIGGER      0b00010000
-#define PROPERTY_SCALE_POINTS 0b00001000
-#define PROPERTY_ENUMERATION  0b00000100
-#define PROPERTY_TAP_TEMPO    0b00000010
-#define PROPERTY_BYPASS       0b00000001
+#include "utils.h"
 
 class Mode
 {
@@ -18,6 +11,8 @@ public:
     Str label;
 
 	Mode(char* label):label(label){}
+	Mode(char relevant_properties, char property_values):relevant_properties(relevant_properties), property_values(property_values){}
+	Mode(char* label, char relevant_properties, char property_values):label(label), relevant_properties(relevant_properties), property_values(property_values){}
 	~Mode();
 
 	void expects(char property, bool value) {
@@ -25,6 +20,19 @@ public:
 		if (value) {
 			this->property_values |= property;
 		}
+	}
+
+	unsigned char descriptorSize(){
+		return 2 + label.length;
+	}
+
+	void sendDescriptor(unsigned char* checksum){
+		*checksum += (unsigned char) relevant_properties;
+		send(relevant_properties);
+		*checksum += (unsigned char) property_values;
+		send(property_values);
+		*checksum += (unsigned char) checkSum(this->label.msg, this->label.length);
+		send(this->label.msg, this->label.length);
 	}
 
 };

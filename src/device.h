@@ -24,7 +24,7 @@ public:
 
 	char read_buffer[MAX_DATA_SIZE];
 
-	Device(char* url_id, char* label, char actuators_total_count, char channel) : url_id(url_id), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
+	Device(char* url_id, char* label, char actuators_total_count, char channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
 		this->acts = new Actuator*[actuators_total_count];
 	}
 
@@ -59,7 +59,7 @@ public:
 		static char inputChar;
 		static bool msg_received = false;
 		static Word msg_data_size;
-		static Word msg_total_size{MAX_DATA_SIZE};
+		static Word msg_total_size(MAX_DATA_SIZE);
 
 		static uint16_t read_counter = 0;	// Index of serial input buffer
 
@@ -81,6 +81,10 @@ public:
 			
 			read_buffer[read_counter] = SREAD();
 
+				if(read_buffer[read_counter] == BYTE_SYNC){
+					read_counter = POS_SYNC//ULTIMO ADENDO FOI AQUI, PROBLEMA NA MSG DE CONTROL ADDRESSING (ESTAVA TROCANDO O ULTIMO \x1B POR \xAA)
+				}
+
 				if(read_counter == POS_SYNC){
 					if (read_buffer[POS_SYNC] != BYTE_SYNC){
 						return;
@@ -96,13 +100,12 @@ public:
 					}
 				}
 				
-				if(read_buffer[read_counter] == BYTE_ESCAPE){
+				if(read_buffer[read_counter] == BYTE_ESCAPE && read_counter != POS_SYNC){
 					if(SBYTESAVAILABLE()){
 						inputChar = SREAD();
 
 						switch(inputChar){
 							case BYTE_ESCAPE:
-								read_buffer[read_counter] = BYTE_ESCAPE ;
 							break;
 
 							case ~BYTE_SYNC:
@@ -141,7 +144,8 @@ public:
 				}
 				else if(read_counter == msg_total_size.data16-1){
 
-					PRINT("MSG COMPLETA: ");
+					PRINT("  msg total size: ");
+					PRINT(msg_total_size.data16);
 
 					Str mano(read_buffer, msg_total_size.data16);
 
@@ -168,6 +172,12 @@ public:
 		int len = msg->length;
 
 		summ = checkSum(msg->msg, len-1);
+
+		PRINT("  ::  ");
+		send(len);
+		PRINT("  ::  ");
+		send(msg->msg, len);
+		PRINT("  ::  ");
 
 		if( msg->msg[len-1] != summ ) {
 			ERROR("Checksum changed:");
@@ -223,6 +233,7 @@ public:
 					}
 					else{
 						sendMessage(FUNC_DEVICE_DESCRIPTOR);
+						this->state = WAITING_CONTROL_ADDRESSING;
 					}
 				break;
 				
@@ -234,48 +245,98 @@ public:
 
 						Actuator* act;
 
-						if(!(act = searchActuator(msg->msg[POS_DATA_SIZE2+1]))){
+						if(!(act = searchActuator(msg->msg[CTRLADDR_ACT_ID]))){
 							ERROR("Actuator does not exist.");
 							return;
 						}
 						else{
 
-							if(!((msg->msg[POS_DATA_SIZE2+2] && msg->msg[POS_DATA_SIZE2+5]) == msg->msg[POS_DATA_SIZE2+3])){
+							if(!((msg->msg[CTRLADDR_CHOSEN_MASK1] && msg->msg[CTRLADDR_PORT_MASK]) == msg->msg[CTRLADDR_CHOSEN_MASK2])){
 								ERROR("Mode not supported in this actuator.");
 							}
 							else{
 
-								unsigned char param_id = msg->msg[POS_DATA_SIZE2+4];
+								unsigned char param_id = msg->msg[CTRLADDR_ADDR_ID];
 
-								unsigned char label_size = msg->msg[POS_DATA_SIZE2+6];
-								unsigned char value_pos = POS_DATA_SIZE2 + 7 + label_size;
+								unsigned char label_size = msg->msg[CTRLADDR_LABEL_SIZE];
+								unsigned char value_pos = CTRLADDR_LABEL + label_size;
 								unsigned char s_p_count_pos = value_pos + 19 + msg->msg[value_pos+18];
 
+								Addressing* addr;
+
+								switch(act->visual_output_level){
+									case VISUAL_NONE:
+										
+										addr = new Addressing(msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
+															msg->msg[CTRLADDR_PORT_MASK],
+															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
+															{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
+															{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
+															{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
+															msg->msg[value_pos+16],msg->msg[value_pos+17]);
+									break;
+
+									case VISUAL_SHOW_LABEL:
+										
+										addr = new Addressing(&(msg->msg[CTRLADDR_LABEL]), msg->msg[CTRLADDR_LABEL_SIZE],
+							 								&(msg->msg[value_pos+19]), msg->msg[value_pos+18],
+															msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
+															msg->msg[CTRLADDR_PORT_MASK],
+															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
+															{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
+															{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
+															{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
+															msg->msg[value_pos+16],msg->msg[value_pos+17]);
+									break;
+
+									case VISUAL_SHOW_SCALEPOINTS:
+
+										addr = new Addressing(&(msg->msg[CTRLADDR_LABEL]), msg->msg[CTRLADDR_LABEL_SIZE],
+							 								&(msg->msg[value_pos+19]), msg->msg[value_pos+18],
+															msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
+															msg->msg[CTRLADDR_PORT_MASK],
+															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
+															{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
+															{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
+															{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
+															msg->msg[value_pos+16],msg->msg[value_pos+17],msg->msg[s_p_count_pos]);
+
+										if(msg->msg[s_p_count_pos]){
+											
+											unsigned char s_p_label_size_pos;
+											unsigned char s_p_label_size;
+											unsigned char s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
+
+											ScalePoint* sp;
+
+											for (int i = 0; i < addr->scale_points_total_count; ++i){
+												
+												s_p_label_size_pos = s_p_value_pos+4;
+												s_p_label_size = msg->msg[s_p_label_size_pos];
+												s_p_value_pos = s_p_label_size_pos + s_p_label_size;
 
 
-								Addressing* addr = new Addressing(msg->msg[POS_DATA_SIZE2+7], msg->msg[POS_DATA_SIZE2+6],
-								 								msg->msg[value_pos+19], msg->msg[value_pos+18],
-																{msg->msg[POS_DATA_SIZE2+2],msg->msg[POS_DATA_SIZE2+3]},
-																msg->msg[POS_DATA_SIZE2+5],
-																{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
-																{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
-																{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
-																{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
-																msg->msg[value_pos+16],msg->msg[value_pos+17],msg->msg[s_p_count_pos]);
+												sp = new ScalePoint(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size,
+																	msg->msg[s_p_value_pos], msg->msg[s_p_value_pos+1],
+																	msg->msg[s_p_value_pos+2],msg->msg[s_p_value_pos+3]);
+
+												addr->addScalePoint(sp);
+
+											}
+										}
+										
+									break;
+								}
 
 								act->address(param_id, addr);
 
-								if(msg->msg[s_p_count_pos]){
-									addr->add
-								}
-
+								addr->sendDescriptor();
 
 							}
+
+							// sendMessage(FUNC_CONTROL_ADDRESSING, 0, 0);
+							this->state = WAITING_DATA_REQUEST;
 						}
-
-
-
-
 
 					}
 				break;

@@ -162,9 +162,15 @@
 ************************************************************************************************************************
 */
 
-enum{POS_SYNC, POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2, NOT_USABLE_CHECKSUM, HEADER_SIZE};
-enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ADDRESSING, WAITING_DATA_REQUEST};
-enum{DESTINATION = 1, ORIGIN};
+enum{POS_SYNC, POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2, NOT_USABLE_CHECKSUM, HEADER_SIZE}; // msg buffer positions
+
+enum{CTRLADDR_ACT_ID=6, CTRLADDR_CHOSEN_MASK1, CTRLADDR_CHOSEN_MASK2, CTRLADDR_ADDR_ID, CTRLADDR_PORT_MASK, CTRLADDR_LABEL_SIZE, CTRLADDR_LABEL};
+
+enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ADDRESSING, WAITING_DATA_REQUEST}; //device state
+enum{DESTINATION = 1, ORIGIN}; // device addressing 
+enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS}; // visual output level
+
+
 
 /*
 ************************************************************************************************************************
@@ -192,6 +198,10 @@ union u_Word{
 union Word{
 	int16_t data16;
 	int8_t data8[2];
+
+	Word(){}
+	Word(int16_t x):data16(x){}
+	Word(int8_t x, int8_t y):data8{x,y}{}
 };
 
 class Str{
@@ -356,17 +366,18 @@ int freeRam () {
 }
 
 void send(char byte){ // this function sends bytes via swrite
-	if(byte == BYTE_SYNC){
-		SWRITE(BYTE_ESCAPE);
-		SWRITE(~byte);
-	}
-	else{
+	// if(byte == BYTE_SYNC){
+	// 	SWRITE(BYTE_ESCAPE);
+	// 	SWRITE(~byte);
+	// }
+	// else{
 		SWRITE(byte);
-	}
+	// }
 }
 
 void send(char* msg, int length){ //same thing for strings
-	for (int i = 0; i < length; ++i){
+		SWRITE(msg[0]);
+	for (int i = 1; i < length; ++i){
 		send(msg[i]);		
 	}
 }

@@ -12,25 +12,35 @@ public:
 	char 			addressing_id;
 	Addressing* 	addressing;
 
-	LinearSensor(char* name, char id): Actuator(name, id, 1, 1, 3){
-		Mode *mode = addMode("linear");
+	LinearSensor(char* name, char id): Actuator(name, id, 1, 1, 3, VISUAL_SHOW_LABEL){
+		Mode *mode = supports("linear");
+		// mode->expects(PROPERTY_INTEGER, false);
+		// mode->expects(PROPERTY_LOGARITHM, false);
 		mode->expects(PROPERTY_TOGGLE, false);
 		mode->expects(PROPERTY_TRIGGER, false);
 		mode->expects(PROPERTY_SCALE_POINTS, false);
 		mode->expects(PROPERTY_ENUMERATION, false);
 		mode->expects(PROPERTY_TAP_TEMPO, false);
 		mode->expects(PROPERTY_BYPASS, false);
-
-		
+				
 	}
 	~LinearSensor(){}
 
  	void address(char addressing_id, Addressing* data) {
+ 		slots_counter++;
  		this->addressing_id = addressing_id;
  		this->addressing = data;
  	}
  	void unaddress(char addressing_id) {
- 		//todo free
+ 		if(!slots_counter){
+ 			ERROR("No parameters addressed.");
+ 		}
+ 		else{
+ 			slots_counter--;
+
+ 			delete this->addressing;
+ 		}
+
  	}
 
 	Update* getUpdates(){

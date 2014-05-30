@@ -11,9 +11,14 @@ public:
     Str label;
 
 	Mode(char* label):label(label){}
-	Mode(char relevant_properties, char property_values):relevant_properties(relevant_properties), property_values(property_values){}
+	Mode(char relevant_properties, char property_values):relevant_properties(relevant_properties), property_values(property_values), label(""){}
 	Mode(char* label, char relevant_properties, char property_values):label(label), relevant_properties(relevant_properties), property_values(property_values){}
-	~Mode();
+	~Mode(){
+		Str* p_lab;
+		p_lab = &label;
+
+		delete p_lab;
+	}
 
 	void expects(char property, bool value) {
 		this->relevant_properties |= property;

@@ -34,14 +34,29 @@ public:
 		// mode2->expects(PROPERTY_TAP_TEMPO, false);
 		// mode2->expects(PROPERTY_BYPASS, false);
 
+		addStep(2);
+
 	}
 
 	void address(char addressing_id, Addressing* data) {
- 		this->addressing_id = addressing_id;
- 		this->addressing = data;
+ 		if(slots_counter >= slots_total_count){
+ 			ERROR("Maximum parameters addressed already.");
+ 		}
+ 		else{
+	 		slots_counter++;
+	 		this->addressing_id = addressing_id;
+	 		this->addressing = data;
+ 		}
  	}
  	void unaddress(char addressing_id) {
- 		//todo free
+ 		if(!slots_counter){
+ 			ERROR("No parameters addressed.");
+ 		}
+ 		else{
+ 			slots_counter--;
+
+ 			delete this->addressing;
+ 		}
  	}
 
 	Update* getUpdates(){

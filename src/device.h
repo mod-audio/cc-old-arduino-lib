@@ -17,7 +17,7 @@ public:
 	char id;					// address given by the host
 	char channel; 				// differentiate 2 identical devices
 	char actuators_total_count;	// quantity of actuators in the device
-	char actuators_counter;		// quantity of actuators in the device
+	char actuators_counter=0;		// quantity of actuators in the device
 	char state;					// state in which the device is, protocol-wise
 
 	Actuator**	acts;			// vector which holds all actuators pointers
@@ -46,11 +46,11 @@ public:
 
 	Actuator* searchActuator(int id){
 		for (int i = 0; i < actuators_counter; ++i){
-			if(acts[i]->id == id)
+			if(acts[i]->id == id){
 				return acts[i];
-			else
-				return NULL;
+			}
 		}
+		return NULL;
 	}
 
 	void serialRead(){
@@ -77,90 +77,120 @@ public:
 
 		// digitalWrite(13, HIGH);
 
-	    while(SBYTESAVAILABLE() && read_counter < msg_total_size.data16 && !msg_received){
+		while( (SBYTESAVAILABLE() && read_counter < msg_total_size.data16) || bff){
 			
 			read_buffer[read_counter] = SREAD();
 
-				if(read_buffer[read_counter] == BYTE_SYNC){
-					read_counter = POS_SYNC//ULTIMO ADENDO FOI AQUI, PROBLEMA NA MSG DE CONTROL ADDRESSING (ESTAVA TROCANDO O ULTIMO \x1B POR \xAA)
-				}
+			if(read_counter%10)
+				delayMicroseconds(8); // TODO: Verificar se este delay é realmente necessário, sem ele o arduino não responde as vezes na mensagem do control chain
 
-				if(read_counter == POS_SYNC){
-					if (read_buffer[POS_SYNC] != BYTE_SYNC){
-						return;
-					}
-					else{
-						if(SBYTESAVAILABLE()){
-							read_counter++;
-							read_buffer[read_counter] = SREAD();
-						}
-						else{
-							return;
-						}
-					}
-				}
-				
-				if(read_buffer[read_counter] == BYTE_ESCAPE && read_counter != POS_SYNC){
-					if(SBYTESAVAILABLE()){
-						inputChar = SREAD();
+			// PRINT("[");
+			// PRINT(read_counter);
+			// PRINT("]");
+			// PRINT(":");
+			// PRINT(read_buffer[read_counter]);
+			// PRINT(" ");
 
-						switch(inputChar){
-							case BYTE_ESCAPE:
-							break;
+			if(read_buffer[read_counter] == '\xaa' && read_counter == 1){ // TEST
+				PRINT(" RAM: ");
+				PRINT(freeRam());
+				PRINT(" ");
+			}
 
-							case ~BYTE_SYNC:
-								read_buffer[read_counter] = BYTE_SYNC ;
-							break;
-						}
-					}
-					else{
-						return;
-					}
-				}
+			if(read_buffer[read_counter] == BYTE_SYNC){
+				read_counter = POS_SYNC;
+			}
 
-				if(read_counter == POS_DEST){
-
-					if((this->state != CONNECTING) && (read_buffer[POS_DEST] != this->id)){
-						return;
-					}
-
-				}
-				else if(read_counter == POS_DATA_SIZE2){
-
-					msg_data_size.data8[0] = (int) read_buffer[POS_DATA_SIZE1];
-					msg_data_size.data8[1] = (int) read_buffer[POS_DATA_SIZE2];
-
-					msg_total_size.data16 = (int) msg_data_size.data16 + HEADER_SIZE; // data size + header + checksum
-
-					if((int) msg_total_size.data16 > MAX_DATA_SIZE){
-						ERROR(("Message size bigger than max data size."));
-
-						msg_data_size.data16 = 0;
-						read_counter = POS_SYNC;
-						
-						return;
-					}
-
-				}
-				else if(read_counter == msg_total_size.data16-1){
-
-					PRINT("  msg total size: ");
-					PRINT(msg_total_size.data16);
-
-					Str mano(read_buffer, msg_total_size.data16);
-
-					parse(&mano);
-
-					read_counter = POS_SYNC;
-					msg_data_size.data16 = 0;
-					msg_total_size.data16 = MAX_DATA_SIZE;
-
+			if(read_counter == POS_SYNC){
+				if (read_buffer[POS_SYNC] != BYTE_SYNC){
 					return;
-
 				}
+				else{
+					if(SBYTESAVAILABLE()){
+						read_counter++;
+						read_buffer[read_counter] = SREAD();
+					}
+					else{
+						return;
+					}
+				}
+			}
+			
+			if((read_buffer[read_counter] == BYTE_ESCAPE && read_counter != POS_SYNC) || bff){
+
+
+				if(SBYTESAVAILABLE()){
+
+					if(!bff){
+						inputChar = SREAD();
+					}
+
+					switch(inputChar){
+						case BYTE_ESCAPE:
+						break;
+
+						case ~BYTE_SYNC:
+						read_buffer[read_counter] = BYTE_SYNC ;
+						break;
+
+						default:
+						ERROR("Invalid special character.");
+						DPRINT(inputChar);
+						DPRINT("  ");
+						break;
+
+					}
+					bff = false;
+				}
+				else{
+					bff = true;
+					return;
+				}
+			}
+
+			if(read_counter == POS_DEST){
+
+				if((this->state != CONNECTING) && (read_buffer[POS_DEST] != this->id)){
+					return;
+				}
+
+			}
+			else if(read_counter == POS_DATA_SIZE2){
+
+				msg_data_size.data8[0] = (int) read_buffer[POS_DATA_SIZE1];
+				msg_data_size.data8[1] = (int) read_buffer[POS_DATA_SIZE2];
+
+				msg_total_size.data16 = (int) msg_data_size.data16 + HEADER_SIZE; // data size + header + checksum
+
+				if((int) msg_total_size.data16 > MAX_DATA_SIZE){
+					ERROR(("Message size bigger than max data size."));
+
+					msg_data_size.data16 = 0;
+					read_counter = POS_SYNC;
+					
+					return;
+				}
+
+			}
+			else if(read_counter >= msg_total_size.data16-1){
+
+				// PRINT("  msg total size: ");
+				// PRINT(msg_total_size.data16);
+
+				Str mano(read_buffer, msg_total_size.data16);
+
+				parse(&mano);
+
+				read_counter = POS_SYNC;
+				msg_data_size.data16 = 0;
+				msg_total_size.data16 = MAX_DATA_SIZE;
+
+				return;
+
+			}
 
 			read_counter++;
-	    }
+		}
 
 	}
 
@@ -173,11 +203,11 @@ public:
 
 		summ = checkSum(msg->msg, len-1);
 
-		PRINT("  ::  ");
-		send(len);
-		PRINT("  ::  ");
-		send(msg->msg, len);
-		PRINT("  ::  ");
+		// PRINT("  ::  ");
+		// send(len);
+		// PRINT("  ::  ");
+		// send(msg->msg, len); // VOLTAR
+		// PRINT("  ::  ");
 
 		if( msg->msg[len-1] != summ ) {
 			ERROR("Checksum changed:");
@@ -228,7 +258,7 @@ public:
 				break;
 				
 				case FUNC_DEVICE_DESCRIPTOR:
-					if(this->state != WAITING_DESCRIPTOR_REQUEST){
+					if(this->state != WAITING_DESCRIPTOR_REQUEST && this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting descriptor request.")
 					}
 					else{
@@ -238,7 +268,7 @@ public:
 				break;
 				
 				case FUNC_CONTROL_ADDRESSING:
-					if(this->state != WAITING_CONTROL_ADDRESSING){
+					if(this->state != WAITING_CONTROL_ADDRESSING && this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting control addressing.");
 					}
 					else{
@@ -254,6 +284,10 @@ public:
 							if(!((msg->msg[CTRLADDR_CHOSEN_MASK1] && msg->msg[CTRLADDR_PORT_MASK]) == msg->msg[CTRLADDR_CHOSEN_MASK2])){
 								ERROR("Mode not supported in this actuator.");
 							}
+							else if(act->slots_counter >= act->slots_total_count){
+									ERROR("Maximum parameters addressed already.");
+									return;
+							}
 							else{
 
 								unsigned char param_id = msg->msg[CTRLADDR_ADDR_ID];
@@ -266,7 +300,7 @@ public:
 
 								switch(act->visual_output_level){
 									case VISUAL_NONE:
-										
+
 										addr = new Addressing(msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
 															msg->msg[CTRLADDR_PORT_MASK],
 															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
@@ -309,12 +343,19 @@ public:
 
 											ScalePoint* sp;
 
+											// PRINT(" COUNTER: ");
+											// send(msg->msg[s_p_count_pos]);											
+											// PRINT(" ");
+
 											for (int i = 0; i < addr->scale_points_total_count; ++i){
 												
 												s_p_label_size_pos = s_p_value_pos+4;
 												s_p_label_size = msg->msg[s_p_label_size_pos];
-												s_p_value_pos = s_p_label_size_pos + s_p_label_size;
+												s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
 
+												PRINT(" SP: ");
+												send(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size);											
+												PRINT(" ");
 
 												sp = new ScalePoint(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size,
 																	msg->msg[s_p_value_pos], msg->msg[s_p_value_pos+1],
@@ -334,7 +375,7 @@ public:
 
 							}
 
-							// sendMessage(FUNC_CONTROL_ADDRESSING, 0, 0);
+							sendMessage(FUNC_CONTROL_ADDRESSING, 0, 0);
 							this->state = WAITING_DATA_REQUEST;
 						}
 
@@ -342,6 +383,9 @@ public:
 				break;
 				
 				case FUNC_DATA_REQUEST:
+					static unsigned char data_counter = 0;
+
+					send(FUNC_DATA_REQUEST);
 					
 				break;
 				
@@ -554,6 +598,7 @@ public:
 
 	void sendMessage(char function, char byte1 = 0 /*used as function_error*/, char byte2 = 1 /*used as error code*/, Str error_msg = ""){
 
+		int changed_actuators = 0;
 		unsigned char checksum = 0;
 		Word data_size;
 
@@ -573,7 +618,15 @@ public:
 			break;
 			
 			case FUNC_DATA_REQUEST:
-				// TODO data_size.data16 = 0;
+				for (int i = 0; i < actuators_counter; ++i){
+					if(acts[i]->checkChange())
+						changed_actuators++;
+				}
+				// (param id (1) + param value (4)) * changed params (n) + params count (1) + addr request count (1) + addr requests(n)
+				data_size.data16 = changed_actuators*5 + 2;
+
+ 				// TODO	implementar o pedido de parametro (que ja foi endereçado mas não esta sendo usado) através do ID
+
 			break;
 			
 			case FUNC_ERROR:
@@ -661,6 +714,18 @@ public:
 			break;
 			
 			case FUNC_DATA_REQUEST:
+				checksum += (unsigned char) changed_actuators;
+				send(changed_actuators);
+
+				for (int i = 0; i < changed_actuators; ++i){
+					if(acts[i]->changed){
+						this->acts[i]->getUpdates()->sendDescriptor(&checksum);
+					}
+				}
+
+				checksum += (unsigned char) 0; // TODO addr request
+				send(0)//;
+
 			break;
 			
 			case FUNC_CONTROL_UNADDRESSING: //control addressing and unaddressing

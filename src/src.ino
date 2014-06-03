@@ -46,23 +46,23 @@ Actuator* swit = new Myswitch("switch", 2);
 
 
 void setup() {
+
+	dev->state = WAITING_CONTROL_ADDRESSING;
+	dev->id = 0x80;
 	
 	dev->addActuator(pot);
-	pot->addStep(11);
-	pot->addStep(22);
-	pot->addStep(33);
 	dev->addActuator(swit);
-	swit->addStep(2);
 
 	Serial.begin(BAUD_RATE);
-	pinMode(13, OUTPUT);
+	pinMode(USER_LED, OUTPUT);
 	initializeDevice();
 
 }
 
+unsigned char kkk;
+
 void loop() {
 	dev->connectDevice();
-
 
 }
 

@@ -110,7 +110,7 @@
 #define DEBUG_FLAG		1
 #endif
 
-#define EPSLON   0.01
+#define VALUE_CHANGE_TOLERANCE   0.01
 
 /*
 ************************************************************************************************************************
@@ -366,13 +366,13 @@ int freeRam () {
 }
 
 void send(char byte){ // this function sends bytes via swrite
-	// if(byte == BYTE_SYNC){
-	// 	SWRITE(BYTE_ESCAPE);
-	// 	SWRITE(~byte);
-	// }
-	// else{
+	if(byte == BYTE_SYNC){
+		SWRITE(BYTE_ESCAPE);
+		SWRITE(~byte);
+	}
+	else{
 		SWRITE(byte);
-	// }
+	}
 }
 
 void send(char* msg, int length){ //same thing for strings

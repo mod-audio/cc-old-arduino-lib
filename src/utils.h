@@ -418,6 +418,9 @@ void initializeDevice(){
 	timerA.start();
 	Timer1.initialize(1000);
 	Timer1.attachInterrupt(isr_timer);
+	
+	Serial.begin(BAUD_RATE);
+	pinMode(USER_LED, OUTPUT);
 }
 
 #endif

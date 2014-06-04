@@ -114,8 +114,15 @@ public:
 	char addressing_id;
 	Value value;
 
+	ValueUpdate():addressing_id(0), value(0){}
+
 	ValueUpdate(char addressing_id, float value):
 	addressing_id(addressing_id), value(value){}
+
+	void setup(char addressing_id, float value){
+		this->addressing_id = addressing_id;
+		this->value.f = value;
+	}
 };
 
 class Update{
@@ -123,25 +130,28 @@ public:
 	ValueUpdate* updates;
 	char* addressing_requests;
 
-	Update(){}
+	Update(){
+		this->updates = new	ValueUpdate();
+		this->addressing_requests = NULL; //TODO implementar isso ai
+	}
 
 	void sendDescriptor(unsigned char* checksum){
 
 		*checksum += (unsigned char) this->updates->addressing_id;
 		send(this->updates->addressing_id);
 
-		// *checksum += (unsigned char) this->updates->value.c[0];
-		// send(this->updates->value.c[0]);
-		// *checksum += (unsigned char) this->updates->value.c[1];
-		// send(this->updates->value.c[1]);
-		// *checksum += (unsigned char) this->updates->value.c[2];
-		// send(this->updates->value.c[2]);
-		// *checksum += (unsigned char) this->updates->value.c[3];
-		// send(this->updates->value.c[3]);
+		*checksum += (unsigned char) this->updates->value.c[0];
+		send(this->updates->value.c[0]);
+		*checksum += (unsigned char) this->updates->value.c[1];
+		send(this->updates->value.c[1]);
+		*checksum += (unsigned char) this->updates->value.c[2];
+		send(this->updates->value.c[2]);
+		*checksum += (unsigned char) this->updates->value.c[3];
+		send(this->updates->value.c[3]);
 
-		PRINT("valor[");
-		PRINT(analogRead(A4));
-		PRINT("]");
+		PRINT(" Value[");
+		PRINT(this->updates->value.f);
+		PRINT("] ");
 	}
 };
 
@@ -175,7 +185,7 @@ public:
 		delete[] steps;
 	}
 
-	virtual Update* getUpdates()=0;
+	virtual void getUpdates(Update* update)=0;
 
 	virtual void address(char addressing_id, Addressing* addressing)=0;
 

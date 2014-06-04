@@ -24,8 +24,11 @@ public:
 
 	char read_buffer[MAX_DATA_SIZE];
 
+	Update* updates; // TODO resolver essa questão
+
 	Device(char* url_id, char* label, char actuators_total_count, char channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
 		this->acts = new Actuator*[actuators_total_count];
+		this->updates = new Update();
 	}
 
 	~Device(){
@@ -281,8 +284,9 @@ public:
 						}
 						else{
 
-							if(!((msg->msg[CTRLADDR_CHOSEN_MASK1] && msg->msg[CTRLADDR_PORT_MASK]) == msg->msg[CTRLADDR_CHOSEN_MASK2])){
+							if(!((msg->msg[CTRLADDR_CHOSEN_MASK1] & msg->msg[CTRLADDR_PORT_MASK]) == msg->msg[CTRLADDR_CHOSEN_MASK2])){
 								ERROR("Mode not supported in this actuator.");
+								sendMessage(FUNC_CONTROL_ADDRESSING, -1);
 							}
 							else if(act->slots_counter >= act->slots_total_count){
 									ERROR("Maximum parameters addressed already.");
@@ -373,10 +377,10 @@ public:
 
 								addr->sendDescriptor();
 
-							}
+								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
+								this->state = WAITING_DATA_REQUEST;
 
-							sendMessage(FUNC_CONTROL_ADDRESSING, 0, 0);
-							this->state = WAITING_DATA_REQUEST;
+							}
 						}
 
 					}
@@ -395,6 +399,12 @@ public:
 				break;
 				
 				case FUNC_CONTROL_UNADDRESSING:
+					//TODO
+					// if(!this->actuators_counter){
+					// 	ERROR("Nothing addressed.");
+					// }
+					// else{}
+
 					
 				break;
 				
@@ -403,205 +413,9 @@ public:
 				break;
 			}
 		}
-			
-		// 	Word convert;
-
-		// 	convert.data8[0] = msg->msg[4];		// 2 bytes indicating data size
-		// 	convert.data8[1] = msg->msg[5];
-
-		// 	if(convert.data16 >= MAX_DATA_SIZE){
-		// 		ERROR("Message too long.");
-		// 		return;
-		// 	}
-
-		// 	if(msg->msg[3] == CONNECTION){ 
-		// 		if(dev->state == CONNECTING){
-		// 			dev->setAddress(DESTINATION, msg->msg[2]);
-		// 			dev->setAddress(ORIGIN, msg->msg[1]);
-		// 			dev->state = WAITING_DESCRIPTOR_REQUEST;
-		// 		}
-		// 		else{
-		// 			ERROR("Device is not waiting connection message.");
-		// 			return;
-		// 		}
-		// 	}
-		// 	else{
-		// 		if((char) msg->msg[2] != (char) dev->destination_address){
-		// 			ERROR("This message was not sent from the host.");
-		// 			return;
-		// 		}
-		// 		if((char) msg->msg[1] != (char) dev->origin_address){ // case addresses don't match
-		// 			ERROR("This message is not intended for this device.");
-		// 			return;
-		// 		}
-		// 		switch(msg->msg[3]){
-
-		// 			case DEVICE_DESCRIPTOR:
-		// 				if(dev->state == WAITING_DESCRIPTOR_REQUEST){
-		// 					sendMsg(DEVICE_DESCRIPTOR);
-		// 					dev->state = WAITING_CONTROL_ADDRESSING;
-		// 				}
-		// 				else{
-		// 					ERROR("Device is not waiting descriptor request.");
-		// 					return;
-		// 				}
-		// 			break;
-
-		// 			case CONTROL_ADDRESSING:
-		// 				if(dev->state == WAITING_CONTROL_ADDRESSING || dev->state == WAITING_DATA_REQUEST){
-		// 					if(msg->msg[6] == dev->channel){   // msg->msg[7] is actuator id (should be right) and msg->msg[8] is mask size
-								
-		// 						if(dev->acts[msg->msg[7]-1]->control->addressed == false){
-
-		// 							String param_name;
-		// 							int param_name_pos = 9 + msg->msg[8];
-		// 							int param_name_size = subStringLength(msg, param_name_pos);
-
-		// 							for (int i = param_name_pos; i < param_name_pos+param_name_size; ++i)
-		// 							{
-		// 								param_name += msg->msg[i];
-		// 							}
-
-		// 							int values_pos = param_name_pos + param_name_size + 1;
-
-		// 							float c_value 	= bytesToFloat(msg->msg[values_pos], msg->msg[values_pos + 1], msg->msg[values_pos + 2], msg->msg[values_pos + 3]) ;
-		// 							float c_min 	= bytesToFloat(msg->msg[values_pos + 4], msg->msg[values_pos + 5], msg->msg[values_pos + 6], msg->msg[values_pos + 7]) ;
-		// 							float c_max 	= bytesToFloat(msg->msg[values_pos + 8], msg->msg[values_pos + 9], msg->msg[values_pos + 10], msg->msg[values_pos + 11]) ;
-		// 							float c_default = bytesToFloat(msg->msg[values_pos + 12], msg->msg[values_pos + 13], msg->msg[values_pos + 14], msg->msg[values_pos + 15]) ;
-
-		// 							Word	steps;
-		// 							steps.data8[0] = msg->msg[values_pos+16];
-		// 							steps.data8[1] = msg->msg[values_pos+17];
-
-		// 							String param_unit;
-		// 							int param_unit_pos = values_pos + 18;
-		// 							int param_unit_size = subStringLength(msg,param_unit_pos);
-		// 							for (int i = param_unit_pos; i < param_unit_pos+param_unit_size; ++i)
-		// 							{
-		// 								param_unit += msg->msg[i];
-		// 							}
-
-		// 							char scale_point_count = msg->msg[param_unit_pos + param_unit_size + 1];
-
-		// 							dev->acts[msg->msg[7]-1]->control->setController(msg->msg[9], 
-		// 								param_name, 
-		// 								c_value, 
-		// 								c_min, 
-		// 								c_max, 
-		// 								c_default, 
-		// 								steps.data16, 
-		// 								param_unit, 
-		// 								scale_point_count);
-
-		// 							if(scale_point_count != 0){
-		// 								String scale_point_label;
-		// 								int scale_point_pos = param_unit_pos + param_unit_size + 2;
-		// 								int scale_point_size = 0;
-
-		// 								float scale_point_value;
-
-		// 								// this loops receives scalepoint names and values from msg and add them to controller structure
-		// 								for (int i = 0; i < scale_point_count; ++i)
-		// 								{
-		// 									scale_point_size = subStringLength(msg,scale_point_pos);
-
-		// 									scale_point_value = bytesToFloat(msg->msg[ scale_point_pos + scale_point_size + 1 ],
-		// 										msg->msg[ scale_point_pos + scale_point_size + 2 ], 
-		// 										msg->msg[ scale_point_pos + scale_point_size + 3 ], 
-		// 										msg->msg[ scale_point_pos + scale_point_size + 4 ]); 
-
-		// 									for (int i = scale_point_pos; i < scale_point_pos+scale_point_size; ++i)
-		// 									{
-		// 										scale_point_label += msg->msg[i];
-		// 									}
-		// 									dev->acts[msg->msg[7]-1]->control->addScalePoint(scale_point_label, scale_point_value);
-											
-		// 									scale_point_pos += scale_point_size + 5;
-
-		// 									scale_point_label = "";
-		// 								}
-		// 							}
-
-		// 							// dev->acts[msg->msg[7]-1]->control->describeController();
-
-		// 							dev->state = WAITING_DATA_REQUEST;
-		// 							dev->controls_addressed++;
-
-		// 							if(!timerB.working){
-		// 								timerB.start();
-		// 								timerB.setPeriod(DEVICE_TIMEOUT_PERIOD);
-		// 							}
-									
-		// 						}
-		// 						else{
-		// 							ERROR("This actuator is already being used.");
-		// 							sendMsg(CONTROL_ADDRESSING,-1);
-		// 							return;
-		// 						}
-		// 					}
-		// 					else{
-		// 						ERROR("Wrong device channel.");
-		// 						sendMsg(CONTROL_ADDRESSING,-1);
-		// 						return;
-		// 					}
-		// 				}
-		// 				else{
-		// 					ERROR("Device is not waiting control addressing.");
-		// 					return;
-		// 				}
-		// 			break;
-
-		// 			case DATA_REQUEST:
-		// 				if(dev->state == WAITING_DATA_REQUEST){ // being on WAITING_DATA_REQUEST state means that at least one controller is addressed
-		// 					sendMsg(DATA_REQUEST);
-		// 				}
-		// 				else{
-		// 					ERROR("Device is not waiting data request.");
-		// 					return;
-		// 				}
-		// 			break;
-
-		// 			case CONTROL_UNADDRESSING:
-		// 				if(dev->state == WAITING_DATA_REQUEST){
-		// 					if(msg->msg[6] == dev->channel){
-		// 						if(dev->acts[msg->msg[7]-1]->control->addressed){
-		// 							dev->acts[msg->msg[7]-1]->control->removeAddressing();
-		// 							dev->controls_addressed--;
-									
-		// 							if(dev->controls_addressed == 0){
-		// 								dev->state = CONTROL_ADDRESSING;
-		// 								timerB.stop();
-		// 							}
-		// 						}
-		// 						else{
-		// 							ERROR("This actuator is not addressed.");
-		// 							return;
-		// 						}
-		// 					}
-		// 					else{
-		// 						ERROR("This device is not on this channel.");
-		// 						return;
-		// 					}
-		// 				}
-		// 				else{
-		// 					ERROR("There is no control addressed.");
-		// 					return;
-		// 				}
-		// 				ERROR("Number of controls addressed: ");
-		// 				PRINT(dev->controls_addressed);
-		// 			break;
-		// 		}
-		// 	}
-
-		// else{
-		// 	ERROR("Invalid message received.");
-		// }
-		// if(timerB.working){
-		// 	timerB.reset();
-		// }
 	}
 
-	void sendMessage(char function, char byte1 = 0 /*used as function_error*/, char byte2 = 1 /*used as error code*/, Str error_msg = ""){
+	void sendMessage(char function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
 
 		int changed_actuators = 0;
 		unsigned char checksum = 0;
@@ -712,10 +526,10 @@ public:
 
 			case FUNC_CONTROL_ADDRESSING: //control addressing and unaddressing
 
-				checksum += (unsigned char) byte1;
-				send(byte1);
-				checksum += (unsigned char) byte2;
-				send(byte2);
+				checksum += (unsigned char) status.data8[0];
+				send(status.data8[0]);
+				checksum += (unsigned char) status.data8[1];
+				send(status.data8[1]);
 
 			break;
 			
@@ -727,7 +541,11 @@ public:
 
 				for (int i = 0; i < changed_actuators; ++i){
 					if(acts[i]->changed){
-						this->acts[i]->getUpdates()->sendDescriptor(&checksum);
+
+						this->acts[i]->getUpdates(this->updates);
+						this->updates->sendDescriptor(&checksum);
+
+						acts[i]->uncheckChange();
 					}
 				}
 

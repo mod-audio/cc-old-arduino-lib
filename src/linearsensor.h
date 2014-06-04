@@ -51,7 +51,8 @@ public:
 
  	}
 
-	Update* getUpdates(){
+	void getUpdates(Update* update){
+
 		int sensor = this->getValue();
 		
 		float scaleMin, scaleMax;
@@ -78,12 +79,7 @@ public:
 	    	value = floor(value);
 	    }
 
-	    ValueUpdate *value_update = new ValueUpdate(this->addressing_id, value);
-
-		Update *update = new Update();
-		update->updates = value_update;
-
-		return update;
+	    update->updates->setup(this->addressing_id, value);
 	}
 
 	virtual float getValue()=0;

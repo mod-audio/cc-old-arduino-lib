@@ -23,12 +23,12 @@ public:
 
 };
 
-class Myswitch : public Switch {
+class Myswitch : public Button {
 public:
 	int max = 1;
 	int min = 0;
 
-	Myswitch(char* name, char id):Switch(name, id, true){
+	Myswitch(char* name, char id):Button(name, id, true){
 		pinMode(SWITCH_PIN, INPUT);
 	}
  
@@ -47,14 +47,9 @@ Actuator* swit = new Myswitch("switch", 2);
 
 void setup() {
 
-	dev->state = WAITING_DATA_REQUEST;
-	dev->id = 0x80;
-	
 	dev->addActuator(pot);
 	dev->addActuator(swit);
 
-	Serial.begin(BAUD_RATE);
-	pinMode(USER_LED, OUTPUT);
 	initializeDevice();
 
 }

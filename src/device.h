@@ -91,7 +91,7 @@ public:
 			// PRINT(read_buffer[read_counter]);
 			// PRINT(" ");
 
-			if(read_buffer[read_counter] == '\xaa' && read_counter == 1){ // TEST
+			if(read_buffer[read_counter] == '\xaa' && read_counter == 1){ // VOLTAR
 				PRINT(" RAM: ");
 				PRINT(freeRam());
 				PRINT(" ");
@@ -383,9 +383,14 @@ public:
 				break;
 				
 				case FUNC_DATA_REQUEST:
+
+					if(this->state != WAITING_DATA_REQUEST){
+						ERROR("Not waiting data request.");
+					}
+					
 					static unsigned char data_counter = 0;
 
-					send(FUNC_DATA_REQUEST);
+					sendMessage(FUNC_DATA_REQUEST);
 					
 				break;
 				
@@ -618,6 +623,7 @@ public:
 			break;
 			
 			case FUNC_DATA_REQUEST:
+
 				for (int i = 0; i < actuators_counter; ++i){
 					if(acts[i]->checkChange())
 						changed_actuators++;
@@ -714,6 +720,8 @@ public:
 			break;
 			
 			case FUNC_DATA_REQUEST:
+
+
 				checksum += (unsigned char) changed_actuators;
 				send(changed_actuators);
 
@@ -724,7 +732,7 @@ public:
 				}
 
 				checksum += (unsigned char) 0; // TODO addr request
-				send(0)//;
+				send(0);
 
 			break;
 			

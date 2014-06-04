@@ -130,14 +130,18 @@ public:
 		*checksum += (unsigned char) this->updates->addressing_id;
 		send(this->updates->addressing_id);
 
-		*checksum += (unsigned char) this->updates->value.c[0];
-		send(this->updates->value.c[0]);
-		*checksum += (unsigned char) this->updates->value.c[1];
-		send(this->updates->value.c[1]);
-		*checksum += (unsigned char) this->updates->value.c[2];
-		send(this->updates->value.c[2]);
-		*checksum += (unsigned char) this->updates->value.c[3];
-		send(this->updates->value.c[3]);
+		// *checksum += (unsigned char) this->updates->value.c[0];
+		// send(this->updates->value.c[0]);
+		// *checksum += (unsigned char) this->updates->value.c[1];
+		// send(this->updates->value.c[1]);
+		// *checksum += (unsigned char) this->updates->value.c[2];
+		// send(this->updates->value.c[2]);
+		// *checksum += (unsigned char) this->updates->value.c[3];
+		// send(this->updates->value.c[3]);
+
+		PRINT("valor[");
+		PRINT(analogRead(A4));
+		PRINT("]");
 	}
 };
 

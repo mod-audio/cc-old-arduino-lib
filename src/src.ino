@@ -5,7 +5,7 @@
 #include "linearsensor.h"
 #include "switch.h"
 
-#define POT_MAX 1013
+#define POT_MAX 1014
 #define POT_MIN 8
 #define POT_PIN A4
 #define SWITCH_PIN 5
@@ -47,7 +47,7 @@ Actuator* swit = new Myswitch("switch", 2);
 
 void setup() {
 
-	dev->state = WAITING_CONTROL_ADDRESSING;
+	dev->state = WAITING_DATA_REQUEST;
 	dev->id = 0x80;
 	
 	dev->addActuator(pot);
@@ -58,8 +58,6 @@ void setup() {
 	initializeDevice();
 
 }
-
-unsigned char kkk;
 
 void loop() {
 	dev->connectDevice();

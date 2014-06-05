@@ -4,6 +4,10 @@
 #include "utils.h"
 #include "actuator.h"
 
+#define TOGGLE_DOWN		0
+#define TOGGLE_MID		1
+#define TOGGLE_HIGH		2
+
 class Button: public Actuator{ // A switch witch does not save state, it can emulate state saver switch
 public:
 	int 			minimum = 0;
@@ -12,9 +16,11 @@ public:
 	char 			addressing_id;
 	Addressing* 	addressing;
 
+
+
 	Button(char* name, char id, bool default_state): Actuator(name, id, 1, 2, 1, VISUAL_NONE), default_state(default_state){
 
-		Mode *mode = supports("toggle"); // saves state
+		Mode *mode = supports(F("toggle")); // saves state
 		// mode->expects(PROPERTY_INTEGER, false);
 		// mode->expects(PROPERTY_LOGARITHM, false);
 		mode->expects(PROPERTY_TOGGLE, true);
@@ -24,7 +30,7 @@ public:
 		// mode->expects(PROPERTY_TAP_TEMPO, false);
 		// mode->expects(PROPERTY_BYPASS, false);
 
-		Mode *mode2 = supports("trigger"); //does not save state
+		Mode *mode2 = supports(F("trigger")); //does not save state
 		// mode2->expects(PROPERTY_INTEGER, false);
 		// mode2->expects(PROPERTY_LOGARITHM, false);
 		mode2->expects(PROPERTY_TOGGLE, true);
@@ -59,8 +65,11 @@ public:
  		}
  	}
 
-	void getUpdates(Update* update){
-	    static bool trigger = false;
+ 	void calculateValue(){
+
+ 		static bool trigger = false;
+ 		static char toggle_state = false;
+ 		static char last_toggle_state = false;
 
 		bool sensor = (bool) this->getValue();
 		
@@ -69,31 +78,79 @@ public:
 		scaleMin = this->addressing->minimum.f;
 	    scaleMax = this->addressing->maximum.f;
 	    
-	    float value;
+	    if ((this->addressing->port_properties & modes[0].relevant_properties) == modes[0].property_values) { // toggle
+	    	switch(toggle_state){
+	    		case TOGGLE_DOWN:
+	    			if(!(sensor && default_state)){
+	    				last_toggle_state = toggle_state;
+	    				toggle_state = TOGGLE_MID;
+	    			}
+	    		break;
 
-	    if (this->addressing->port_properties & PROPERTY_TOGGLE) {
-	    	if(sensor && default_state)
-	    		value = scaleMin;
-	    	else
-	    		value = scaleMax;
+	    		case TOGGLE_MID:
+	    			if(sensor && default_state){
+	    				if(last_toggle_state == TOGGLE_HIGH){
+		    				last_toggle_state = toggle_state;
+		    				toggle_state = TOGGLE_DOWN;
+	    				}
+    					else if(last_toggle_state == TOGGLE_DOWN){
+		    				last_toggle_state = toggle_state;
+		    				toggle_state = TOGGLE_HIGH;
+    					}
+	    			}
+	    		break;
+
+	    		case TOGGLE_HIGH:
+	    			if(!(sensor && default_state)){
+	    				last_toggle_state = toggle_state;
+	    				toggle_state = TOGGLE_MID;
+	    			}
+	    		break;
+	    	}
 	    }
 
-	    if (this->addressing->port_properties & PROPERTY_TRIGGER) {
+//TODO	    // if ((this->addressing->port_properties & modes[1].relevant_properties) == modes[1].property_values) { // trigger
 
-	    	if(trigger && (default_state && sensor)){
-	    		trigger = false;
-	    		value = scaleMin;
-	    	}
-	    	else if(!trigger && !(default_state && sensor)){
-	    		trigger = true;
-	    		value = scaleMax;
-	    	}
-	    	else{
-	    		value = scaleMin;
-	    	}
-	    }
+	    // 	if(trigger && (default_state && sensor)){
+	    // 		trigger = false;
+	    // 		this->value = scaleMin;
+	    // 	}
+	    // 	else if(!trigger && !(default_state && sensor)){
+	    // 		trigger = true;
+	    // 		this->value = scaleMax;
+	    // 	}
+	    // 	else{
+	    // 		this->value = scaleMin;
+	    // 	}
+	    // }
+ 	}
 
-	    update->updates->setup(this->addressing_id, value);
+ 	void postMessageChanges(){
+ 		// if (this->addressing->port_properties & PROPERTY_TOGGLE) {
+	  //   	if(sensor && default_state)
+	  //   		this->value = scaleMin;
+	  //   	else
+	  //   		this->value = scaleMax;
+	  //   }
+
+	  //   if (this->addressing->port_properties & PROPERTY_TRIGGER) {
+
+	  //   	if(trigger && (default_state && sensor)){
+	  //   		trigger = false;
+	  //   		this->value = scaleMin;
+	  //   	}
+	  //   	else if(!trigger && !(default_state && sensor)){
+	  //   		trigger = true;
+	  //   		this->value = scaleMax;
+	  //   	}
+	  //   	else{
+	  //   		this->value = scaleMin;
+	  //   	}
+	  //   }
+ 	}
+
+	void getUpdates(Update* update){
+		update->updates->setup(this->addressing_id, this->value);
 	}
 
 	virtual float getValue()=0;

@@ -51,8 +51,7 @@ public:
 
  	}
 
-	void getUpdates(Update* update){
-
+ 	void calculateValue(){
 		int sensor = this->getValue();
 		
 		float scaleMin, scaleMax;
@@ -67,20 +66,24 @@ public:
 	    } 
 
 	    // Parameter is linear
-		float value = (sensor - this->minimum) * (this->addressing->maximum.f - this->addressing->minimum.f);
-	    value /= (this->maximum - this->minimum);
-	    value += this->addressing->minimum.f;
+		this->value = (sensor - this->minimum) * (this->addressing->maximum.f - this->addressing->minimum.f);
+	    this->value /= (this->maximum - this->minimum);
+	    this->value += this->addressing->minimum.f;
 	    
 	    if (this->addressing->port_properties & PROPERTY_LOGARITHM) {
-	    	value = pow(2,value);
+	    	this->value = pow(2,this->value);
 	    }
 
 	    if (this->addressing->port_properties & PROPERTY_INTEGER) {
-	    	value = floor(value);
+	    	this->value = floor(this->value);
 	    }
+ 	}
 
-	    update->updates->setup(this->addressing_id, value);
+	void getUpdates(Update* update){
+	    update->updates->setup(this->addressing_id, this->value);
 	}
+
+	void postMessageChanges(){}
 
 	virtual float getValue()=0;
 

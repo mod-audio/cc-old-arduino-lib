@@ -57,6 +57,8 @@ void setup() {
 void loop() {
 	dev->connectDevice();
 
+	dev->refreshValues();
+
 }
 
 void serialEvent(){

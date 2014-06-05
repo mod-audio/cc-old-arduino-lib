@@ -35,6 +35,12 @@ public:
 		delete[] acts;
 	}
 
+/*
+************************************************************************************************************************
+*           Actuator Related
+************************************************************************************************************************
+*/
+
 	void addActuator(Actuator* actuator_class){
 		if(actuators_counter >= actuators_total_count){
 			ERROR("Actuators limit overflow!");
@@ -55,6 +61,18 @@ public:
 		}
 		return NULL;
 	}
+
+	void refreshValues(){
+		for (int i = 0; i < actuators_counter; ++i){
+			acts[i]->calculateValue();
+		}
+	}
+
+/*
+************************************************************************************************************************
+*           Communication Related
+************************************************************************************************************************
+*/
 
 	void serialRead(){
 
@@ -287,6 +305,7 @@ public:
 							if(!((msg->msg[CTRLADDR_CHOSEN_MASK1] & msg->msg[CTRLADDR_PORT_MASK]) == msg->msg[CTRLADDR_CHOSEN_MASK2])){
 								ERROR("Mode not supported in this actuator.");
 								sendMessage(FUNC_CONTROL_ADDRESSING, -1);
+								return;
 							}
 							else if(act->slots_counter >= act->slots_total_count){
 									ERROR("Maximum parameters addressed already.");
@@ -545,7 +564,6 @@ public:
 						this->acts[i]->getUpdates(this->updates);
 						this->updates->sendDescriptor(&checksum);
 
-						acts[i]->uncheckChange();
 					}
 				}
 
@@ -567,6 +585,11 @@ public:
 
 		SFLUSH();
 
+
+		for (int i = 0; i < changed_actuators; ++i){
+			if(acts[i]->changed)
+				acts[i]->postMessageRotine();
+		}
 	}
 
 	void connectDevice(){

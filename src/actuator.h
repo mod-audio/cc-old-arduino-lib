@@ -173,6 +173,8 @@ public:
 	char 				visual_output_level;
 	bool				changed;
 
+	float 				value;
+
 	Actuator(char* name, char id, char slots_total_count, char modes_total_count, char steps_total_count, char visual_output_level):
 	name(name), id(id), slots_total_count(slots_total_count), modes_total_count(modes_total_count), 
 	steps_total_count(steps_total_count), slots_counter(0), modes_counter(0), steps_counter(0), visual_output_level(visual_output_level){
@@ -191,7 +193,11 @@ public:
 
 	virtual void unaddress(char addressing_id)=0;
 
+	virtual void calculateValue()=0;
+
 	virtual float getValue()=0;
+
+	virtual void postMessageChanges()=0;
 
 	Mode*	supports(char* label){
 		if(modes_counter >= modes_total_count){
@@ -252,8 +258,11 @@ public:
 		}
 	}
 
-	void uncheckChange(){
+
+	void postMessageRotine(){
 		this->changed = false;
+
+		postMessageChanges();
 	}
 
 	void sendDescriptor(unsigned char* checksum){

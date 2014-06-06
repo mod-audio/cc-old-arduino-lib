@@ -20,7 +20,7 @@ public:
 
 	Button(char* name, char id, bool default_state): Actuator(name, id, 1, 2, 1, VISUAL_NONE), default_state(default_state){
 
-		Mode *mode = supports(F("toggle")); // saves state
+		Mode *mode = supports("toggle"); // saves state
 		// mode->expects(PROPERTY_INTEGER, false);
 		// mode->expects(PROPERTY_LOGARITHM, false);
 		mode->expects(PROPERTY_TOGGLE, true);
@@ -30,7 +30,7 @@ public:
 		// mode->expects(PROPERTY_TAP_TEMPO, false);
 		// mode->expects(PROPERTY_BYPASS, false);
 
-		Mode *mode2 = supports(F("trigger")); //does not save state
+		Mode *mode2 = supports("trigger"); //does not save state
 		// mode2->expects(PROPERTY_INTEGER, false);
 		// mode2->expects(PROPERTY_LOGARITHM, false);
 		mode2->expects(PROPERTY_TOGGLE, true);
@@ -78,7 +78,7 @@ public:
 		scaleMin = this->addressing->minimum.f;
 	    scaleMax = this->addressing->maximum.f;
 	    
-	    if ((this->addressing->port_properties & modes[0].relevant_properties) == modes[0].property_values) { // toggle
+	    if ((this->addressing->port_properties & modes[0]->relevant_properties) == modes[0]->property_values) { // toggle
 	    	switch(toggle_state){
 	    		case TOGGLE_DOWN:
 	    			if(!(sensor && default_state)){
@@ -92,10 +92,12 @@ public:
 	    				if(last_toggle_state == TOGGLE_HIGH){
 		    				last_toggle_state = toggle_state;
 		    				toggle_state = TOGGLE_DOWN;
+		    				this->value = scaleMin;
 	    				}
     					else if(last_toggle_state == TOGGLE_DOWN){
 		    				last_toggle_state = toggle_state;
 		    				toggle_state = TOGGLE_HIGH;
+		    				this->value = scaleMax;
     					}
 	    			}
 	    		break;
@@ -108,45 +110,28 @@ public:
 	    		break;
 	    	}
 	    }
+	    //TODO implementar e testar modo trigger
+		// if ((this->addressing->port_properties & modes[1]->relevant_properties) == modes[1]->property_values) { // trigger
 
-//TODO	    // if ((this->addressing->port_properties & modes[1].relevant_properties) == modes[1].property_values) { // trigger
-
-	    // 	if(trigger && (default_state && sensor)){
-	    // 		trigger = false;
-	    // 		this->value = scaleMin;
-	    // 	}
-	    // 	else if(!trigger && !(default_state && sensor)){
-	    // 		trigger = true;
-	    // 		this->value = scaleMax;
-	    // 	}
-	    // 	else{
-	    // 		this->value = scaleMin;
-	    // 	}
-	    // }
+	 //    	if(trigger && (default_state && sensor)){
+	 //    		trigger = false;
+	 //    		this->value = scaleMin;
+	 //    	}
+	 //    	else if(!trigger && !(default_state && sensor)){
+	 //    		trigger = true;
+	 //    		this->value = scaleMax;
+	 //    	}
+	 //    	else{
+	 //    		this->value = scaleMin;
+	 //    	}
+	 //    }
  	}
 
  	void postMessageChanges(){
- 		// if (this->addressing->port_properties & PROPERTY_TOGGLE) {
-	  //   	if(sensor && default_state)
-	  //   		this->value = scaleMin;
-	  //   	else
-	  //   		this->value = scaleMax;
-	  //   }
+		// if ((this->addressing->port_properties & modes[1]->relevant_properties) == modes[1]->property_values) { // trigger
 
-	  //   if (this->addressing->port_properties & PROPERTY_TRIGGER) {
-
-	  //   	if(trigger && (default_state && sensor)){
-	  //   		trigger = false;
-	  //   		this->value = scaleMin;
-	  //   	}
-	  //   	else if(!trigger && !(default_state && sensor)){
-	  //   		trigger = true;
-	  //   		this->value = scaleMax;
-	  //   	}
-	  //   	else{
-	  //   		this->value = scaleMin;
-	  //   	}
-	  //   }
+	 //    	this->value = 0;
+	 //    }
  	}
 
 	void getUpdates(Update* update){

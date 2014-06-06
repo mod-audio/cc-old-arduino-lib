@@ -149,9 +149,9 @@ public:
 		*checksum += (unsigned char) this->updates->value.c[3];
 		send(this->updates->value.c[3]);
 
-		PRINT(" Value[");
-		PRINT(this->updates->value.f);
-		PRINT("] ");
+		// PRINT(" Value[");
+		// PRINT(this->updates->value.f);
+		// PRINT("] ");
 	}
 };
 

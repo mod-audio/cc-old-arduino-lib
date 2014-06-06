@@ -249,18 +249,18 @@ public:
 
 				Str url( &msg->msg[POS_DATA_SIZE2+2] , msg->msg[POS_DATA_SIZE2+1] );
 
-				PRINT("||||");
-				for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
-					PRINT(url.msg[xx]);
-				PRINT("||||");
-				for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
-					PRINT(this->url_id.msg[xx]);
-				PRINT("||||");
+				// PRINT("||||");
+				// for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
+				// 	PRINT(url.msg[xx]);
+				// PRINT("||||");
+				// for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
+				// 	PRINT(this->url_id.msg[xx]);
+				// PRINT("||||");
 
 				if( (url == this->url_id) && (msg->msg[msg->length-4] == this->channel) ){
 					this->id = msg->msg[POS_DEST];
 					this->state = WAITING_DESCRIPTOR_REQUEST;
-					PRINT("AE CARAIO");
+					// PRINT("AE CARAIO");
 					return;
 				}
 				else{
@@ -376,9 +376,9 @@ public:
 												s_p_label_size = msg->msg[s_p_label_size_pos];
 												s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
 
-												PRINT(" SP: ");
+												// PRINT(" SP: ");
 												send(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size);											
-												PRINT(" ");
+												// PRINT(" ");
 
 												sp = new ScalePoint(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size,
 																	msg->msg[s_p_value_pos], msg->msg[s_p_value_pos+1],
@@ -394,7 +394,7 @@ public:
 
 								act->address(param_id, addr);
 
-								addr->sendDescriptor();
+								// addr->sendDescriptor();
 
 								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
 								this->state = WAITING_DATA_REQUEST;
@@ -439,6 +439,8 @@ public:
 		int changed_actuators = 0;
 		unsigned char checksum = 0;
 		Word data_size;
+
+		digitalWrite(WRITE_READ_PIN, WRITE_ENABLE);
 
 		switch(function){
 			case FUNC_CONNECTION:
@@ -567,7 +569,7 @@ public:
 					}
 				}
 
-				checksum += (unsigned char) 0; // TODO addr request
+				checksum += (unsigned char) 0; // TODO addr request <<<< IMPORTANTE : DISCUTIR A IMPLEMENTAÇÃO DISSO >>>>
 				send(0);
 
 			break;
@@ -585,6 +587,7 @@ public:
 
 		SFLUSH();
 
+		digitalWrite(WRITE_READ_PIN, READ_ENABLE);
 
 		for (int i = 0; i < changed_actuators; ++i){
 			if(acts[i]->changed)

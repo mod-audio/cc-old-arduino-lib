@@ -441,11 +441,12 @@ public:
 		Word data_size;
 
 		digitalWrite(WRITE_READ_PIN, WRITE_ENABLE);
+		delayMicroseconds(100);
 
 		switch(function){
 			case FUNC_CONNECTION:
-				// url_id (n bytes) + channel (1) + version(2 bytes)
-				data_size.data16 = this->url_id.length + 3;
+				// url_id size (1) + url_id (n bytes) + channel (1) + version(2 bytes)
+				data_size.data16 = this->url_id.length + 4;
 			break;
 			
 			case FUNC_DEVICE_DESCRIPTOR:
@@ -513,6 +514,9 @@ public:
 
 		switch(function){
 			case FUNC_CONNECTION:
+
+				checksum += (unsigned char) this->url_id.length;
+				send(this->url_id.length);
 
 				checksum += checkSum(this->url_id.msg, this->url_id.length);
 				send(this->url_id.msg, this->url_id.length);

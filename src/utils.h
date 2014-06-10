@@ -368,7 +368,11 @@ int freeRam () {
 void send(char byte){ // this function sends bytes via swrite
 	if(byte == BYTE_SYNC){
 		SWRITE(BYTE_ESCAPE);
-		SWRITE(~byte);
+		SWRITE(~BYTE_SYNC);
+	}
+	if(byte == BYTE_ESCAPE){
+		SWRITE(BYTE_ESCAPE);
+		SWRITE(BYTE_ESCAPE);
 	}
 	else{
 		SWRITE(byte);
@@ -421,6 +425,7 @@ void initializeDevice(){
 	
 	Serial.begin(BAUD_RATE);
 	pinMode(USER_LED, OUTPUT);
+	pinMode(WRITE_READ_PIN, OUTPUT);
 }
 
 #endif

@@ -240,11 +240,6 @@ public:
 
 		count += steps_counter*2; //modes count
 
-		PRINT("ACT [");
-		PRINT((int)count);
-		PRINT("] ");
-
-
 		return count;
 
 	}

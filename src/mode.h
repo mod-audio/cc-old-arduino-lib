@@ -28,12 +28,6 @@ public:
 	}
 
 	unsigned char descriptorSize(){
-
-		PRINT("MODE [");
-		PRINT((2 + 1 + label.length));
-		PRINT("] ");
-
-
 		return 2 + 1 + label.length;
 	}
 

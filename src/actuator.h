@@ -224,8 +224,8 @@ public:
 		}
 	}
 
-	unsigned char descriptorSize(){
-		unsigned char count = 0;
+	uint16_t descriptorSize(){
+		uint16_t count = 0;
 		int i = 0;
 
 		count += 1; //id
@@ -239,6 +239,11 @@ public:
 		count += 1; //step list size
 
 		count += steps_counter*2; //modes count
+
+		PRINT("ACT [");
+		PRINT((int)count);
+		PRINT("] ");
+
 
 		return count;
 

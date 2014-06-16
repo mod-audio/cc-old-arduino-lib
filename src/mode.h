@@ -28,7 +28,13 @@ public:
 	}
 
 	unsigned char descriptorSize(){
-		return 2 + label.length;
+
+		PRINT("MODE [");
+		PRINT((2 + 1 + label.length));
+		PRINT("] ");
+
+
+		return 2 + 1 + label.length;
 	}
 
 	void sendDescriptor(unsigned char* checksum){

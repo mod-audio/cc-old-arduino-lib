@@ -38,7 +38,7 @@ public:
 
 };
 
-Device* dev = new Device("http://portalmod.com/devices/XP", "Pedal_Expressao", 2, 1);
+Device* dev = new Device("http://portalmod.com/devices/XP", "Pedal_Expressao", 2/*actuators count*/, 1);
 
 Actuator* pot = new Mypot("potenciometro", 1);
 
@@ -63,4 +63,4 @@ void loop() {
 
 void serialEvent(){
 	dev->serialRead();
-}
+}	

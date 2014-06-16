@@ -456,6 +456,10 @@ public:
 					data_size.data16 += acts[i]->descriptorSize();
 				}
 
+				PRINT("DEVICE [");
+				PRINT((int) data_size.data16);
+				PRINT("] ");
+
 			break;
 			
 			case FUNC_DATA_REQUEST:

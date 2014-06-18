@@ -149,7 +149,8 @@
 #endif
 
 #ifndef ERROR(__str) // error msg
-#define ERROR(__str) if(DEBUG_FLAG) {PRINT(F("[ERROR]: << ")); PRINT(F(__str)); PRINT(F(" >> "));} 
+#define ERROR(__str) sendError(__str);
+// #define ERROR(__str) if(DEBUG_FLAG) {PRINT(F("[ERROR]: << ")); PRINT(F(__str)); PRINT(F(" >> "));} 
 #endif
 
 #ifndef WARN(__str) // warning msg
@@ -426,6 +427,27 @@ void initializeDevice(){
 	Serial.begin(BAUD_RATE);
 	pinMode(USER_LED, OUTPUT);
 	pinMode(WRITE_READ_PIN, OUTPUT);
+}
+
+void sendError(Str err){
+
+	u_Word dt_sz(3 + err.length);
+
+	PRINT('\xAA');
+	send('\x00');
+	send('\x80');
+	send('\xFF');
+	send(dt_sz.data8[0]);
+	send(dt_sz.data8[1]);
+	send('\x01');
+	send('\x01');
+	send(err.length);
+	send(err.msg, err.length);
+	send(('\xaa' + '\x80' + '\xFF' + dt_sz.data8[0] + dt_sz.data8[1] + '\x01' + '\x01' + err.length + checkSum(err.msg, err.length))%256);
+
+	SFLUSH();
+
+
 }
 
 #endif

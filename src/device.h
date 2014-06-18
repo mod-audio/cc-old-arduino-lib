@@ -410,10 +410,11 @@ public:
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting data request.");
 					}
-					
-					static unsigned char data_counter = 0;
+					else{
+						static unsigned char data_counter = 0;
 
-					sendMessage(FUNC_DATA_REQUEST);
+						sendMessage(FUNC_DATA_REQUEST);
+					}
 					
 				break;
 				
@@ -583,6 +584,21 @@ public:
 			break;
 			
 			case FUNC_ERROR:
+				checksum += (unsigned char) 1;
+				send(1); // error within function
+
+				checksum += (unsigned char) 1;
+				send(1); // error code
+
+				checksum += (unsigned char) error_msg.length;
+				send(error_msg.length); // error message size
+
+				checksum += (unsigned char) error_msg.length;
+				send(error_msg.length); // error message size
+
+				checksum += checkSum(error_msg.msg, error_msg.length);
+				send(error_msg.msg, error_msg.length);
+
 			break;
 
 		}

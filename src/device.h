@@ -8,6 +8,7 @@ extern STimer timerA;
 extern STimer timerSERIAL;
 extern STimer timerLED;
 
+char g_device_id;
 
 class Device{
 
@@ -64,7 +65,9 @@ public:
 
 	void refreshValues(){
 		for (int i = 0; i < actuators_counter; ++i){
-			acts[i]->calculateValue();
+			if(acts[i]->slots_counter){
+				acts[i]->calculateValue();
+			}
 		}
 	}
 
@@ -224,11 +227,6 @@ public:
 
 		summ = checkSum(msg->msg, len-1);
 
-		// PRINT("  ::  ");
-		// send(len);
-		// PRINT("  ::  ");
-		// send(msg->msg, len); // VOLTAR
-		// PRINT("  ::  ");
 
 		if( msg->msg[len-1] != summ ) {
 			ERROR("Checksum changed:");
@@ -249,18 +247,11 @@ public:
 
 				Str url( &msg->msg[POS_DATA_SIZE2+2] , msg->msg[POS_DATA_SIZE2+1] );
 
-				// PRINT("||||");
-				// for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
-				// 	PRINT(url.msg[xx]);
-				// PRINT("||||");
-				// for(int xx = 0; xx < msg->msg[POS_DATA_SIZE2+1]; xx++)
-				// 	PRINT(this->url_id.msg[xx]);
-				// PRINT("||||");
-
 				if( (url == this->url_id) && (msg->msg[msg->length-4] == this->channel) ){
 					this->id = msg->msg[POS_DEST];
 					this->state = WAITING_DESCRIPTOR_REQUEST;
-					// PRINT("AE CARAIO");
+
+					g_device_id = this->id;
 					return;
 				}
 				else{
@@ -285,6 +276,8 @@ public:
 					else{
 						sendMessage(FUNC_DEVICE_DESCRIPTOR);
 						this->state = WAITING_CONTROL_ADDRESSING;
+
+						digitalWrite(USER_LED,LOW);//VOLTAR
 					}
 				break;
 				
@@ -293,6 +286,8 @@ public:
 						ERROR("Not waiting control addressing.");
 					}
 					else{
+
+						digitalWrite(USER_LED,HIGH);//VOLTAR
 
 						Actuator* act;
 
@@ -366,19 +361,13 @@ public:
 
 											ScalePoint* sp;
 
-											// PRINT(" COUNTER: ");
-											// send(msg->msg[s_p_count_pos]);											
-											// PRINT(" ");
-
 											for (int i = 0; i < addr->scale_points_total_count; ++i){
 												
 												s_p_label_size_pos = s_p_value_pos+4;
 												s_p_label_size = msg->msg[s_p_label_size_pos];
 												s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
 
-												// PRINT(" SP: ");
 												send(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size);											
-												// PRINT(" ");
 
 												sp = new ScalePoint(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size,
 																	msg->msg[s_p_value_pos], msg->msg[s_p_value_pos+1],
@@ -394,8 +383,6 @@ public:
 
 								act->address(param_id, addr);
 
-								// addr->sendDescriptor();
-
 								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
 								this->state = WAITING_DATA_REQUEST;
 
@@ -409,23 +396,36 @@ public:
 
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting data request.");
+						return;
 					}
 					else{
-						static unsigned char data_counter = 0;
+						unsigned char data_request_seq = msg->msg[POS_DATA_SIZE2 + 1];
+						static unsigned char old_data_request_seq = data_request_seq - 1;
 
-						sendMessage(FUNC_DATA_REQUEST);
+						if(data_request_seq != (old_data_request_seq + 1)%256){
+
+							backUpMessage(0,BACKUP_SEND);
+							old_data_request_seq = data_request_seq;
+						}
+						else{
+
+							backUpMessage(0,BACKUP_RESET);
+							sendMessage(FUNC_DATA_REQUEST);
+							old_data_request_seq = data_request_seq;
+						}
+
 					}
 					
 				break;
 				
 				case FUNC_CONTROL_UNADDRESSING:
-					//TODO
-					// if(!this->actuators_counter){
-					// 	ERROR("Nothing addressed.");
-					// }
-					// else{}
-
-					
+					if(this->state != WAITING_DATA_REQUEST){
+						ERROR("No control assigned.")
+						return;
+					}
+					else{
+						if
+					}
 				break;
 				
 				case FUNC_ERROR:
@@ -561,11 +561,19 @@ public:
 			
 			case FUNC_DATA_REQUEST:
 
+				backUpMessage(BYTE_SYNC, BACKUP_RECORD);
+				backUpMessage(HOST_ADDRESS, BACKUP_RECORD);
+				backUpMessage(this->id, BACKUP_RECORD);
+				backUpMessage(function, BACKUP_RECORD);
+				backUpMessage(data_size.data8[0], BACKUP_RECORD);
+				backUpMessage(data_size.data8[1], BACKUP_RECORD);
 
 				checksum += (unsigned char) changed_actuators;
 				send(changed_actuators);
 
-				for (int i = 0; i < changed_actuators; ++i){
+				backUpMessage(changed_actuators, BACKUP_RECORD);
+
+				for (int i = 0; i < actuators_counter; ++i){
 					if(acts[i]->changed){
 
 						this->acts[i]->getUpdates(this->updates);
@@ -576,6 +584,8 @@ public:
 
 				checksum += (unsigned char) 0; // TODO addr request <<<< IMPORTANTE : DISCUTIR A IMPLEMENTAÇÃO DISSO >>>>
 				send(0);
+
+				backUpMessage(0, BACKUP_RECORD);
 
 			break;
 			
@@ -605,6 +615,10 @@ public:
 
 		send(checksum);
 
+		if(function == FUNC_DATA_REQUEST){
+			backUpMessage(checksum, BACKUP_RECORD);
+		}
+
 		SFLUSH();
 
 		digitalWrite(WRITE_READ_PIN, READ_ENABLE);
@@ -617,6 +631,7 @@ public:
 
 	void connectDevice(){
 		static bool ledpos = 0;
+		static bool ledpose = 0;
 		// pinMode(13, OUTPUT);
 		bool timer_flag = false;
 
@@ -653,8 +668,10 @@ public:
 			}
 		}
 		else {
+			if(!ledpose)
 			digitalWrite(USER_LED,HIGH);
 			timerLED.stop();
+			ledpose = 1;
 		}
 	}
 

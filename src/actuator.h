@@ -149,6 +149,12 @@ public:
 		*checksum += (unsigned char) this->updates->value.c[3];
 		send(this->updates->value.c[3]);
 
+		backUpMessage(this->updates->addressing_id, BACKUP_RECORD);
+		backUpMessage(this->updates->value.c[0], BACKUP_RECORD);
+		backUpMessage(this->updates->value.c[1], BACKUP_RECORD);
+		backUpMessage(this->updates->value.c[2], BACKUP_RECORD);
+		backUpMessage(this->updates->value.c[3], BACKUP_RECORD);
+
 		// PRINT(" Value[");
 		// PRINT(this->updates->value.f);
 		// PRINT("] ");
@@ -248,14 +254,18 @@ public:
 		static float old_value = 0;
 		float value = getValue();
 
-		if(fabs(old_value - value) < VALUE_CHANGE_TOLERANCE){
+		if(slots_counter){
+			if(fabs(old_value - value) < VALUE_CHANGE_TOLERANCE){
+				return false;
+			}
+			else{
+				old_value = value;
+				this->changed = true;
+				return true;
+			}
+		}
+		else
 			return false;
-		}
-		else{
-			old_value = value;
-			this->changed = true;
-			return true;
-		}
 	}
 
 

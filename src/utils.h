@@ -6,6 +6,8 @@
 #include <Arduino.h>
 #include <TimerOne.h>
 
+extern char g_device_id;
+
 /*
 ************************************************************************************************************************
 *           Actuator Types
@@ -171,6 +173,7 @@ enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ADDRESSING, WAI
 enum{DESTINATION = 1, ORIGIN}; // device addressing 
 enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS}; // visual output level
 
+enum{BACKUP_RECORD, BACKUP_RESET, BACKUP_SEND}; // Backup Message actions
 
 
 /*
@@ -387,6 +390,26 @@ void send(char* msg, int length){ //same thing for strings
 	}
 }
 
+void backUpMessage(char byte, int action){
+	static char backup[MAX_DATA_SIZE];
+	static int i = 0;
+
+	switch(action){
+		case BACKUP_RECORD:
+			backup[i] = byte;
+			i++;
+		break;
+
+		case BACKUP_RESET:
+			i = 0;
+		break;
+
+		case BACKUP_SEND:
+			send(&backup[0], i);
+		break;
+	}
+}
+
 unsigned char checkSum(char* msg, int length){
 	unsigned char checksum = 0;
 
@@ -435,7 +458,7 @@ void sendError(Str err){
 
 	PRINT('\xAA');
 	send('\x00');
-	send('\x80');
+	send(g_device_id);
 	send('\xFF');
 	send(dt_sz.data8[0]);
 	send(dt_sz.data8[1]);
@@ -443,7 +466,7 @@ void sendError(Str err){
 	send('\x01');
 	send(err.length);
 	send(err.msg, err.length);
-	send(('\xaa' + '\x80' + '\xFF' + dt_sz.data8[0] + dt_sz.data8[1] + '\x01' + '\x01' + err.length + checkSum(err.msg, err.length))%256);
+	send(('\xaa' + g_device_id + '\xFF' + dt_sz.data8[0] + dt_sz.data8[1] + '\x01' + '\x01' + err.length + checkSum(err.msg, err.length))%256);
 
 	SFLUSH();
 

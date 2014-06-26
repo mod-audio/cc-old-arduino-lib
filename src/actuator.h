@@ -25,19 +25,21 @@ public:
 	Value		default_value;
 	Word		steps;
 
+	char 		id;
+
 
 	ScalePoint**	scale_points;
 	char			scale_points_counter=0;
 	char			scale_points_total_count=0;
 
-	Addressing(char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
-	label("",0), unit("",0), mode(mode1, mode2),port_properties(port_properties),value(value),minimum(minimum),maximum(maximum),default_value(default_value),steps(step1,step2){}
+	Addressing(char id, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
+	id(id), label("",0), unit("",0), mode(mode1, mode2),port_properties(port_properties),value(value),minimum(minimum),maximum(maximum),default_value(default_value),steps(step1,step2){}
 
-	Addressing(char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
-	label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(0){}
+	Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
+	id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(0){}
 
-	Addressing(char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value1, Value minimum, Value maximum, Value default_value, char step1, char step2, char scale_points_total_count):
-	label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value1), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(scale_points_total_count){
+	Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value1, Value minimum, Value maximum, Value default_value, char step1, char step2, char scale_points_total_count):
+	id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value1), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(scale_points_total_count){
 		
 
 		if(scale_points_total_count){

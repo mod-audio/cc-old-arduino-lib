@@ -319,39 +319,45 @@ public:
 								switch(act->visual_output_level){
 									case VISUAL_NONE:
 
-										addr = new Addressing(msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
+										addr = new Addressing(msg->msg[CTRLADDR_ADDR_ID],
+															msg->msg[CTRLADDR_CHOSEN_MASK1],
+															msg->msg[CTRLADDR_CHOSEN_MASK2],
 															msg->msg[CTRLADDR_PORT_MASK],
-															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
-															{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
-															{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
-															{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
-															msg->msg[value_pos+16],msg->msg[value_pos+17]);
+															{msg->msg[value_pos], msg->msg[value_pos+1], msg->msg[value_pos+2], msg->msg[value_pos+3]}, 
+															{msg->msg[value_pos+4], msg->msg[value_pos+5], msg->msg[value_pos+6], msg->msg[value_pos+7]},
+															{msg->msg[value_pos+8], msg->msg[value_pos+9], msg->msg[value_pos+10], msg->msg[value_pos+11]}, 
+															{msg->msg[value_pos+12], msg->msg[value_pos+13], msg->msg[value_pos+14], msg->msg[value_pos+15]},
+															msg->msg[value_pos+16], msg->msg[value_pos+17]);
 									break;
 
 									case VISUAL_SHOW_LABEL:
 										
-										addr = new Addressing(&(msg->msg[CTRLADDR_LABEL]), msg->msg[CTRLADDR_LABEL_SIZE],
+										addr = new Addressing(msg->msg[CTRLADDR_ADDR_ID],
+															&(msg->msg[CTRLADDR_LABEL]),
+															msg->msg[CTRLADDR_LABEL_SIZE],
 							 								&(msg->msg[value_pos+19]), msg->msg[value_pos+18],
-															msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
+															msg->msg[CTRLADDR_CHOSEN_MASK1], msg->msg[CTRLADDR_CHOSEN_MASK2],
 															msg->msg[CTRLADDR_PORT_MASK],
-															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
-															{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
-															{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
-															{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
-															msg->msg[value_pos+16],msg->msg[value_pos+17]);
+															{msg->msg[value_pos], msg->msg[value_pos+1], msg->msg[value_pos+2], msg->msg[value_pos+3]}, 
+															{msg->msg[value_pos+4], msg->msg[value_pos+5], msg->msg[value_pos+6], msg->msg[value_pos+7]},
+															{msg->msg[value_pos+8], msg->msg[value_pos+9], msg->msg[value_pos+10], msg->msg[value_pos+11]}, 
+															{msg->msg[value_pos+12], msg->msg[value_pos+13], msg->msg[value_pos+14], msg->msg[value_pos+15]},
+															msg->msg[value_pos+16], msg->msg[value_pos+17]);
 									break;
 
 									case VISUAL_SHOW_SCALEPOINTS:
 
-										addr = new Addressing(&(msg->msg[CTRLADDR_LABEL]), msg->msg[CTRLADDR_LABEL_SIZE],
+										addr = new Addressing(msg->msg[CTRLADDR_ADDR_ID],
+															&(msg->msg[CTRLADDR_LABEL]),
+															msg->msg[CTRLADDR_LABEL_SIZE],
 							 								&(msg->msg[value_pos+19]), msg->msg[value_pos+18],
-															msg->msg[CTRLADDR_CHOSEN_MASK1],msg->msg[CTRLADDR_CHOSEN_MASK2],
+															msg->msg[CTRLADDR_CHOSEN_MASK1], msg->msg[CTRLADDR_CHOSEN_MASK2],
 															msg->msg[CTRLADDR_PORT_MASK],
-															{msg->msg[value_pos],msg->msg[value_pos+1],msg->msg[value_pos+2],msg->msg[value_pos+3]}, 
-															{msg->msg[value_pos+4],msg->msg[value_pos+5],msg->msg[value_pos+6],msg->msg[value_pos+7]},
-															{msg->msg[value_pos+8],msg->msg[value_pos+9],msg->msg[value_pos+10],msg->msg[value_pos+11]}, 
-															{msg->msg[value_pos+12],msg->msg[value_pos+13],msg->msg[value_pos+14],msg->msg[value_pos+15]},
-															msg->msg[value_pos+16],msg->msg[value_pos+17],msg->msg[s_p_count_pos]);
+															{msg->msg[value_pos], msg->msg[value_pos+1], msg->msg[value_pos+2], msg->msg[value_pos+3]}, 
+															{msg->msg[value_pos+4], msg->msg[value_pos+5], msg->msg[value_pos+6], msg->msg[value_pos+7]},
+															{msg->msg[value_pos+8], msg->msg[value_pos+9], msg->msg[value_pos+10], msg->msg[value_pos+11]}, 
+															{msg->msg[value_pos+12], msg->msg[value_pos+13], msg->msg[value_pos+14], msg->msg[value_pos+15]},
+															msg->msg[value_pos+16], msg->msg[value_pos+17], msg->msg[s_p_count_pos]);
 
 										if(msg->msg[s_p_count_pos]){
 											
@@ -423,9 +429,9 @@ public:
 						ERROR("No control assigned.")
 						return;
 					}
-					else{
-						if
-					}
+					// else{
+					// 	if()
+					// }
 				break;
 				
 				case FUNC_ERROR:

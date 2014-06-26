@@ -59,9 +59,14 @@ public:
  			ERROR("No parameters addressed.");
  		}
  		else{
- 			slots_counter--;
+ 			if(addressing_id == this->addressing_id){
+	 			slots_counter--;
+	 			delete this->addressing;
+ 			}
+ 			else{
+	 			ERROR("No parameters addressed.");
+ 			}
 
- 			delete this->addressing;
  		}
  	}
 

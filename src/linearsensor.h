@@ -11,7 +11,7 @@ public:
 	char 			addressing_id;
 	Addressing* 	addressing;
 
-	LinearSensor(char* name, char id): Actuator(name, id, 1, 1 /*mode counter*/, 3, VISUAL_NONE){
+	LinearSensor(char* name, char id): Actuator(name, id, 1 /*slots*/, 1 /*mode counter*/, 3, VISUAL_NONE){
 		Mode *mode = supports("linear");
 		// mode->expects(PROPERTY_INTEGER, true);
 		// mode->expects(PROPERTY_LOGARITHM, false);
@@ -28,28 +28,6 @@ public:
 				
 	}
 	~LinearSensor(){}
-
- 	void address(char addressing_id, Addressing* data) {
- 		if(slots_counter >= slots_total_count){
- 			ERROR("Maximum parameters addressed already.");
- 		}
- 		else{
-	 		slots_counter++;
-	 		this->addressing_id = addressing_id;
-	 		this->addressing = data;
- 		}
- 	}
- 	void unaddress(char addressing_id) {
- 		if(!slots_counter){
- 			ERROR("No parameters addressed.");
- 		}
- 		else{
- 			slots_counter--;
-
- 			delete this->addressing;
- 		}
-
- 	}
 
  	void calculateValue(){
 		int sensor = this->getValue();

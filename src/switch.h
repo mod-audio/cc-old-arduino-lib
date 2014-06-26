@@ -12,9 +12,7 @@ class Button: public Actuator{ // A switch witch does not save state, it can emu
 public:
 	int 			minimum = 0;
 	int 			maximum = 1;
-	bool			default_state;
-	char 			addressing_id;
-	Addressing* 	addressing;
+	bool			default_state; // which value the button holds when is not pressed.
 
 
 
@@ -44,32 +42,6 @@ public:
 
 	}
 
-	void address(char addressing_id, Addressing* data) {
- 		if(slots_counter >= slots_total_count){
- 			ERROR("Maximum parameters addressed already.");
- 		}
- 		else{
-	 		slots_counter++;
-	 		this->addressing_id = addressing_id;
-	 		this->addressing = data;
- 		}
- 	}
- 	void unaddress(char addressing_id) {
- 		if(!slots_counter){
- 			ERROR("No parameters addressed.");
- 		}
- 		else{
- 			if(addressing_id == this->addressing_id){
-	 			slots_counter--;
-	 			delete this->addressing;
- 			}
- 			else{
-	 			ERROR("No parameters addressed.");
- 			}
-
- 		}
- 	}
-
  	void calculateValue(){
 
  		static bool trigger = false;
@@ -80,10 +52,10 @@ public:
 		
 		float scaleMin, scaleMax;
 
-		scaleMin = this->addressing->minimum.f;
-	    scaleMax = this->addressing->maximum.f;
+		scaleMin = this->addrs[0]->minimum.f;
+	    scaleMax = this->addrs[0]->maximum.f;
 	    
-	    if ((this->addressing->port_properties & modes[0]->relevant_properties) == modes[0]->property_values) { // toggle
+	    if ((this->addrs[0]->port_properties & modes[0]->relevant_properties) == modes[0]->property_values) { // toggle
 	    	switch(toggle_state){
 	    		case TOGGLE_DOWN:
 	    			if(!(sensor && default_state)){
@@ -140,7 +112,7 @@ public:
  	}
 
 	void getUpdates(Update* update){
-		update->updates->setup(this->addressing_id, this->value);
+		update->updates->setup(this->addrs[0]->id, this->value);
 	}
 
 	virtual float getValue()=0;

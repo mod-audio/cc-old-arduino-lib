@@ -387,7 +387,7 @@ public:
 									break;
 								}
 
-								act->address(param_id, addr);
+								act->address(addr);
 
 								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
 								this->state = WAITING_DATA_REQUEST;

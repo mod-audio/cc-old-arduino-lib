@@ -183,9 +183,12 @@ public:
 
 	float 				value;
 
+	Addressing**		addrs;
+
 	Actuator(char* name, char id, char slots_total_count, char modes_total_count, char steps_total_count, char visual_output_level):
 	name(name), id(id), slots_total_count(slots_total_count), modes_total_count(modes_total_count), 
 	steps_total_count(steps_total_count), slots_counter(0), modes_counter(0), steps_counter(0), visual_output_level(visual_output_level){
+		this->addrs = new Addressing*[slots_total_count];
 		this->modes = new Mode*[modes_total_count];
 		this->steps = new uint16_t[steps_total_count];
 	}
@@ -197,15 +200,37 @@ public:
 
 	virtual void getUpdates(Update* update)=0;
 
-	virtual void address(char addressing_id, Addressing* addressing)=0;
-
-	virtual void unaddress(char addressing_id)=0;
-
 	virtual void calculateValue()=0;
 
 	virtual float getValue()=0;
 
 	virtual void postMessageChanges()=0;
+
+	void address(Addressing* addressing){
+ 		if(slots_counter >= slots_total_count){
+ 			ERROR("Maximum parameters addressed already.");
+ 		}
+ 		else{
+	 		this->addrs[slots_counter] = addressing;
+	 		slots_counter++;
+ 		}
+	}
+
+	void unaddress(char addressing_id){
+		if(!slots_counter){
+ 			ERROR("No parameters addressed.");
+		}
+		else{
+			Addressing* ptr;
+			if(ptr = IdToPointer<Addressing>(addressing_id, slots_counter, addrs)){
+				delete ptr;
+				slots_counter--;
+			}
+			else{
+	 			ERROR("Parameter id not found.");
+			}
+		}
+	}
 
 	Mode*	supports(char* label){
 		if(modes_counter >= modes_total_count){

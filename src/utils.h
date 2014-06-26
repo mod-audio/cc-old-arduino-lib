@@ -420,14 +420,14 @@ unsigned char checkSum(char* msg, int length){
 	return checksum;
 }
 
-template<typename T> int IdToIndex(int id, int counter_limit, T** container){
+template<typename T> T* IdToPointer(int id, int counter_limit, T** container){
 	for (int i = 0; i < counter_limit; ++i)
 	{
 		if(container[i]->id == id){
-			return i;
+			return container[i];
 		}
 		else
-			-1;
+			return NULL;
 	}
 }
 

@@ -374,7 +374,7 @@ void send(char byte){ // this function sends bytes via swrite
 		SWRITE(BYTE_ESCAPE);
 		SWRITE(~BYTE_SYNC);
 	}
-	if(byte == BYTE_ESCAPE){
+	else if(byte == BYTE_ESCAPE){
 		SWRITE(BYTE_ESCAPE);
 		SWRITE(BYTE_ESCAPE);
 	}

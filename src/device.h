@@ -115,11 +115,11 @@ public:
 			// PRINT(read_buffer[read_counter]);
 			// PRINT(" ");
 
-			if(read_buffer[read_counter] == '\xaa' && read_counter == 1){ // VOLTAR
-				PRINT(" RAM: ");
-				PRINT(freeRam());
-				PRINT(" ");
-			}
+			// if(read_buffer[read_counter] == '\xaa' && read_counter == 1){ // VOLTAR
+			// 	PRINT(" RAM: ");
+			// 	PRINT(freeRam());
+			// 	PRINT(" ");
+			// }
 
 			if(read_buffer[read_counter] == BYTE_SYNC){
 				read_counter = POS_SYNC;

@@ -4,12 +4,6 @@
 #include "linearsensor.h"
 #include "switch.h"
 
-// #ifdef __arm__
-// // #include <DueTimer.h>
-// #else
-#include <TimerOne.h>
-// #endif
-
 #define POT_MAX 1014
 #define POT_MIN 8
 #define POT_PIN A4
@@ -20,7 +14,7 @@ public:
 	int max = POT_MAX;
 	int min = POT_MIN;
 
-	Mypot(char* name, char id):LinearSensor(name, id){}
+	Mypot(char* name, uint8_t id):LinearSensor(name, id){}
  
 	float getValue( ){
 		return analogRead(POT_PIN);
@@ -33,7 +27,7 @@ public:
 	int max = 1;
 	int min = 0;
 
-	Myswitch(char* name, char id):Button(name, id, true){
+	Myswitch(char* name, uint8_t id):Button(name, id, true){
 		pinMode(SWITCH_PIN, INPUT);
 	}
  
@@ -43,7 +37,7 @@ public:
 
 };
 
-Device* dev;
+// Device* dev;
 
 Actuator* pot;
 
@@ -51,24 +45,24 @@ Actuator* swit;
 
 
 void setup() {
-	dev = new Device("http://portalmod.com/devices/XP", "Pedal_Expressao", 2/*actuators count*/, 1);
+	device = new Device("http://portalmod.com/devices/XP", "Pedal_Expressao", 2/*actuators count*/, 1);
 	pot = new Mypot("potenciometro", 1);
 	swit = new Myswitch("switch", 2);
 
-	dev->addActuator(pot);
-	dev->addActuator(swit);
-
-	// initializeDevice();
+	device->addActuator(pot);
+	device->addActuator(swit);
 
 }
 
 void loop() {
-	dev->connectDevice();
+	if((int) swit->getValue() == 0){
+		PRINT("FREE RAM: [");
+		PRINT(freeRam());
+		PRINT("] ");
+	}
 
-	dev->refreshValues();
+	device->connectDevice();
+
+	device->refreshValues();
 
 }
-
-void serialEvent(){
-	dev->serialRead();
-}	

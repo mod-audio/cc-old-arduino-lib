@@ -16,7 +16,7 @@ public:
 
 
 
-	Button(char* name, char id, bool default_state): Actuator(name, id, 1, 2, 1, VISUAL_NONE), default_state(default_state){
+	Button(char* name, uint8_t id, bool default_state): Actuator(name, id, 1, 2, 1, VISUAL_NONE), default_state(default_state){
 
 		Mode *mode = supports("toggle"); // saves state
 		// mode->expects(PROPERTY_INTEGER, false);
@@ -45,8 +45,8 @@ public:
  	void calculateValue(){
 
  		static bool trigger = false;
- 		static char toggle_state = false;
- 		static char last_toggle_state = false;
+ 		static uint8_t toggle_state = false;
+ 		static uint8_t last_toggle_state = false;
 
 		bool sensor = (bool) this->getValue();
 		

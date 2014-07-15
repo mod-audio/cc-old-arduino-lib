@@ -3,31 +3,32 @@
 
 #include "actuator.h"
 #include "utils.h"
+#include "comm.h"
 
 extern STimer timerA;
 extern STimer timerSERIAL;
 extern STimer timerLED;
 
-char g_device_id;
+uint8_t g_device_id;
+
+void recv_cb(chain_t* chain);
 
 class Device{
 
 public:
 	Str label; 					// friendly name
 	Str url_id; 				// device URL
-	char id;					// address given by the host
-	char channel; 				// differentiate 2 identical devices
-	char actuators_total_count;	// quantity of actuators in the device
-	char actuators_counter=0;		// quantity of actuators in the device
-	char state;					// state in which the device is, protocol-wise
+	uint8_t id;					// address given by the host
+	uint8_t channel; 				// differentiate 2 identical devices
+	uint8_t actuators_total_count;	// quantity of actuators in the device
+	uint8_t actuators_counter=0;		// quantity of actuators in the device
+	uint8_t state;					// state in which the device is, protocol-wise
 
 	Actuator**	acts;			// vector which holds all actuators pointers
 
-	char read_buffer[MAX_DATA_SIZE];
-
 	Update* updates; // TODO resolver essa questão
 
-	Device(char* url_id, char* label, char actuators_total_count, char channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
+	Device(char* url_id, char* label, uint8_t actuators_total_count, uint8_t channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
 		this->acts = new Actuator*[actuators_total_count];
 		this->updates = new Update();
 
@@ -48,6 +49,8 @@ public:
 		SBEGIN(BAUD_RATE);
 		pinMode(USER_LED, OUTPUT);
 		pinMode(WRITE_READ_PIN, OUTPUT);
+
+		comm_setup(recv_cb);
 	}
 
 	~Device(){
@@ -95,180 +98,19 @@ public:
 ************************************************************************************************************************
 */
 
-	void serialRead(){
+	void parse(chain_t* chain){ // in_msg is what the device receives from host, encrypted
 
-
-		static char inputChar;
-		static bool msg_received = false;
-		static Word msg_data_size;
-		static Word msg_total_size(MAX_DATA_SIZE);
-
-		static uint16_t read_counter = 0;	// Index of serial input buffer
-
-		static bool bff = false; // indicates if a special character is waiting for translation
-
-	 	int last_input;
-
-		if(timerSERIAL.check()){
-			read_counter = 0;
-			msg_total_size.data16 = MAX_DATA_SIZE;
-			timerSERIAL.reset();
-		}
-		
-		if(SBYTESAVAILABLE() == 0) return;
-
-		// digitalWrite(13, HIGH);
-
-		while( (SBYTESAVAILABLE() && read_counter < msg_total_size.data16) || bff){
-			
-			read_buffer[read_counter] = SREAD();
-
-			if(read_counter%10)
-				delayMicroseconds(8); // TODO: Verificar se este delay é realmente necessário, sem ele o arduino não responde as vezes na mensagem do control chain
-
-			// PRINT("[");
-			// PRINT(read_counter);
-			// PRINT("]");
-			// PRINT(":");
-			// PRINT(read_buffer[read_counter]);
-			// PRINT(" ");
-
-			// if(read_buffer[read_counter] == '\xaa' && read_counter == 1){ // VOLTAR
-			// 	PRINT(" RAM: ");
-			// 	PRINT(freeRam());
-			// 	PRINT(" ");
-			// }
-
-			if(read_buffer[read_counter] == BYTE_SYNC){
-				read_counter = POS_SYNC;
-			}
-
-			if(read_counter == POS_SYNC){
-				if (read_buffer[POS_SYNC] != BYTE_SYNC){
-					return;
-				}
-				else{
-					if(SBYTESAVAILABLE()){
-						read_counter++;
-						read_buffer[read_counter] = SREAD();
-					}
-					else{
-						return;
-					}
-				}
-			}
-			
-			if((read_buffer[read_counter] == BYTE_ESCAPE && read_counter != POS_SYNC) || bff){
-
-
-				if(SBYTESAVAILABLE()){
-
-					if(!bff){
-						inputChar = SREAD();
-					}
-
-					switch(inputChar){
-						case BYTE_ESCAPE:
-						break;
-
-						case ~BYTE_SYNC:
-						read_buffer[read_counter] = BYTE_SYNC ;
-						break;
-
-						default:
-						ERROR("Invalid special character.");
-						DPRINT(inputChar);
-						DPRINT("  ");
-						break;
-
-					}
-					bff = false;
-				}
-				else{
-					bff = true;
-					return;
-				}
-			}
-
-			if(read_counter == POS_DEST){
-
-				if((this->state != CONNECTING) && (read_buffer[POS_DEST] != this->id)){
-					return;
-				}
-
-			}
-			else if(read_counter == POS_DATA_SIZE2){
-
-				msg_data_size.data8[0] = (int) read_buffer[POS_DATA_SIZE1];
-				msg_data_size.data8[1] = (int) read_buffer[POS_DATA_SIZE2];
-
-				msg_total_size.data16 = (int) msg_data_size.data16 + HEADER_SIZE; // data size + header + checksum
-
-				if((int) msg_total_size.data16 > MAX_DATA_SIZE){
-					ERROR(("Message size bigger than max data size."));
-
-					msg_data_size.data16 = 0;
-					read_counter = POS_SYNC;
-					
-					return;
-				}
-
-			}
-			else if(read_counter >= msg_total_size.data16-1){
-
-				// PRINT("  msg total size: ");
-				// PRINT(msg_total_size.data16);
-
-				Str mano(read_buffer, msg_total_size.data16);
-
-				parse(&mano);
-
-				read_counter = POS_SYNC;
-				msg_data_size.data16 = 0;
-				msg_total_size.data16 = MAX_DATA_SIZE;
-
-				return;
-
-			}
-
-			read_counter++;
-		}
-
-	}
-
-
-	void parse(Str* msg){ // in_msg is what the device receives from host, encrypted
-
-		char summ = 0;
-
-		int len = msg->length;
-
-		summ = checkSum(msg->msg, len-1);
-
-
-		if( msg->msg[len-1] != summ ) {
-			ERROR("Checksum changed:");
-
-			DPRINT("In msg: (");
-			DPRINT(msg->msg[len-1]);
-			DPRINT(") ");
-			
-			DPRINT("Calculated: (");
-			DPRINT(summ);
-			DPRINT(") ");
-
-			return;
-		}
+		uint8_t* ptr = &chain->sync;
 
 		if(this->state == CONNECTING){ // connection response, checks URL and channel to associate address to device id.
-			if(msg->msg[POS_FUNC] == FUNC_CONNECTION){
+			if(chain->function == FUNC_CONNECTION){
 
-				Str url( &msg->msg[POS_DATA_SIZE2+2] , msg->msg[POS_DATA_SIZE2+1] );
+				Str url( (char*) &ptr[POS_DATA_SIZE2+2] , ptr[POS_DATA_SIZE2+1] );
 
-				if( (url == this->url_id) && (msg->msg[msg->length-4] == this->channel) ){
-					this->id = msg->msg[POS_DEST];
+				if( (url == this->url_id) && (ptr[chain->data_size+3] == this->channel) ){
+					this->id = ptr[POS_DEST];
 					this->state = WAITING_DESCRIPTOR_REQUEST;
-
+					comm_set_address(this->id);
 					g_device_id = this->id;
 					return;
 				}
@@ -281,7 +123,7 @@ public:
 				return;
 		}
 		else{
-			switch(msg->msg[POS_FUNC]){
+			switch(chain->function){
 				
 				case FUNC_CONNECTION:
 					ERROR("Device already connected.");
@@ -309,13 +151,13 @@ public:
 
 						Actuator* act;
 
-						if(!(act = searchActuator(msg->msg[CTRLADDR_ACT_ID]))){
+						if(!(act = searchActuator(ptr[CTRLADDR_ACT_ID]))){
 							ERROR("Actuator does not exist.");
 							return;
 						}
 						else{
 
-							if(!((msg->msg[CTRLADDR_CHOSEN_MASK1] & msg->msg[CTRLADDR_PORT_MASK]) == msg->msg[CTRLADDR_CHOSEN_MASK2])){
+							if(!((ptr[CTRLADDR_CHOSEN_MASK1] & ptr[CTRLADDR_PORT_MASK]) == ptr[CTRLADDR_CHOSEN_MASK2])){
 								ERROR("Mode not supported in this actuator.");
 								sendMessage(FUNC_CONTROL_ADDRESSING, -1);
 								return;
@@ -326,19 +168,19 @@ public:
 							}
 							else{
 
-								unsigned char param_id = msg->msg[CTRLADDR_ADDR_ID];
+								uint8_t param_id = ptr[CTRLADDR_ADDR_ID];
 
-								unsigned char label_size = msg->msg[CTRLADDR_LABEL_SIZE];
-								unsigned char value_pos = CTRLADDR_LABEL + label_size;
-								unsigned char s_p_count_pos = value_pos + 19 + msg->msg[value_pos+18];
+								uint8_t label_size = ptr[CTRLADDR_LABEL_SIZE];
+								uint8_t value_pos = CTRLADDR_LABEL + label_size;
+								uint8_t s_p_count_pos = value_pos + 19 + ptr[value_pos+18];
 
 								Addressing* addr;
 
-								addr = new Addressing(act->visual_output_level, &(msg->msg[CTRLADDR_ACT_ID+1]));
+								addr = new Addressing(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
 
 								act->address(addr);
 
-								addr->sendDescriptor();//VOLTAR
+								// addr->sendDescriptor();//VOLTAR
 
 								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
 								this->state = WAITING_DATA_REQUEST;
@@ -356,8 +198,8 @@ public:
 						return;
 					}
 					else{
-						unsigned char data_request_seq = msg->msg[POS_DATA_SIZE2 + 1];
-						static unsigned char old_data_request_seq = data_request_seq - 1;
+						uint8_t data_request_seq = ptr[POS_DATA_SIZE2 + 1];
+						static uint8_t old_data_request_seq = data_request_seq - 1;
 
 						if(data_request_seq != (old_data_request_seq + 1)%256){
 
@@ -392,10 +234,10 @@ public:
 		}
 	}
 
-	void sendMessage(char function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
+	void sendMessage(uint8_t function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
 
 		int changed_actuators = 0;
-		unsigned char checksum = 0;
+		uint8_t checksum = 0;
 		Word data_size;
 
 		digitalWrite(WRITE_READ_PIN, WRITE_ENABLE);
@@ -473,7 +315,7 @@ public:
 		switch(function){
 			case FUNC_CONNECTION:
 
-				checksum += (unsigned char) this->url_id.length;
+				checksum += (uint8_t) this->url_id.length;
 				send(this->url_id.length);
 
 				checksum += checkSum(this->url_id.msg, this->url_id.length);
@@ -492,13 +334,13 @@ public:
 			
 			case FUNC_DEVICE_DESCRIPTOR:
 
-				checksum += (unsigned char) this->label.length;
+				checksum += (uint8_t) this->label.length;
 				send(this->label.length);
 
 				checksum += checkSum(this->label.msg, this->label.length);
 				send(this->label.msg, this->label.length);
 
-				checksum += (unsigned char) this->actuators_total_count;
+				checksum += (uint8_t) this->actuators_total_count;
 				send(this->actuators_total_count);
 
 				for(int i = 0; i < actuators_total_count; i++){
@@ -509,9 +351,9 @@ public:
 
 			case FUNC_CONTROL_ADDRESSING: //control addressing and unaddressing
 
-				checksum += (unsigned char) status.data8[0];
+				checksum += (uint8_t) status.data8[0];
 				send(status.data8[0]);
-				checksum += (unsigned char) status.data8[1];
+				checksum += (uint8_t) status.data8[1];
 				send(status.data8[1]);
 
 			break;
@@ -525,7 +367,7 @@ public:
 				backUpMessage(data_size.data8[0], BACKUP_RECORD);
 				backUpMessage(data_size.data8[1], BACKUP_RECORD);
 
-				checksum += (unsigned char) changed_actuators;
+				checksum += (uint8_t) changed_actuators;
 				send(changed_actuators);
 
 				backUpMessage(changed_actuators, BACKUP_RECORD);
@@ -539,7 +381,7 @@ public:
 					}
 				}
 
-				checksum += (unsigned char) 0; // TODO addr request <<<< IMPORTANTE : DISCUTIR A IMPLEMENTAÇÃO DISSO >>>>
+				checksum += (uint8_t) 0; // TODO addr request <<<< IMPORTANTE : DISCUTIR A IMPLEMENTAÇÃO DISSO >>>>
 				send(0);
 
 				backUpMessage(0, BACKUP_RECORD);
@@ -551,16 +393,16 @@ public:
 			break;
 			
 			case FUNC_ERROR:
-				checksum += (unsigned char) 1;
+				checksum += (uint8_t) 1;
 				send(1); // error within function
 
-				checksum += (unsigned char) 1;
+				checksum += (uint8_t) 1;
 				send(1); // error code
 
-				checksum += (unsigned char) error_msg.length;
+				checksum += (uint8_t) error_msg.length;
 				send(error_msg.length); // error message size
 
-				checksum += (unsigned char) error_msg.length;
+				checksum += (uint8_t) error_msg.length;
 				send(error_msg.length); // error message size
 
 				checksum += checkSum(error_msg.msg, error_msg.length);
@@ -643,5 +485,13 @@ public:
 
 
 };
+
+Device* device;
+
+extern Device* device;
+
+void recv_cb(chain_t *chain){
+	device->parse(chain);
+}
 
 #endif

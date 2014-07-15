@@ -9,7 +9,7 @@ public:
 	int 			minimum = 0;
 	int 			maximum = 1023;
 
-	LinearSensor(char* name, char id): Actuator(name, id, 1 /*slots*/, 1 /*mode counter*/, 3, VISUAL_NONE){
+	LinearSensor(char* name, uint8_t id): Actuator(name, id, 1 /*slots*/, 1 /*mode counter*/, 3, VISUAL_NONE){
 		Mode *mode = supports("linear");
 		// mode->expects(PROPERTY_INTEGER, true);
 		// mode->expects(PROPERTY_LOGARITHM, false);

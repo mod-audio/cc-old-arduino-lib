@@ -9,7 +9,7 @@ public:
 	Str 	label;
 	Value 	value;
 
-	ScalePoint(char* label, int length, char v0, char v1, char v2, char v3):label(label,length), value{v0,v1,v2,v3}{}
+	ScalePoint(char* label, int length, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3):label(label,length), value{v0,v1,v2,v3}{}
 
 };
 
@@ -30,39 +30,25 @@ public:
 	// Fixed size part
 
 	Mode		mode;
-	char		port_properties=0;
+	uint8_t		port_properties=0;
 	Value		value;
 	Value		minimum;
 	Value		maximum;
 	Value		default_value;
 	Word		steps;
 
-	char 		id;
+	uint8_t 		id;
 
 	// Dynamic part
 
 	Str*			label;
 	Str*			unit;
 	ScalePoint**	scale_points;
-	char			scale_points_counter=0;
-	char			scale_points_total_count=0;
+	uint8_t			scale_points_counter=0;
+	uint8_t			scale_points_total_count=0;
 
-	// Addressing(char id, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
-	// id(id), label("",0), unit("",0), mode(mode1, mode2),port_properties(port_properties),value(value),minimum(minimum),maximum(maximum),default_value(default_value),steps(step1,step2), scale_points(NULL){}
 
-	// Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
-	// id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(0), scale_points(NULL){}
-
-	// Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value1, Value minimum, Value maximum, Value default_value, char step1, char step2, char scale_points_total_count):
-	// id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value1), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(scale_points_total_count){
-		
-
-	// 	if(scale_points_total_count){
-	// 		scale_points = new ScalePoint*[scale_points_total_count];
-	// 	}
-	// }
-
-	Addressing(int visual_output_level, char* ctrl_data):
+	Addressing(int visual_output_level, uint8_t* ctrl_data):
 		mode(ctrl_data[0], ctrl_data[1]),
 		id(ctrl_data[2]),
 		port_properties(ctrl_data[3])
@@ -73,8 +59,8 @@ public:
 		// steps(ctrl_data[5+ctrl_data[4] +16],ctrl_data[5+ctrl_data[4] +17])
 		{
 
-		unsigned char label_size = ctrl_data[4];
-		unsigned char position = 5 + label_size;
+		uint8_t label_size = ctrl_data[4];
+		uint8_t position = 5 + label_size;
 		
 		this->value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
 		position += 4;
@@ -91,9 +77,9 @@ public:
 		this->steps = {ctrl_data[position], ctrl_data[position + 1]};
 		position += 2;
 
-		unsigned char s_p_count_pos = position + 1 + ctrl_data[position];
+		uint8_t s_p_count_pos = position + 1 + ctrl_data[position];
 
-		// unsigned char s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
+		// uint8_t s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
 
 		switch(visual_output_level){
 			case VISUAL_NONE:
@@ -110,9 +96,9 @@ public:
 
 		// 		if(ctrl_data[s_p_count_pos]){
 											
-		// 			unsigned char s_p_label_size_pos;
-		// 			unsigned char s_p_label_size;
-		// 			unsigned char s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
+		// 			uint8_t s_p_label_size_pos;
+		// 			uint8_t s_p_label_size;
+		// 			uint8_t s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
 
 		// 			ScalePoint* sp;
 
@@ -201,15 +187,15 @@ public:
 
 class ValueUpdate{
 public:
-	char addressing_id;
+	uint8_t addressing_id;
 	Value value;
 
 	ValueUpdate():addressing_id(0), value(0){}
 
-	ValueUpdate(char addressing_id, float value):
+	ValueUpdate(uint8_t addressing_id, float value):
 	addressing_id(addressing_id), value(value){}
 
-	void setup(char addressing_id, float value){
+	void setup(uint8_t addressing_id, float value){
 		this->addressing_id = addressing_id;
 		this->value.f = value;
 	}
@@ -218,25 +204,25 @@ public:
 class Update{
 public:
 	ValueUpdate* updates;
-	char* addressing_requests;
+	uint8_t* addressing_requests;
 
 	Update(){
 		this->updates = new	ValueUpdate();
 		this->addressing_requests = NULL; //TODO implementar isso ai
 	}
 
-	void sendDescriptor(unsigned char* checksum){
+	void sendDescriptor(uint8_t* checksum){
 
-		*checksum += (unsigned char) this->updates->addressing_id;
+		*checksum += (uint8_t) this->updates->addressing_id;
 		send(this->updates->addressing_id);
 
-		*checksum += (unsigned char) this->updates->value.c[0];
+		*checksum += (uint8_t) this->updates->value.c[0];
 		send(this->updates->value.c[0]);
-		*checksum += (unsigned char) this->updates->value.c[1];
+		*checksum += (uint8_t) this->updates->value.c[1];
 		send(this->updates->value.c[1]);
-		*checksum += (unsigned char) this->updates->value.c[2];
+		*checksum += (uint8_t) this->updates->value.c[2];
 		send(this->updates->value.c[2]);
-		*checksum += (unsigned char) this->updates->value.c[3];
+		*checksum += (uint8_t) this->updates->value.c[3];
 		send(this->updates->value.c[3]);
 
 		backUpMessage(this->updates->addressing_id, BACKUP_RECORD);
@@ -254,26 +240,26 @@ public:
 class Actuator{
 public:
 	Str 				name; // name displayed to user on mod-ui
-	char				id = 0;
+	uint8_t				id = 0;
 	Mode** 				modes;
 	uint16_t* 			steps;
 
-	char 				slots_total_count; //how many parameters the actuator can support simultaneously
-	char 				modes_total_count;  //how many modes the actuator have
-	char 				steps_total_count;  //size of steps list
+	uint8_t 				slots_total_count; //how many parameters the actuator can support simultaneously
+	uint8_t 				modes_total_count;  //how many modes the actuator have
+	uint8_t 				steps_total_count;  //size of steps list
 
-	char 				slots_counter;  //how many slots the actuator have occupied until now
-	char 				modes_counter;  //how many modes the actuator have until now
-	char 				steps_counter;  //size of steps list until now
+	uint8_t 				slots_counter;  //how many slots the actuator have occupied until now
+	uint8_t 				modes_counter;  //how many modes the actuator have until now
+	uint8_t 				steps_counter;  //size of steps list until now
 
-	char 				visual_output_level;
+	uint8_t 				visual_output_level;
 	bool				changed;
 
 	float 				value;
 
 	Addressing**		addrs;
 
-	Actuator(char* name, char id, char slots_total_count, char modes_total_count, char steps_total_count, char visual_output_level):
+	Actuator(char* name, uint8_t id, uint8_t slots_total_count, uint8_t modes_total_count, uint8_t steps_total_count, uint8_t visual_output_level):
 	name(name), id(id), slots_total_count(slots_total_count), modes_total_count(modes_total_count), 
 	steps_total_count(steps_total_count), slots_counter(0), modes_counter(0), steps_counter(0), visual_output_level(visual_output_level){
 		this->addrs = new Addressing*[slots_total_count];
@@ -304,7 +290,7 @@ public:
  		}
 	}
 
-	void unaddress(char addressing_id){
+	void unaddress(uint8_t addressing_id){
 		if(!slots_counter){
  			ERROR("No parameters addressed.");
 		}
@@ -390,39 +376,39 @@ public:
 		postMessageChanges();
 	}
 
-	void sendDescriptor(unsigned char* checksum){
+	void sendDescriptor(uint8_t* checksum){
 		Word step;
 		
-		*checksum += (unsigned char) this->id;
+		*checksum += (uint8_t) this->id;
 		send(this->id);
 
-		*checksum += (unsigned char) this->name.length;
+		*checksum += (uint8_t) this->name.length;
 		send(this->name.length);
 
-		*checksum += (unsigned char) checkSum(this->name.msg, this->name.length);
+		*checksum += (uint8_t) checkSum(this->name.msg, this->name.length);
 		send(this->name.msg, this->name.length);
 
-		*checksum += (unsigned char) this->modes_counter;
+		*checksum += (uint8_t) this->modes_counter;
 		send(this->modes_counter);
 
 		for (int i = 0; i < modes_counter; ++i){
 			this->modes[i]->sendDescriptor(checksum);
 		}
 
-		*checksum += (unsigned char) this->slots_total_count;
+		*checksum += (uint8_t) this->slots_total_count;
 		send(this->slots_total_count);
 
-		*checksum += (unsigned char) this->steps_counter;
+		*checksum += (uint8_t) this->steps_counter;
 		send(this->steps_counter);
 
 		for (int i = 0; i < steps_counter; ++i){
 
 			step.data16 = steps[i];
 
-			*checksum += (unsigned char) step.data8[0];
+			*checksum += (uint8_t) step.data8[0];
 			send(step.data8[0]);
 
-			*checksum += (unsigned char) step.data8[1];
+			*checksum += (uint8_t) step.data8[1];
 			send(step.data8[1]);
 		
 		}

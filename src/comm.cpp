@@ -183,6 +183,7 @@ void comm_send(chain_t *chain)
     uint8_t buffer[2];
     WRITE_MODE();
     Serial.write(CHAIN_SYNC_BYTE);
+    Serial.flush();
     for (i = 0; i < (chain->data_size + 6); i++)
     {
         Serial.write(buffer, encode(*raw_data++, buffer));

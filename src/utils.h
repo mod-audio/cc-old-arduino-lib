@@ -8,7 +8,7 @@
 #include "TimerOne.h"
 #include "DueTimer.h"
 
-extern char g_device_id;
+extern uint8_t g_device_id;
 
 /*
 ************************************************************************************************************************
@@ -190,11 +190,11 @@ enum{BACKUP_RECORD, BACKUP_RESET, BACKUP_SEND}; // Backup Message actions
 
 union Value{
 	float f;
-	char c[4];
+	uint8_t c[4];
 
 	Value(){}
 	Value(float f):f(f){}
-	Value(char c0, char c1, char c2, char c3):c{c0,c1,c2,c3}{}
+	Value(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3):c{c0,c1,c2,c3}{}
 
 };
 
@@ -221,6 +221,7 @@ public:
 	char* msg;
 	int length;
 
+	Str(){}
 	Str(char* msg){ //case it's a normal string like "prefiro o antigo protocolo"
 		int i = 0;
 
@@ -418,8 +419,8 @@ void backUpMessage(char byte, int action){
 	}
 }
 
-unsigned char checkSum(char* msg, int length){
-	unsigned char checksum = 0;
+uint8_t checkSum(char* msg, int length){
+	uint8_t checksum = 0;
 
 	for (int i = 0; i < length; ++i){
 		checksum += msg[i];
@@ -450,27 +451,23 @@ void isr_timer(){
 		timerSERIAL.increment();
 }
 
-void initializeDevice(){
-
-}
-
 void sendError(Str err){
 
-	u_Word dt_sz(3 + err.length);
+	// u_Word dt_sz(3 + err.length);
 
-	PRINT('\xAA');
-	send('\x00');
-	send(g_device_id);
-	send('\xFF');
-	send(dt_sz.data8[0]);
-	send(dt_sz.data8[1]);
-	send('\x01');
-	send('\x01');
-	send(err.length);
-	send(err.msg, err.length);
-	send(('\xaa' + g_device_id + '\xFF' + dt_sz.data8[0] + dt_sz.data8[1] + '\x01' + '\x01' + err.length + checkSum(err.msg, err.length))%256);
+	// PRINT('\xAA');
+	// send((char)'\x00');
+	// send((char)g_device_id);
+	// send((char)'\xFF');
+	// send((char)dt_sz.data8[0]);
+	// send((char)dt_sz.data8[1]);
+	// send((char)'\x01');
+	// send((char)'\x01');
+	// send((char)err.length);
+	// send((char*)err.msg, err.length);
+	// send((char)('\xaa' + g_device_id + '\xFF' + dt_sz.data8[0] + dt_sz.data8[1] + '\x01' + '\x01' + err.length + checkSum((char*)err.msg, err.length))%256);
 
-	SFLUSH();
+	// SFLUSH();
 
 
 }

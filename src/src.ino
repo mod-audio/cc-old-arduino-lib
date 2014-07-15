@@ -1,4 +1,3 @@
-#include <TimerOne.h>
 #include "utils.h"
 #include "device.h"
 #include "actuator.h"

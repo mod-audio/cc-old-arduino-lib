@@ -33,21 +33,21 @@ public:
 
 		timerA.start();
 
-		#ifdef __arm__
+		#ifdef ARDUINO_ARCH_SAM
 		DueTimer timerDue(1000);
 		timerDue = DueTimer::getAvailable();
 		timerDue.start(1000);
 		timerDue.attachInterrupt(isr_timer);
-		#else
+		#endif
+
+		#ifdef ARDUINO_ARCH_AVR
 		Timer1.initialize(1000);
 		Timer1.attachInterrupt(isr_timer);
 		#endif
-		
-		
+
 		SBEGIN(BAUD_RATE);
 		pinMode(USER_LED, OUTPUT);
 		pinMode(WRITE_READ_PIN, OUTPUT);
-
 	}
 
 	~Device(){

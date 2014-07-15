@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <math.h>
 #include <Arduino.h>
-#include <TimerOne.h>
+
+#include "TimerOne.h"
+#include "DueTimer.h"
 
 extern char g_device_id;
 
@@ -449,13 +451,7 @@ void isr_timer(){
 }
 
 void initializeDevice(){
-// 	timerA.start();
-// 	Timer1.initialize(1000);
-// 	Timer1.attachInterrupt(isr_timer);
-	
-// 	Serial.begin(BAUD_RATE);
-// 	pinMode(USER_LED, OUTPUT);
-// 	pinMode(WRITE_READ_PIN, OUTPUT);
+
 }
 
 void sendError(Str err){

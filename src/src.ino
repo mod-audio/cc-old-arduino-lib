@@ -5,6 +5,12 @@
 #include "linearsensor.h"
 #include "switch.h"
 
+// #ifdef __arm__
+// // #include <DueTimer.h>
+// #else
+#include <TimerOne.h>
+// #endif
+
 #define POT_MAX 1014
 #define POT_MIN 8
 #define POT_PIN A4
@@ -38,19 +44,22 @@ public:
 
 };
 
-Device* dev = new Device("http://portalmod.com/devices/XP", "Pedal_Expressao", 2/*actuators count*/, 1);
+Device* dev;
 
-Actuator* pot = new Mypot("potenciometro", 1);
+Actuator* pot;
 
-Actuator* swit = new Myswitch("switch", 2);
+Actuator* swit;
 
 
 void setup() {
+	dev = new Device("http://portalmod.com/devices/XP", "Pedal_Expressao", 2/*actuators count*/, 1);
+	pot = new Mypot("potenciometro", 1);
+	swit = new Myswitch("switch", 2);
 
 	dev->addActuator(pot);
 	dev->addActuator(swit);
 
-	initializeDevice();
+	// initializeDevice();
 
 }
 

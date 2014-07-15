@@ -10,6 +10,7 @@ public:
 	char property_values; 		// defines which state the bits selected above must be set to address something
     Str label;
 
+	Mode(){}
 	Mode(char* label):label(label), relevant_properties(0), property_values(0){}
 	Mode(char relevant_properties, char property_values):relevant_properties(relevant_properties), property_values(property_values), label(""){}
 	Mode(char* label, char relevant_properties, char property_values):label(label), relevant_properties(relevant_properties), property_values(property_values){}

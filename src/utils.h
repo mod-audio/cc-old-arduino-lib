@@ -124,6 +124,10 @@ extern char g_device_id;
 // serial related MACROS
 
 
+#ifndef SBEGIN(__baud_rate) // sends one byte 
+#define SBEGIN(__baud_rate) Serial.begin(__baud_rate)
+#endif
+
 #ifndef SWRITE(__char) // sends one byte 
 #define SWRITE(__char) Serial.write(__char)
 #endif
@@ -186,6 +190,7 @@ union Value{
 	float f;
 	char c[4];
 
+	Value(){}
 	Value(float f):f(f){}
 	Value(char c0, char c1, char c2, char c3):c{c0,c1,c2,c3}{}
 
@@ -195,6 +200,7 @@ union u_Word{
 	uint16_t data16;
 	uint8_t data8[2];
 
+	u_Word(){}
 	u_Word(uint16_t x):data16(x){}
 	u_Word(uint8_t x, uint8_t y):data8{x,y}{}
 };
@@ -443,13 +449,13 @@ void isr_timer(){
 }
 
 void initializeDevice(){
-	timerA.start();
-	Timer1.initialize(1000);
-	Timer1.attachInterrupt(isr_timer);
+// 	timerA.start();
+// 	Timer1.initialize(1000);
+// 	Timer1.attachInterrupt(isr_timer);
 	
-	Serial.begin(BAUD_RATE);
-	pinMode(USER_LED, OUTPUT);
-	pinMode(WRITE_READ_PIN, OUTPUT);
+// 	Serial.begin(BAUD_RATE);
+// 	pinMode(USER_LED, OUTPUT);
+// 	pinMode(WRITE_READ_PIN, OUTPUT);
 }
 
 void sendError(Str err){

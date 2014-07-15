@@ -13,10 +13,22 @@ public:
 
 };
 
+
+// class SPBank{
+// public:
+// 	ScalePoint scale_points[MAX_SCALE_POINTS_N]; // array containing all scalepoints used in the program
+// 	bool state[MAX_SCALE_POINTS_N]; // tells if scale point is being used
+
+// 	SPBank(){}
+// };
+
+// SPBank	bank_sp;
+
 class Addressing{
 public:
-	Str			label;
-	Str			unit;
+
+	// Fixed size part
+
 	Mode		mode;
 	char		port_properties=0;
 	Value		value;
@@ -27,23 +39,99 @@ public:
 
 	char 		id;
 
+	// Dynamic part
 
+	Str*			label;
+	Str*			unit;
 	ScalePoint**	scale_points;
 	char			scale_points_counter=0;
 	char			scale_points_total_count=0;
 
-	Addressing(char id, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
-	id(id), label("",0), unit("",0), mode(mode1, mode2),port_properties(port_properties),value(value),minimum(minimum),maximum(maximum),default_value(default_value),steps(step1,step2){}
+	// Addressing(char id, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
+	// id(id), label("",0), unit("",0), mode(mode1, mode2),port_properties(port_properties),value(value),minimum(minimum),maximum(maximum),default_value(default_value),steps(step1,step2), scale_points(NULL){}
 
-	Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
-	id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(0){}
+	// Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value, Value minimum, Value maximum, Value default_value, char step1, char step2):
+	// id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(0), scale_points(NULL){}
 
-	Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value1, Value minimum, Value maximum, Value default_value, char step1, char step2, char scale_points_total_count):
-	id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value1), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(scale_points_total_count){
+	// Addressing(char id, char* label, int la_length, char* unit, int un_length, char mode1, char mode2, char port_properties, Value value1, Value minimum, Value maximum, Value default_value, char step1, char step2, char scale_points_total_count):
+	// id(id), label(label, la_length), unit(unit, un_length), mode(mode1, mode2), port_properties(port_properties), value(value1), minimum(minimum), maximum(maximum), default_value(default_value), steps(step1, step2), scale_points_total_count(scale_points_total_count){
 		
 
-		if(scale_points_total_count){
-			scale_points = new ScalePoint*[scale_points_total_count];
+	// 	if(scale_points_total_count){
+	// 		scale_points = new ScalePoint*[scale_points_total_count];
+	// 	}
+	// }
+
+	Addressing(int visual_output_level, char* ctrl_data):
+		mode(ctrl_data[0], ctrl_data[1]),
+		id(ctrl_data[2]),
+		port_properties(ctrl_data[3])
+		// value( {ctrl_data[5+ctrl_data[4] ], ctrl_data[5+ctrl_data[4] +1], ctrl_data[5+ctrl_data[4] +2], ctrl_data[5+ctrl_data[4] +3]}),
+		// minimum( {ctrl_data[5+ctrl_data[4] +4], ctrl_data[5+ctrl_data[4] +5], ctrl_data[5+ctrl_data[4] +6], ctrl_data[5+ctrl_data[4] +7]}),
+		// maximum( {ctrl_data[5+ctrl_data[4] +8], ctrl_data[5+ctrl_data[4] +9], ctrl_data[5+ctrl_data[4] +10], ctrl_data[5+ctrl_data[4] +11]}),
+		// default_value( {ctrl_data[5+ctrl_data[4] +12], ctrl_data[5+ctrl_data[4] +13], ctrl_data[5+ctrl_data[4] +14], ctrl_data[5+ctrl_data[4] +15]}),
+		// steps(ctrl_data[5+ctrl_data[4] +16],ctrl_data[5+ctrl_data[4] +17])
+		{
+
+		unsigned char label_size = ctrl_data[4];
+		unsigned char position = 5 + label_size;
+		
+		this->value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->minimum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->maximum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->default_value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 2;
+		
+		this->steps = {ctrl_data[position], ctrl_data[position + 1]};
+		position += 2;
+
+		unsigned char s_p_count_pos = position + 1 + ctrl_data[position];
+
+		// unsigned char s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
+
+		switch(visual_output_level){
+			case VISUAL_NONE:
+				// this->label = "";
+				// this->unit = "";
+			break;
+			case VISUAL_SHOW_LABEL:
+				// this->label = "";
+				// this->unit = "";
+			break;
+		// 	case VISUAL_SHOW_SCALEPOINTS:
+		// 		this->label = "";
+		// 		this->unit = "";
+
+		// 		if(ctrl_data[s_p_count_pos]){
+											
+		// 			unsigned char s_p_label_size_pos;
+		// 			unsigned char s_p_label_size;
+		// 			unsigned char s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
+
+		// 			ScalePoint* sp;
+
+		// 			for (int i = 0; i < addr->scale_points_total_count; ++i){
+						
+		// 				s_p_label_size_pos = s_p_value_pos+4;
+		// 				s_p_label_size = ctrl_data[s_p_label_size_pos];
+		// 				s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
+
+		// 				send(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size);											
+
+		// 				sp = new ScalePoint(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size,
+		// 									ctrl_data[s_p_value_pos], ctrl_data[s_p_value_pos+1],
+		// 									ctrl_data[s_p_value_pos+2],ctrl_data[s_p_value_pos+3]);
+
+		// 				addr->addScalePoint(sp);
+
+		// 			}
+		// 		}
 		}
 	}
 
@@ -60,10 +148,10 @@ public:
 	}
 
 	void sendDescriptor(){
-		PRINT("  label  ");
-		send(label.msg, label.length);
-		PRINT("  unit  ");
-		send(unit.msg, unit.length);
+		// PRINT("  label  ");
+		// send(label->msg, label->length);
+		// PRINT("  unit  ");
+		// send(unit->msg, unit->length);
 		PRINT("  mode  ");
 		send((int)mode.relevant_properties);
 		send((int)mode.property_values);

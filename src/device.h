@@ -30,6 +30,24 @@ public:
 	Device(char* url_id, char* label, char actuators_total_count, char channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
 		this->acts = new Actuator*[actuators_total_count];
 		this->updates = new Update();
+
+		timerA.start();
+
+		#ifdef __arm__
+		DueTimer timerDue(1000);
+		timerDue = DueTimer::getAvailable();
+		timerDue.start(1000);
+		timerDue.attachInterrupt(isr_timer);
+		#else
+		Timer1.initialize(1000);
+		Timer1.attachInterrupt(isr_timer);
+		#endif
+		
+		
+		SBEGIN(BAUD_RATE);
+		pinMode(USER_LED, OUTPUT);
+		pinMode(WRITE_READ_PIN, OUTPUT);
+
 	}
 
 	~Device(){
@@ -316,78 +334,11 @@ public:
 
 								Addressing* addr;
 
-								switch(act->visual_output_level){
-									case VISUAL_NONE:
-
-										addr = new Addressing(msg->msg[CTRLADDR_ADDR_ID],
-															msg->msg[CTRLADDR_CHOSEN_MASK1],
-															msg->msg[CTRLADDR_CHOSEN_MASK2],
-															msg->msg[CTRLADDR_PORT_MASK],
-															{msg->msg[value_pos], msg->msg[value_pos+1], msg->msg[value_pos+2], msg->msg[value_pos+3]}, 
-															{msg->msg[value_pos+4], msg->msg[value_pos+5], msg->msg[value_pos+6], msg->msg[value_pos+7]},
-															{msg->msg[value_pos+8], msg->msg[value_pos+9], msg->msg[value_pos+10], msg->msg[value_pos+11]}, 
-															{msg->msg[value_pos+12], msg->msg[value_pos+13], msg->msg[value_pos+14], msg->msg[value_pos+15]},
-															msg->msg[value_pos+16], msg->msg[value_pos+17]);
-									break;
-
-									case VISUAL_SHOW_LABEL:
-										
-										addr = new Addressing(msg->msg[CTRLADDR_ADDR_ID],
-															&(msg->msg[CTRLADDR_LABEL]),
-															msg->msg[CTRLADDR_LABEL_SIZE],
-							 								&(msg->msg[value_pos+19]), msg->msg[value_pos+18],
-															msg->msg[CTRLADDR_CHOSEN_MASK1], msg->msg[CTRLADDR_CHOSEN_MASK2],
-															msg->msg[CTRLADDR_PORT_MASK],
-															{msg->msg[value_pos], msg->msg[value_pos+1], msg->msg[value_pos+2], msg->msg[value_pos+3]}, 
-															{msg->msg[value_pos+4], msg->msg[value_pos+5], msg->msg[value_pos+6], msg->msg[value_pos+7]},
-															{msg->msg[value_pos+8], msg->msg[value_pos+9], msg->msg[value_pos+10], msg->msg[value_pos+11]}, 
-															{msg->msg[value_pos+12], msg->msg[value_pos+13], msg->msg[value_pos+14], msg->msg[value_pos+15]},
-															msg->msg[value_pos+16], msg->msg[value_pos+17]);
-									break;
-
-									case VISUAL_SHOW_SCALEPOINTS:
-
-										addr = new Addressing(msg->msg[CTRLADDR_ADDR_ID],
-															&(msg->msg[CTRLADDR_LABEL]),
-															msg->msg[CTRLADDR_LABEL_SIZE],
-							 								&(msg->msg[value_pos+19]), msg->msg[value_pos+18],
-															msg->msg[CTRLADDR_CHOSEN_MASK1], msg->msg[CTRLADDR_CHOSEN_MASK2],
-															msg->msg[CTRLADDR_PORT_MASK],
-															{msg->msg[value_pos], msg->msg[value_pos+1], msg->msg[value_pos+2], msg->msg[value_pos+3]}, 
-															{msg->msg[value_pos+4], msg->msg[value_pos+5], msg->msg[value_pos+6], msg->msg[value_pos+7]},
-															{msg->msg[value_pos+8], msg->msg[value_pos+9], msg->msg[value_pos+10], msg->msg[value_pos+11]}, 
-															{msg->msg[value_pos+12], msg->msg[value_pos+13], msg->msg[value_pos+14], msg->msg[value_pos+15]},
-															msg->msg[value_pos+16], msg->msg[value_pos+17], msg->msg[s_p_count_pos]);
-
-										if(msg->msg[s_p_count_pos]){
-											
-											unsigned char s_p_label_size_pos;
-											unsigned char s_p_label_size;
-											unsigned char s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
-
-											ScalePoint* sp;
-
-											for (int i = 0; i < addr->scale_points_total_count; ++i){
-												
-												s_p_label_size_pos = s_p_value_pos+4;
-												s_p_label_size = msg->msg[s_p_label_size_pos];
-												s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
-
-												send(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size);											
-
-												sp = new ScalePoint(&(msg->msg[s_p_label_size_pos+1]),s_p_label_size,
-																	msg->msg[s_p_value_pos], msg->msg[s_p_value_pos+1],
-																	msg->msg[s_p_value_pos+2],msg->msg[s_p_value_pos+3]);
-
-												addr->addScalePoint(sp);
-
-											}
-										}
-										
-									break;
-								}
+								addr = new Addressing(act->visual_output_level, &(msg->msg[CTRLADDR_ACT_ID+1]));
 
 								act->address(addr);
+
+								addr->sendDescriptor();//VOLTAR
 
 								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
 								this->state = WAITING_DATA_REQUEST;

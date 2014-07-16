@@ -11,7 +11,7 @@ enum {SYNC, DESTINATION, ORIGIN, FUNCTION, DATA_SIZE_LSB, DATA_SIZE_MSB, DATA, C
 #define WRITE_MODE()    digitalWrite(SERIAL_READ_WRITE_PIN, HIGH); delayMicroseconds(10)
 
 // local variables
-static chain_t g_chain;
+/*static*/ chain_t g_chain;
 static void (*g_parser_cb)(chain_t *chain_data) = NULL;
 static uint8_t g_address;
 
@@ -189,6 +189,9 @@ void comm_send(chain_t *chain)
         Serial.write(buffer, encode(*raw_data++, buffer));
         Serial.flush();
     }
+
+    // Serial.write(CHAIN_SYNC_BYTE);
+    // Serial.flush();
     READ_MODE();
 }
 

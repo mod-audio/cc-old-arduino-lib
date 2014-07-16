@@ -12,7 +12,8 @@
 // control chain definitions
 #define CHAIN_SYNC_BYTE         0xAA
 #define CHAIN_ESCAPE_BYTE       0x1B
-#define CHAIN_BUFFER_SIZE       256
+#define CHAIN_BUFFER_SIZE       128
+// #define CHAIN_BUFFER_SIZE       256
 #define CHAIN_FIRST_DEV_ADDR    0x80
 
 // data definitions

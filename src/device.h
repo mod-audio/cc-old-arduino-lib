@@ -9,6 +9,8 @@ extern STimer timerA;
 extern STimer timerSERIAL;
 extern STimer timerLED;
 
+extern chain_t g_chain;
+
 uint8_t g_device_id;
 
 void recv_cb(chain_t* chain);
@@ -27,6 +29,9 @@ public:
 	Actuator**	acts;			// vector which holds all actuators pointers
 
 	Update* updates; // TODO resolver essa questão
+
+	chain_t*	chain;
+	// chain_t		chainREAL;
 
 	Device(char* url_id, char* label, uint8_t actuators_total_count, uint8_t channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
 		this->acts = new Actuator*[actuators_total_count];
@@ -51,6 +56,10 @@ public:
 		pinMode(WRITE_READ_PIN, OUTPUT);
 
 		comm_setup(recv_cb);
+
+
+
+		this->chain = &g_chain;
 	}
 
 	~Device(){
@@ -99,6 +108,8 @@ public:
 */
 
 	void parse(chain_t* chain){ // in_msg is what the device receives from host, encrypted
+
+		this->chain = chain;
 
 		uint8_t* ptr = &chain->sync;
 
@@ -202,8 +213,8 @@ public:
 						static uint8_t old_data_request_seq = data_request_seq - 1;
 
 						if(data_request_seq != (old_data_request_seq + 1)%256){
-
 							backUpMessage(0,BACKUP_SEND);
+							send(0,NULL,NULL,true);//VOLTAR
 							old_data_request_seq = data_request_seq;
 						}
 						else{
@@ -240,8 +251,8 @@ public:
 		uint8_t checksum = 0;
 		Word data_size;
 
-		digitalWrite(WRITE_READ_PIN, WRITE_ENABLE);
-		delayMicroseconds(100);
+		// digitalWrite(WRITE_READ_PIN, WRITE_ENABLE);
+		// delayMicroseconds(100);
 
 		switch(function){
 			case FUNC_CONNECTION:
@@ -295,22 +306,29 @@ public:
 		// MESSAGE HEADER
 
 		checksum += BYTE_SYNC;
-		SWRITE(BYTE_SYNC); // so it doesn't get converted
+		// SWRITE(BYTE_SYNC); // so it doesn't get encoded
+		send(BYTE_SYNC, this->chain, &(this->chain->sync)); // so it doesn't get encoded
+		// this->chain->sync = BYTE_SYNC;
 
 		checksum += HOST_ADDRESS;
 		send(HOST_ADDRESS);
+		// this->chain.destination = HOST_ADDRESS;
 
 		checksum += this->id;
 		send(this->id);
+		// this->chain.origin = this->id;
 
 		checksum += function;
 		send(function);
+		// this->chain.function = function;
 
 		checksum += data_size.data8[0];
 		send(data_size.data8[0]);
 
 		checksum += data_size.data8[1];
 		send(data_size.data8[1]);
+
+		// this->chain.data_size = data_size.data16;
 
 		switch(function){
 			case FUNC_CONNECTION:
@@ -412,15 +430,15 @@ public:
 
 		}
 
-		send(checksum);
+		send(checksum,NULL,NULL,true);
 
 		if(function == FUNC_DATA_REQUEST){
 			backUpMessage(checksum, BACKUP_RECORD);
 		}
 
-		SFLUSH();
+		// SFLUSH();
 
-		digitalWrite(WRITE_READ_PIN, READ_ENABLE);
+		// digitalWrite(WRITE_READ_PIN, READ_ENABLE);
 
 		for (int i = 0; i < changed_actuators; ++i){
 			if(acts[i]->changed)

@@ -5,6 +5,7 @@
 #include <math.h>
 #include <Arduino.h>
 
+#include "comm.h"
 #include "TimerOne.h"
 #include "DueTimer.h"
 
@@ -378,23 +379,49 @@ int freeRam () {
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
-void send(char byte){ // this function sends bytes via swrite
-	if(byte == BYTE_SYNC){
-		SWRITE(BYTE_ESCAPE);
-		SWRITE(~BYTE_SYNC);
+void send(char byte, chain_t* ch=NULL, uint8_t* ptr=NULL, bool end=false){ // this function sends bytes via swrite
+	static chain_t* ptrchain = NULL;
+	static uint8_t* ptruint = NULL;
+	static int counter = 0;
+
+	if(ch){
+		ptrchain = ch;
 	}
-	else if(byte == BYTE_ESCAPE){
-		SWRITE(BYTE_ESCAPE);
-		SWRITE(BYTE_ESCAPE);
+	if(ptr){
+		ptruint = ptr;
 	}
-	else{
-		SWRITE(byte);
+
+	if(end){
+		comm_send(ptrchain);
+		counter = 0;
+		return;
 	}
+
+	ptruint[counter] = (uint8_t) byte;
+
+	// PRINT(" [");
+	// PRINT((char) byte);
+	// PRINT("|");
+	// PRINT((char) ptruint[counter]);
+	// PRINT("] ");
+	
+	counter++;
+
+	// if(byte == BYTE_SYNC){
+	// 	SWRITE(BYTE_ESCAPE);
+	// 	SWRITE(~BYTE_SYNC);
+	// }
+	// else if(byte == BYTE_ESCAPE){
+	// 	SWRITE(BYTE_ESCAPE);
+	// 	SWRITE(BYTE_ESCAPE);
+	// }
+	// else{
+		// SWRITE(byte);
+	// }
 }
 
 void send(char* msg, int length){ //same thing for strings
-		SWRITE(msg[0]);
-	for (int i = 1; i < length; ++i){
+	for (int i = 0; i < length; ++i){
 		send(msg[i]);		
 	}
 }

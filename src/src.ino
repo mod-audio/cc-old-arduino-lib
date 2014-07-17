@@ -37,8 +37,6 @@ public:
 
 };
 
-// Device* dev;
-
 Actuator* pot;
 
 Actuator* swit;

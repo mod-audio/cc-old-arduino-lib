@@ -32,14 +32,10 @@ public:
 		return 2 + 1 + label.length;
 	}
 
-	void sendDescriptor(uint8_t* checksum){
-		*checksum += (uint8_t) relevant_properties;
+	void sendDescriptor(){
 		send(relevant_properties);
-		*checksum += (uint8_t) property_values;
 		send(property_values);
-		*checksum += (uint8_t) this->label.length;
 		send(this->label.length);
-		*checksum += (uint8_t) checkSum(this->label.msg, this->label.length);
 		send(this->label.msg, this->label.length);
 	}
 

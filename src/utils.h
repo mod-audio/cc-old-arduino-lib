@@ -379,16 +379,14 @@ int freeRam () {
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
-void send(char byte, chain_t* ch=NULL, uint8_t* ptr=NULL, bool end=false){ // this function sends bytes via swrite
+void send(char byte, chain_t* ch=NULL, bool end=false){ // this function sends bytes via swrite
 	static chain_t* ptrchain = NULL;
 	static uint8_t* ptruint = NULL;
 	static int counter = 0;
 
 	if(ch){
 		ptrchain = ch;
-	}
-	if(ptr){
-		ptruint = ptr;
+		ptruint = (uint8_t *) ch;
 	}
 
 	if(end){
@@ -397,27 +395,9 @@ void send(char byte, chain_t* ch=NULL, uint8_t* ptr=NULL, bool end=false){ // th
 		return;
 	}
 
-	ptruint[counter] = (uint8_t) byte;
-
-	// PRINT(" [");
-	// PRINT((char) byte);
-	// PRINT("|");
-	// PRINT((char) ptruint[counter]);
-	// PRINT("] ");
-	
+	ptruint[counter] = byte;
 	counter++;
 
-	// if(byte == BYTE_SYNC){
-	// 	SWRITE(BYTE_ESCAPE);
-	// 	SWRITE(~BYTE_SYNC);
-	// }
-	// else if(byte == BYTE_ESCAPE){
-	// 	SWRITE(BYTE_ESCAPE);
-	// 	SWRITE(BYTE_ESCAPE);
-	// }
-	// else{
-		// SWRITE(byte);
-	// }
 }
 
 void send(char* msg, int length){ //same thing for strings

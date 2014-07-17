@@ -211,18 +211,13 @@ public:
 		this->addressing_requests = NULL; //TODO implementar isso ai
 	}
 
-	void sendDescriptor(uint8_t* checksum){
+	void sendDescriptor(){
 
-		*checksum += (uint8_t) this->updates->addressing_id;
 		send(this->updates->addressing_id);
 
-		*checksum += (uint8_t) this->updates->value.c[0];
 		send(this->updates->value.c[0]);
-		*checksum += (uint8_t) this->updates->value.c[1];
 		send(this->updates->value.c[1]);
-		*checksum += (uint8_t) this->updates->value.c[2];
 		send(this->updates->value.c[2]);
-		*checksum += (uint8_t) this->updates->value.c[3];
 		send(this->updates->value.c[3]);
 
 		backUpMessage(this->updates->addressing_id, BACKUP_RECORD);
@@ -230,10 +225,6 @@ public:
 		backUpMessage(this->updates->value.c[1], BACKUP_RECORD);
 		backUpMessage(this->updates->value.c[2], BACKUP_RECORD);
 		backUpMessage(this->updates->value.c[3], BACKUP_RECORD);
-
-		// PRINT(" Value[");
-		// PRINT(this->updates->value.f);
-		// PRINT("] ");
 	}
 };
 
@@ -376,39 +367,31 @@ public:
 		postMessageChanges();
 	}
 
-	void sendDescriptor(uint8_t* checksum){
+	void sendDescriptor(){
 		Word step;
 		
-		*checksum += (uint8_t) this->id;
 		send(this->id);
 
-		*checksum += (uint8_t) this->name.length;
 		send(this->name.length);
 
-		*checksum += (uint8_t) checkSum(this->name.msg, this->name.length);
 		send(this->name.msg, this->name.length);
 
-		*checksum += (uint8_t) this->modes_counter;
 		send(this->modes_counter);
 
 		for (int i = 0; i < modes_counter; ++i){
-			this->modes[i]->sendDescriptor(checksum);
+			this->modes[i]->sendDescriptor();
 		}
 
-		*checksum += (uint8_t) this->slots_total_count;
 		send(this->slots_total_count);
 
-		*checksum += (uint8_t) this->steps_counter;
 		send(this->steps_counter);
 
 		for (int i = 0; i < steps_counter; ++i){
 
 			step.data16 = steps[i];
 
-			*checksum += (uint8_t) step.data8[0];
 			send(step.data8[0]);
 
-			*checksum += (uint8_t) step.data8[1];
 			send(step.data8[1]);
 		
 		}

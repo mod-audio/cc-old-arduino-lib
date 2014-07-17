@@ -214,7 +214,7 @@ public:
 
 						if(data_request_seq != (old_data_request_seq + 1)%256){
 							backUpMessage(0,BACKUP_SEND);
-							send(0,NULL,NULL,true);//VOLTAR
+							send(0,NULL,true);//VOLTAR
 							old_data_request_seq = data_request_seq;
 						}
 						else{
@@ -248,11 +248,8 @@ public:
 	void sendMessage(uint8_t function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
 
 		int changed_actuators = 0;
-		uint8_t checksum = 0;
 		Word data_size;
 
-		// digitalWrite(WRITE_READ_PIN, WRITE_ENABLE);
-		// delayMicroseconds(100);
 
 		switch(function){
 			case FUNC_CONNECTION:
@@ -305,73 +302,39 @@ public:
 
 		// MESSAGE HEADER
 
-		checksum += BYTE_SYNC;
-		// SWRITE(BYTE_SYNC); // so it doesn't get encoded
-		send(BYTE_SYNC, this->chain, &(this->chain->sync)); // so it doesn't get encoded
-		// this->chain->sync = BYTE_SYNC;
-
-		checksum += HOST_ADDRESS;
+		send(BYTE_SYNC, this->chain);
 		send(HOST_ADDRESS);
-		// this->chain.destination = HOST_ADDRESS;
-
-		checksum += this->id;
 		send(this->id);
-		// this->chain.origin = this->id;
-
-		checksum += function;
 		send(function);
-		// this->chain.function = function;
-
-		checksum += data_size.data8[0];
 		send(data_size.data8[0]);
-
-		checksum += data_size.data8[1];
 		send(data_size.data8[1]);
-
-		// this->chain.data_size = data_size.data16;
 
 		switch(function){
 			case FUNC_CONNECTION:
 
-				checksum += (uint8_t) this->url_id.length;
 				send(this->url_id.length);
-
-				checksum += checkSum(this->url_id.msg, this->url_id.length);
 				send(this->url_id.msg, this->url_id.length);
-				
-				checksum += this->channel;
 				send(this->channel);
-				
-				checksum += PROTOCOL_VERSION_BYTE1;
 				send(PROTOCOL_VERSION_BYTE1);
-				
-				checksum += PROTOCOL_VERSION_BYTE2;
 				send(PROTOCOL_VERSION_BYTE2);
 
 			break;
 			
 			case FUNC_DEVICE_DESCRIPTOR:
 
-				checksum += (uint8_t) this->label.length;
 				send(this->label.length);
-
-				checksum += checkSum(this->label.msg, this->label.length);
 				send(this->label.msg, this->label.length);
-
-				checksum += (uint8_t) this->actuators_total_count;
 				send(this->actuators_total_count);
 
 				for(int i = 0; i < actuators_total_count; i++){
-					this->acts[i]->sendDescriptor(&checksum);
+					this->acts[i]->sendDescriptor();
 				}
 
 			break;
 
 			case FUNC_CONTROL_ADDRESSING: //control addressing and unaddressing
 
-				checksum += (uint8_t) status.data8[0];
 				send(status.data8[0]);
-				checksum += (uint8_t) status.data8[1];
 				send(status.data8[1]);
 
 			break;
@@ -385,22 +348,18 @@ public:
 				backUpMessage(data_size.data8[0], BACKUP_RECORD);
 				backUpMessage(data_size.data8[1], BACKUP_RECORD);
 
-				checksum += (uint8_t) changed_actuators;
 				send(changed_actuators);
-
-				backUpMessage(changed_actuators, BACKUP_RECORD);
 
 				for (int i = 0; i < actuators_counter; ++i){
 					if(acts[i]->changed){
 
 						this->acts[i]->getUpdates(this->updates);
-						this->updates->sendDescriptor(&checksum);
+						this->updates->sendDescriptor();
 
 					}
 				}
 
-				checksum += (uint8_t) 0; // TODO addr request <<<< IMPORTANTE : DISCUTIR A IMPLEMENTAÇÃO DISSO >>>>
-				send(0);
+				send(0); // addressing request ( endereçamentos reservados na memória da pedaleira em vez do device)
 
 				backUpMessage(0, BACKUP_RECORD);
 
@@ -411,34 +370,21 @@ public:
 			break;
 			
 			case FUNC_ERROR:
-				checksum += (uint8_t) 1;
 				send(1); // error within function
 
-				checksum += (uint8_t) 1;
 				send(1); // error code
 
-				checksum += (uint8_t) error_msg.length;
 				send(error_msg.length); // error message size
 
-				checksum += (uint8_t) error_msg.length;
 				send(error_msg.length); // error message size
 
-				checksum += checkSum(error_msg.msg, error_msg.length);
 				send(error_msg.msg, error_msg.length);
 
 			break;
 
 		}
 
-		send(checksum,NULL,NULL,true);
-
-		if(function == FUNC_DATA_REQUEST){
-			backUpMessage(checksum, BACKUP_RECORD);
-		}
-
-		// SFLUSH();
-
-		// digitalWrite(WRITE_READ_PIN, READ_ENABLE);
+		send(0,NULL,true);
 
 		for (int i = 0; i < changed_actuators; ++i){
 			if(acts[i]->changed)
@@ -470,8 +416,6 @@ public:
 			while(!timer_flag){
 
 				timer_flag = timerA.check();
-
-
 
 				if(timer_flag){
 					
@@ -505,8 +449,6 @@ public:
 };
 
 Device* device;
-
-extern Device* device;
 
 void recv_cb(chain_t *chain){
 	device->parse(chain);

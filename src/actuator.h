@@ -246,6 +246,7 @@ public:
 	uint8_t 				visual_output_level;
 	bool				changed;
 
+	float 				old_value;
 	float 				value;
 
 	Addressing**		addrs;
@@ -343,7 +344,6 @@ public:
 	}
 
 	bool checkChange(){
-		static float old_value = 0;
 		float value = getValue();
 
 		if(slots_counter){

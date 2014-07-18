@@ -266,8 +266,9 @@ public:
 			case FUNC_DATA_REQUEST:
 
 				for (int i = 0; i < actuators_counter; ++i){
-					if(acts[i]->checkChange())
+					if(acts[i]->checkChange()){
 						changed_actuators++;
+					}
 				}
 				// (param id (1) + param value (4)) * changed params (n) + params count (1) + addr request count (1) + addr requests(n)
 				data_size.data16 = changed_actuators*5 + 2;

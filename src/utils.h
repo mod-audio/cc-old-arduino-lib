@@ -223,7 +223,7 @@ public:
 	int length;
 
 	Str(){}
-	Str(char* msg){ //case it's a normal string like "prefiro o antigo protocolo"
+	Str(const char* msg){ //case it's a normal string like "prefiro o antigo protocolo"
 		int i = 0;
 
 		for (; msg[i] != '\0'; ++i);
@@ -287,75 +287,52 @@ public:
 	}
 };
 
+typedef uint32_t mod_timer_t;
 
-
-struct STimer
+class STimer
 {
-	uint16_t period;
-	uint16_t counter;
-	bool working;
-	bool timeout_flag;
+public:
 
-	STimer(int period){ //period in milisseconds
+	static mod_timer_t static_timer_count;
+
+	mod_timer_t period = 1; //in ms
+	mod_timer_t offset = 0;
+	bool working = false;
+
+	STimer(mod_timer_t period){ //period in milisseconds
 		this->period = period;
-		this->counter = 0;
-		this->working = false;
-		this->timeout_flag = false;
 	}
 
-	void increment(){
-		if(working){
-			if(counter >= period){
-				timeout_flag = true;
-				counter = 0;
-			}
-			else{
-				counter++;
-			}
-			
-		}
-		else return;
-	}
-
-	void setPeriod(uint32_t period){
-		if(working){
-			this->period = period;
-			counter = 0;
-			timeout_flag = false;
-		}
-		else{
-			return;
-		}
+	void setPeriod(mod_timer_t period){
+		this->period = period;
+		offset = static_timer_count;
 	}
 
 	bool check(){ // tells if the timer reached its period
-		if(working && timeout_flag){
-			return true;
+		if(working){
+			if((mod_timer_t)(static_timer_count - offset) >= period){
+				return true;
+			}
 		}
-		else
-			return false;
-	}
-
-	uint32_t consult(){
-		return counter;
+		return false;
 	}
 
 	void stop(){
 		working = false;
-		timeout_flag = false;
-		counter = 0;
 	}
 
 	void start(){
 		working = true;
+		offset = static_timer_count;
 	}
 
 	void reset(){
-		timeout_flag = false;
-		counter = 0;
+		working = true;
+		offset = static_timer_count;
 	}
 };
 
+mod_timer_t STimer::static_timer_count = 0;
 
 /**************************************************************************************
                                     Instantiations
@@ -448,14 +425,7 @@ template<typename T> T* IdToPointer(int id, int counter_limit, T** container){
 }
 
 void isr_timer(){
-	if(timerA.working)
-		timerA.increment();
-	if(timerB.working)
-		timerB.increment();
-	if(timerLED.working)
-		timerLED.increment();
-	if(timerSERIAL.working)
-		timerSERIAL.increment();
+	STimer::static_timer_count++;
 }
 
 void sendError(Str err){

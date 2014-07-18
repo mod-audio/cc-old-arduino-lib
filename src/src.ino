@@ -53,11 +53,11 @@ void setup() {
 }
 
 void loop() {
-	if((int) swit->getValue() == 0){
-		PRINT("FREE RAM: [");
-		PRINT(freeRam());
-		PRINT("] ");
-	}
+	// if((int) swit->getValue() == 0){
+	// 	PRINT("FREE RAM: [");
+	// 	PRINT(freeRam());
+	// 	PRINT("] ");
+	// }
 
 	device->connectDevice();
 

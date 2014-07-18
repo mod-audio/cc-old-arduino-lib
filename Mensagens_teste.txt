@@ -25,3 +25,12 @@ s.write('\xAA\x80\x00\x04\x01\x00\x01\x30');s.readall()
 s.write('\xAA\x80\x00\x04\x01\x00\x02\x31');s.readall()
 s.write('\xAA\x80\x00\x04\x01\x00\x03\x32');s.readall()
 s.write('\xAA\x80\x00\x04\x01\x00\x04\x33');s.readall()
+
+Teste automatizado:
+
+import time;
+i = 100; x = 0;
+while(i):
+    s.write('\xAA\x80\x00\x04\x01\x00%c%c' % (x,0x2F+x));
+    i -= 1; x += 1;
+    time.sleep(0.002)

@@ -28,5 +28,6 @@ typedef struct __attribute__((__packed__)) CHAIN_T {
 void comm_setup(void (*parser_cb)(chain_t *chain));
 void comm_send(chain_t *chain);
 void comm_set_address(uint8_t address);
+chain_t* comm_get_receive_pointer(void);
 
 #endif

@@ -31,7 +31,6 @@ public:
 	Update* updates; // TODO resolver essa questão
 
 	chain_t*	chain;
-	// chain_t		chainREAL;
 
 	Device(char* url_id, char* label, uint8_t actuators_total_count, uint8_t channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
 		this->acts = new Actuator*[actuators_total_count];
@@ -57,9 +56,7 @@ public:
 
 		comm_setup(recv_cb);
 
-
-
-		this->chain = &g_chain;
+		this->chain = comm_get_receive_pointer();
 	}
 
 	~Device(){
@@ -421,7 +418,7 @@ public:
 					
 					timerA.reset();
 					
-					if(!Serial.available()){ 
+					if(!SBYTESAVAILABLE()){ 
 						sendMessage(FUNC_CONNECTION);
 					}
 				}

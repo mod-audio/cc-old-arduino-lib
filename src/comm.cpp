@@ -30,7 +30,7 @@ static uint8_t decode(uint8_t byte, uint8_t *decoded)
         {
             (*decoded) = CHAIN_ESCAPE_BYTE;
         }
-        else if (byte == ~CHAIN_SYNC_BYTE)
+        else if (byte == (uint8_t)(~CHAIN_SYNC_BYTE))
         {
             (*decoded) = CHAIN_SYNC_BYTE;
         }
@@ -51,7 +51,7 @@ static uint8_t encode(uint8_t byte, uint8_t *buffer)
     if (byte == CHAIN_SYNC_BYTE)
     {
         buffer[0] = CHAIN_ESCAPE_BYTE;
-        buffer[1] = ~CHAIN_SYNC_BYTE;
+        buffer[1] = (uint8_t)(~CHAIN_SYNC_BYTE);
         return 2;
     }
     else if (byte == CHAIN_ESCAPE_BYTE)

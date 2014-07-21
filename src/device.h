@@ -211,14 +211,15 @@ public:
 
 						if(data_request_seq != (old_data_request_seq + 1)%256){
 							backUpMessage(0,BACKUP_SEND);
-							send(0,NULL,true);//VOLTAR
+							// send(0,NULL,true);//VOLTAR
 							old_data_request_seq = data_request_seq;
 						}
 						else{
 
 							backUpMessage(0,BACKUP_RESET);
-							sendMessage(FUNC_DATA_REQUEST);
-							old_data_request_seq = data_request_seq;
+							if(sendMessage(FUNC_DATA_REQUEST)){
+								old_data_request_seq = data_request_seq;
+							}
 						}
 
 					}
@@ -242,7 +243,7 @@ public:
 		}
 	}
 
-	void sendMessage(uint8_t function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
+	int sendMessage(uint8_t function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
 
 		int changed_actuators = 0;
 		Word data_size;
@@ -272,11 +273,11 @@ public:
 				}
 
 				if(!changed_actuators){
-					// for (int i = 0; i < actuators_counter; ++i){
-					// 	if(acts[i]->changed)
-					// 		acts[i]->postMessageRotine();
-					// }
-					return;
+				// 	// for (int i = 0; i < actuators_counter; ++i){
+				// 	// 	if(acts[i]->changed)
+				// 	// 		acts[i]->postMessageRotine();
+				// 	// }
+					return 0;
 				}
 				// (param id (1) + param value (4)) * changed params (n) + params count (1) + addr request count (1) + addr requests(n)
 				data_size.data16 = changed_actuators*5 + 2;
@@ -354,6 +355,7 @@ public:
 				backUpMessage(data_size.data8[0], BACKUP_RECORD);
 				backUpMessage(data_size.data8[1], BACKUP_RECORD);
 
+				backUpMessage(changed_actuators, BACKUP_RECORD);
 				send(changed_actuators);
 
 				for (int i = 0; i < actuators_counter; ++i){
@@ -365,7 +367,6 @@ public:
 					// PRINT("]:");
 
 					if(acts[i]->changed && acts[i]->addrs[0] != NULL){
-
 
 						this->acts[i]->getUpdates(this->updates);
 						this->updates->sendDescriptor();
@@ -404,6 +405,8 @@ public:
 			if(acts[i]->changed)
 				acts[i]->postMessageRotine();
 		}
+
+		return 1;
 	}
 
 	void connectDevice(){

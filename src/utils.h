@@ -390,19 +390,25 @@ void send(char* msg, int length){ //same thing for strings
 void backUpMessage(char byte, int action){
 	static char backup[MAX_DATA_SIZE];
 	static int i = 0;
+	static bool has_content = false;
 
 	switch(action){
 		case BACKUP_RECORD:
+			has_content = true;
 			backup[i] = byte;
 			i++;
 		break;
 
 		case BACKUP_RESET:
+			has_content = false;
 			i = 0;
 		break;
 
 		case BACKUP_SEND:
-			send(&backup[0], i);
+			if(has_content){
+				send(&backup[0], i);
+				send(0,NULL,true);
+			}
 		break;
 	}
 }

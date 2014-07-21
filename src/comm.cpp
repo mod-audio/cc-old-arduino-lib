@@ -4,16 +4,16 @@
 #include <Arduino.h>
 
 // defines
-enum {SYNC, DESTINATION, ORIGIN, FUNCTION, DATA_SIZE_LSB, DATA_SIZE_MSB, DATA, CHECKSUM, UNKNOWN = 0xFF};
+enum {SYNC, DESTINATION, ORIGIN, FUNCTION, DATA_SIZE_LSB, DATA_SIZE_MSB, DATA, CHECKSUM};
 
 // macros
 #define READ_MODE()     digitalWrite(SERIAL_READ_WRITE_PIN, LOW)
-#define WRITE_MODE()    digitalWrite(SERIAL_READ_WRITE_PIN, HIGH); delayMicroseconds(10)
+#define WRITE_MODE()    digitalWrite(SERIAL_READ_WRITE_PIN, HIGH); delayMicroseconds(30)
 
 // local variables
 static chain_t g_chain;
 static void (*g_parser_cb)(chain_t *chain_data) = NULL;
-static uint8_t g_address;
+static uint8_t g_fsm_state, g_address;
 
 ////////////////////////////////////////////////////////////////////////////////
 // local functions definitions
@@ -30,7 +30,7 @@ static uint8_t decode(uint8_t byte, uint8_t *decoded)
         {
             (*decoded) = CHAIN_ESCAPE_BYTE;
         }
-        else if (byte == ~CHAIN_SYNC_BYTE)
+        else if (byte == (uint8_t)(~CHAIN_SYNC_BYTE))
         {
             (*decoded) = CHAIN_SYNC_BYTE;
         }
@@ -51,7 +51,7 @@ static uint8_t encode(uint8_t byte, uint8_t *buffer)
     if (byte == CHAIN_SYNC_BYTE)
     {
         buffer[0] = CHAIN_ESCAPE_BYTE;
-        buffer[1] = ~CHAIN_SYNC_BYTE;
+        buffer[1] = (uint8_t)(~CHAIN_SYNC_BYTE);
         return 2;
     }
     else if (byte == CHAIN_ESCAPE_BYTE)
@@ -71,64 +71,66 @@ static uint8_t encode(uint8_t byte, uint8_t *buffer)
 
 static bool chain_fsm(uint8_t byte) 
 {
-    static uint8_t state = UNKNOWN, checksum;
+    static uint8_t checksum;
     static uint16_t received;
     uint16_t tmp;
 
-    if (byte == CHAIN_SYNC_BYTE) state = SYNC;
-    if (state != CHECKSUM) checksum += byte;
+    if (g_fsm_state != CHECKSUM) checksum += byte;
 
-    switch (state)
+    switch (g_fsm_state)
     {
         case SYNC:
-            g_chain.data_size = 0;
-            received = 0;
-            checksum = CHAIN_SYNC_BYTE;
-            state++;
+            if (byte == CHAIN_SYNC_BYTE)
+            {
+                g_chain.data_size = 0;
+                received = 0;
+                checksum = CHAIN_SYNC_BYTE;
+                g_fsm_state++;
+            }
             break;
 
         case DESTINATION:
             if (g_address == 0 || (g_address == byte && g_address >= CHAIN_FIRST_DEV_ADDR))
             {
                 g_chain.destination = byte;
-                state++;    
+                g_fsm_state++;
             }
             else
             {
-                state = UNKNOWN;            
+                g_fsm_state = SYNC;
             }
             break;
 
         case ORIGIN:
             g_chain.origin = byte;
-            state++;
+            g_fsm_state++;
             break;
 
         case FUNCTION:
             g_chain.function = byte;
-            state++;
+            g_fsm_state++;
             break;
 
         case DATA_SIZE_LSB:
             g_chain.data_size = byte;
-            state++;
+            g_fsm_state++;
             break;
 
         case DATA_SIZE_MSB:
             tmp = byte;
             tmp <<= 8;
             g_chain.data_size |= tmp;
-            state++;
-            if (g_chain.data_size == 0) state++;
+            g_fsm_state++;
+            if (g_chain.data_size == 0) g_fsm_state++;
             break;
 
         case DATA:
             g_chain.data[received++] = byte;
-            if (received == g_chain.data_size) state = CHECKSUM;
+            if (received == g_chain.data_size) g_fsm_state = CHECKSUM;
             break;
 
         case CHECKSUM:
-            state = UNKNOWN;
+            g_fsm_state = SYNC;
             if (byte == checksum) return true;
             break;
     }
@@ -139,6 +141,10 @@ static bool chain_fsm(uint8_t byte)
 static void rx_cb(uint8_t byte)
 {
     if (!g_parser_cb) return;
+
+    // check if is the sync byte before decode it
+    // case true, forces the chain fsm to initial state
+    if (byte == CHAIN_SYNC_BYTE) g_fsm_state = SYNC;
 
     if (decode(byte, &byte) && chain_fsm(byte))
     {
@@ -183,15 +189,11 @@ void comm_send(chain_t *chain)
     uint8_t buffer[2];
     WRITE_MODE();
     Serial.write(CHAIN_SYNC_BYTE);
-    Serial.flush();
     for (i = 0; i < (chain->data_size + 6); i++)
     {
         Serial.write(buffer, encode(*raw_data++, buffer));
         Serial.flush();
     }
-
-    // Serial.write(CHAIN_SYNC_BYTE);
-    // Serial.flush();
     READ_MODE();
 }
 

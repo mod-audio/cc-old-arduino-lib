@@ -213,6 +213,8 @@ public:
 
 	void sendDescriptor(){
 
+		// PRINT("SD_");
+
 		send(this->updates->addressing_id);
 
 		send(this->updates->value.c[0]);
@@ -235,15 +237,15 @@ public:
 	Mode** 				modes;
 	uint16_t* 			steps;
 
-	uint8_t 				slots_total_count; //how many parameters the actuator can support simultaneously
-	uint8_t 				modes_total_count;  //how many modes the actuator have
-	uint8_t 				steps_total_count;  //size of steps list
+	uint8_t 			slots_total_count; //how many parameters the actuator can support simultaneously
+	uint8_t 			modes_total_count;  //how many modes the actuator have
+	uint8_t 			steps_total_count;  //size of steps list
 
-	uint8_t 				slots_counter;  //how many slots the actuator have occupied until now
-	uint8_t 				modes_counter;  //how many modes the actuator have until now
-	uint8_t 				steps_counter;  //size of steps list until now
+	uint8_t 			slots_counter;  //how many slots the actuator have occupied until now
+	uint8_t 			modes_counter;  //how many modes the actuator have until now
+	uint8_t 			steps_counter;  //size of steps list until now
 
-	uint8_t 				visual_output_level;
+	uint8_t 			visual_output_level;
 	bool				changed;
 
 	float 				old_value;
@@ -254,7 +256,7 @@ public:
 	Actuator(char* name, uint8_t id, uint8_t slots_total_count, uint8_t modes_total_count, uint8_t steps_total_count, uint8_t visual_output_level):
 	name(name), id(id), slots_total_count(slots_total_count), modes_total_count(modes_total_count), 
 	steps_total_count(steps_total_count), slots_counter(0), modes_counter(0), steps_counter(0), visual_output_level(visual_output_level){
-		this->addrs = new Addressing*[slots_total_count];
+		this->addrs = new Addressing*[slots_total_count]();
 		this->modes = new Mode*[modes_total_count];
 		this->steps = new uint16_t[steps_total_count];
 	}

@@ -372,6 +372,10 @@ void send(char byte, chain_t* ch=NULL, bool end=false){ // this function sends b
 		return;
 	}
 
+	// PRINT(" byte[");
+	// PRINT(byte);
+	// PRINT("]");
+
 	ptruint[counter] = byte;
 	counter++;
 

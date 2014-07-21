@@ -23,7 +23,7 @@ public:
 	uint8_t id;					// address given by the host
 	uint8_t channel; 				// differentiate 2 identical devices
 	uint8_t actuators_total_count;	// quantity of actuators in the device
-	uint8_t actuators_counter=0;		// quantity of actuators in the device
+	uint8_t actuators_counter;		// quantity of actuators in the device
 	uint8_t state;					// state in which the device is, protocol-wise
 
 	Actuator**	acts;			// vector which holds all actuators pointers
@@ -176,11 +176,11 @@ public:
 							}
 							else{
 
-								uint8_t param_id = ptr[CTRLADDR_ADDR_ID];
+								// uint8_t param_id = ptr[CTRLADDR_ADDR_ID];
 
-								uint8_t label_size = ptr[CTRLADDR_LABEL_SIZE];
-								uint8_t value_pos = CTRLADDR_LABEL + label_size;
-								uint8_t s_p_count_pos = value_pos + 19 + ptr[value_pos+18];
+								// uint8_t label_size = ptr[CTRLADDR_LABEL_SIZE];
+								// uint8_t value_pos = CTRLADDR_LABEL + label_size;
+								// uint8_t s_p_count_pos = value_pos + 19 + ptr[value_pos+18];
 
 								Addressing* addr;
 
@@ -270,6 +270,14 @@ public:
 						changed_actuators++;
 					}
 				}
+
+				if(!changed_actuators){
+					// for (int i = 0; i < actuators_counter; ++i){
+					// 	if(acts[i]->changed)
+					// 		acts[i]->postMessageRotine();
+					// }
+					return;
+				}
 				// (param id (1) + param value (4)) * changed params (n) + params count (1) + addr request count (1) + addr requests(n)
 				data_size.data16 = changed_actuators*5 + 2;
 
@@ -349,7 +357,15 @@ public:
 				send(changed_actuators);
 
 				for (int i = 0; i < actuators_counter; ++i){
-					if(acts[i]->changed){
+
+					// PRINT(" [");
+					// PRINT(i);
+					// PRINT("|");
+					// PRINT((uint32_t)acts[i]->addrs[0]);
+					// PRINT("]:");
+
+					if(acts[i]->changed && acts[i]->addrs[0] != NULL){
+
 
 						this->acts[i]->getUpdates(this->updates);
 						this->updates->sendDescriptor();
@@ -384,7 +400,7 @@ public:
 
 		send(0,NULL,true);
 
-		for (int i = 0; i < changed_actuators; ++i){
+		for (int i = 0; i < actuators_counter; ++i){
 			if(acts[i]->changed)
 				acts[i]->postMessageRotine();
 		}

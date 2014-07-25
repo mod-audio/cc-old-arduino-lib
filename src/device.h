@@ -15,29 +15,42 @@ uint8_t g_device_id;
 
 void recv_cb(chain_t* chain);
 
+
+/*
+************************************************************************************************************************
+This class represents the model of a physic device, so it holds a list
+of actuators and a class chain, who will take care of the communication between
+device and MOD.
+************************************************************************************************************************
+*/
 class Device{
 
 public:
-	Str label; 					// friendly name
-	Str url_id; 				// device URL
-	uint8_t id;					// address given by the host
-	uint8_t channel; 				// differentiate 2 identical devices
-	uint8_t actuators_total_count;	// quantity of actuators in the device
-	uint8_t actuators_counter;		// quantity of actuators in the device
-	uint8_t state;					// state in which the device is, protocol-wise
+	Str 		label; 					// friendly name
+	Str 		url_id; 				// device URL
+	uint8_t 	id;						// address given by the host
+	uint8_t 	channel; 				// differentiate 2 identical devices
+	uint8_t 	actuators_total_count;	// quantity of actuators in the device
+	uint8_t 	actuators_counter;		// quantity of actuators in the device
+	uint8_t 	state;					// state in which the device is, protocol-wise
 
-	Actuator**	acts;			// vector which holds all actuators pointers
+	Actuator**	acts;					// vector which holds all actuators pointers
 
-	Update* updates; // TODO resolver essa questão
+	Update* 	updates;				// hold the information that will be send to host
 
-	chain_t*	chain;
+	chain_t*	chain;					// this pointer receives the address to an already instantiated chain object, which is located in comm.cpp
 
-	Device(char* url_id, char* label, uint8_t actuators_total_count, uint8_t channel) : url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count), state(CONNECTING), channel(channel), actuators_counter(0){
+	Device(char* url_id, char* label, uint8_t actuators_total_count, uint8_t channel):
+	url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count),
+	state(CONNECTING), channel(channel), actuators_counter(0){
+
 		this->acts = new Actuator*[actuators_total_count];
 		this->updates = new Update();
 
+		//This timer is responsible for connection's random period for sending handshake message
 		timerA.start();
 
+		//These ifdefs switches between AVR and ARM compatible timers
 		#ifdef ARDUINO_ARCH_SAM
 		DueTimer timerDue(1000);
 		timerDue = DueTimer::getAvailable();
@@ -56,6 +69,7 @@ public:
 
 		comm_setup(recv_cb);
 
+		// chain receives an address from chain object already instantiated in comm.cpp
 		this->chain = comm_get_receive_pointer();
 	}
 
@@ -69,6 +83,7 @@ public:
 ************************************************************************************************************************
 */
 
+	// adds an actuator pointer to the pointer vector.
 	void addActuator(Actuator* actuator_class){
 		if(actuators_counter >= actuators_total_count){
 			ERROR("Actuators limit overflow!");
@@ -81,6 +96,7 @@ public:
 		}
 	}
 
+	// receives actuator id (not necessarily equal to actuator's index on acts[]) and returns a pointer to that actuator
 	Actuator* searchActuator(int id){
 		for (int i = 0; i < actuators_counter; ++i){
 			if(acts[i]->id == id){
@@ -90,6 +106,7 @@ public:
 		return NULL;
 	}
 
+	// runs value calculation function on actuator class (or sub class)
 	void refreshValues(){
 		for (int i = 0; i < actuators_counter; ++i){
 			if(acts[i]->slots_counter){
@@ -103,14 +120,16 @@ public:
 *           Communication Related
 ************************************************************************************************************************
 */
+	// This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
+	void parse(chain_t* chain){ 
 
-	void parse(chain_t* chain){ // in_msg is what the device receives from host, encrypted
-
+		// struct containing message
 		this->chain = chain;
 
 		uint8_t* ptr = &chain->sync;
 
-		if(this->state == CONNECTING){ // connection response, checks URL and channel to associate address to device id.
+		// connection response, checks URL and channel to associate address to device id.
+		if(this->state == CONNECTING){
 			if(chain->function == FUNC_CONNECTION){
 
 				Str url( (char*) &ptr[POS_DATA_SIZE2+2] , ptr[POS_DATA_SIZE2+1] );
@@ -176,12 +195,6 @@ public:
 							}
 							else{
 
-								// uint8_t param_id = ptr[CTRLADDR_ADDR_ID];
-
-								// uint8_t label_size = ptr[CTRLADDR_LABEL_SIZE];
-								// uint8_t value_pos = CTRLADDR_LABEL + label_size;
-								// uint8_t s_p_count_pos = value_pos + 19 + ptr[value_pos+18];
-
 								Addressing* addr;
 
 								addr = new Addressing(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
@@ -226,7 +239,7 @@ public:
 					
 				break;
 				
-				case FUNC_CONTROL_UNADDRESSING:
+				case FUNC_CONTROL_UNADDRESSING://TODO
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("No control assigned.")
 						return;
@@ -243,6 +256,7 @@ public:
 		}
 	}
 
+	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that
 	int sendMessage(uint8_t function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
 
 		int changed_actuators = 0;
@@ -409,6 +423,7 @@ public:
 		return 1;
 	}
 
+	// initialize conversation between device and host
 	void connectDevice(){
 		static bool ledpos = 0;
 		static bool ledpose = 0;
@@ -442,7 +457,7 @@ public:
 						sendMessage(FUNC_CONNECTION);
 					}
 				}
-				ledpos^=1;
+				ledpos^=1; // THIS LINE IS A MISTERY
 			}
 		}
 		else {

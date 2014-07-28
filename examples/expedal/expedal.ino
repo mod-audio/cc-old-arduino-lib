@@ -2,7 +2,7 @@
 #include "device.h"
 #include "actuator.h"
 #include "linearsensor.h"
-#include "switch.h"
+#include "button.h"
 
 #define POT_MAX 1014
 #define POT_MIN 8

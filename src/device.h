@@ -152,10 +152,12 @@ public:
 		else{
 			switch(chain->function){
 				
+				// if already connected and debug flag is on, an error message is sent on serial connection.
 				case FUNC_CONNECTION:
 					ERROR("Device already connected.");
 				break;
 				
+				// returns device descriptor
 				case FUNC_DEVICE_DESCRIPTOR:
 					if(this->state != WAITING_DESCRIPTOR_REQUEST && this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting descriptor request.")
@@ -168,7 +170,7 @@ public:
 					}
 				break;
 				
-				case FUNC_CONTROL_ADDRESSING:
+				case FUNC_CONTROL_ASSIGNMENT:
 					if(this->state != WAITING_CONTROL_ADDRESSING && this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting control addressing.");
 					}
@@ -178,21 +180,27 @@ public:
 
 						Actuator* act;
 
+						// Since actuator ID and index on the vector 'acts' are not necessarily the same, this function returns a pointer to
+						// the ID placed as parameter. 
 						if(!(act = searchActuator(ptr[CTRLADDR_ACT_ID]))){
 							ERROR("Actuator does not exist.");
 							return;
 						}
+						// In case the pointer is not NULL.
 						else{
 
+							// Checks if the mode is not supported on the device.
 							if(!((ptr[CTRLADDR_CHOSEN_MASK1] & ptr[CTRLADDR_PORT_MASK]) == ptr[CTRLADDR_CHOSEN_MASK2])){
 								ERROR("Mode not supported in this actuator.");
-								sendMessage(FUNC_CONTROL_ADDRESSING, -1);
+								sendMessage(FUNC_CONTROL_ASSIGNMENT, -1);
 								return;
 							}
+							// Checks if the parameter has no slots to contain the parameter.
 							else if(act->slots_counter >= act->slots_total_count){
 									ERROR("Maximum parameters addressed already.");
 									return;
 							}
+							// if everything is ok, the parameter is assigned to the actuator.
 							else{
 
 								Addressing* addr;
@@ -201,9 +209,7 @@ public:
 
 								act->address(addr);
 
-								// addr->sendDescriptor();//VOLTAR
-
-								sendMessage(FUNC_CONTROL_ADDRESSING, 0);
+								sendMessage(FUNC_CONTROL_ASSIGNMENT, 0);
 								this->state = WAITING_DATA_REQUEST;
 
 							}
@@ -214,21 +220,25 @@ public:
 				
 				case FUNC_DATA_REQUEST:
 
+					// checks if the state is not propper to send a data request message.
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting data request.");
 						return;
 					}
 					else{
 						uint8_t data_request_seq = ptr[POS_DATA_SIZE2 + 1];
+						// Old data request serves to check if the data sequence was incremented, indicating that the host received the last message.
 						static uint8_t old_data_request_seq = data_request_seq - 1;
 
+						// if the data seq is not right, the last message sent on a data request is repeated.
 						if(data_request_seq != (old_data_request_seq + 1)%256){
 							backUpMessage(0,BACKUP_SEND);
 							// send(0,NULL,true);//VOLTAR
 							old_data_request_seq = data_request_seq;
 						}
 						else{
-
+							// if the seq is right, then the backup message is reseted and recorded again. Finally, the old dara seq is reassigned as 
+							// the newest data seq.
 							backUpMessage(0,BACKUP_RESET);
 							if(sendMessage(FUNC_DATA_REQUEST)){
 								old_data_request_seq = data_request_seq;
@@ -239,7 +249,8 @@ public:
 					
 				break;
 				
-				case FUNC_CONTROL_UNADDRESSING://TODO
+				// this function empty the addressing slot on a parameter, in case it has a parameter assigned.
+				case FUNC_CONTROL_UNASSIGNMENT://TODO
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("No control assigned.")
 						return;
@@ -256,7 +267,8 @@ public:
 		}
 	}
 
-	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that
+	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
+	// The integer returned in this function indicates if the message was sent or not.
 	int sendMessage(uint8_t function, Word status = 0 /*control addressing status*/, Str error_msg = ""){
 
 		int changed_actuators = 0;
@@ -305,12 +317,12 @@ public:
 				data_size.data16 = error_msg.length + 3;
 			break;
 
-			case FUNC_CONTROL_ADDRESSING:
+			case FUNC_CONTROL_ASSIGNMENT:
 				// response bytes
 				data_size.data16 = 2;
 			break;
 
-			case FUNC_CONTROL_UNADDRESSING:
+			case FUNC_CONTROL_UNASSIGNMENT:
 				data_size.data16 = 0;
 			break;
 
@@ -353,7 +365,7 @@ public:
 
 			break;
 
-			case FUNC_CONTROL_ADDRESSING: //control addressing and unaddressing
+			case FUNC_CONTROL_ASSIGNMENT: //control addressing and unaddressing
 
 				send(status.data8[0]);
 				send(status.data8[1]);
@@ -394,18 +406,18 @@ public:
 
 			break;
 			
-			case FUNC_CONTROL_UNADDRESSING: //control addressing and unaddressing
+			case FUNC_CONTROL_UNASSIGNMENT: //control addressing and unaddressing
 
 			break;
 			
-			case FUNC_ERROR:
+			case FUNC_ERROR: //TODO
 				send(1); // error within function
 
 				send(1); // error code
 
 				send(error_msg.length); // error message size
 
-				send(error_msg.length); // error message size
+				// send(error_msg.length); // error message size
 
 				send(error_msg.msg, error_msg.length);
 
@@ -413,8 +425,11 @@ public:
 
 		}
 
+		// this last send call doesn't send a message, it only notifys the message is over and should be sent by comm struct.
 		send(0,NULL,true);
 
+		// this loop runs an a post message rotine. The main purpose of this routine is to clean the 'changed' flag on actuators, specially
+		// those with a trigger assigned.
 		for (int i = 0; i < actuators_counter; ++i){
 			if(acts[i]->changed)
 				acts[i]->postMessageRotine();
@@ -430,9 +445,10 @@ public:
 		// pinMode(13, OUTPUT);
 		bool timer_flag = false;
 
-
+		// checks if device is trying to connect yet.
 		if(this->state == CONNECTING){
 			
+			// this timer takes care of led blinking while the device is not connected.
 			if(!timerLED.working){
 				pinMode(USER_LED, OUTPUT);
 				timerLED.start();
@@ -442,22 +458,26 @@ public:
 				checkConnectLED();
 			}
 
-			// timerA.setPeriod(1000); //// VOLTAR DEPOIS
+			// This timer sets a random period to send a connecting (or handshaking) message.
 			timerA.setPeriod(random(RANDOM_CONNECT_RANGE_BOTTOM, RANDOM_CONNECT_RANGE_TOP));
 
+			// While the timer has not triggered.
 			while(!timer_flag){
 
 				timer_flag = timerA.check();
 
+				// if the alarm is triggered.
 				if(timer_flag){
 					
+					// timerA Reseted.
 					timerA.reset();
 					
+					// If there are no bytes to read yet.
 					if(!SBYTESAVAILABLE()){ 
 						sendMessage(FUNC_CONNECTION);
 					}
 				}
-				ledpos^=1; // THIS LINE IS A MISTERY
+				ledpos^=1; // THIS LINE IS A MISTERY, no joke!
 			}
 		}
 		else {
@@ -468,6 +488,7 @@ public:
 		}
 	}
 
+	// If timerLED is triggered, the led light is changed to HIGH or LOW, depending on the previous status.
 	void checkConnectLED(){
 		static bool ledpos = 0;
 		if(timerLED.check()){
@@ -480,8 +501,10 @@ public:
 
 };
 
+// Only device object needed.
 Device* device;
 
+// Serial call back indicating a message is ready to be parsed.
 void recv_cb(chain_t *chain){
 	device->parse(chain);
 }

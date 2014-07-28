@@ -127,7 +127,7 @@ extern uint8_t g_device_id;
 // serial related MACROS
 
 
-#ifndef SBEGIN(__baud_rate) // sends one byte 
+#ifndef SBEGIN(__baud_rate) // Starts serial with and baud rate. 
 #define SBEGIN(__baud_rate) Serial.begin(__baud_rate)
 #endif
 
@@ -171,16 +171,23 @@ extern uint8_t g_device_id;
 *           Enumerations
 ************************************************************************************************************************
 */
-
+// Byte possition and its meaning on a message header until POS_DATA_SIZE2. After that only HEADER_SIZE is used.
 enum{POS_SYNC, POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2, NOT_USABLE_CHECKSUM, HEADER_SIZE}; // msg buffer positions
 
+// Byte possition and meaning in a control assignment message (on data part).
 enum{CTRLADDR_ACT_ID=6, CTRLADDR_CHOSEN_MASK1, CTRLADDR_CHOSEN_MASK2, CTRLADDR_ADDR_ID, CTRLADDR_PORT_MASK, CTRLADDR_LABEL_SIZE, CTRLADDR_LABEL};
 
+// Device state machine, it gives a hint about which message the device can receive or should send.
 enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ADDRESSING, WAITING_DATA_REQUEST}; //device state
-enum{DESTINATION = 1, ORIGIN}; // device addressing 
-enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS}; // visual output level
 
-enum{BACKUP_RECORD, BACKUP_RESET, BACKUP_SEND}; // Backup Message actions
+// device addressing 
+enum{DESTINATION = 1, ORIGIN};
+
+// visual output level. This indicates if the device can or cannot display a information.
+enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};
+
+// Backup Message actions
+enum{BACKUP_RECORD, BACKUP_RESET, BACKUP_SEND};
 
 
 /*
@@ -189,6 +196,7 @@ enum{BACKUP_RECORD, BACKUP_RESET, BACKUP_SEND}; // Backup Message actions
 ************************************************************************************************************************
 */
 
+// This union is used to associate an float and use the float bytes separately on a message.
 union Value{
 	float f;
 	uint8_t c[4];
@@ -199,6 +207,7 @@ union Value{
 
 };
 
+// The next unions are used to read 2 bytes as a 16 bit in or as 2 bytes separately. 
 union u_Word{
 	uint16_t data16;
 	uint8_t data8[2];
@@ -217,6 +226,11 @@ union Word{
 	Word(int8_t x, int8_t y):data8{x,y}{}
 };
 
+/*
+************************************************************************************************************************
+This class represents a string. It was created to have more control over a string.
+************************************************************************************************************************
+*/
 class Str{
 public:
 	char* msg;
@@ -287,6 +301,13 @@ public:
 	}
 };
 
+
+/*
+************************************************************************************************************************
+This class is a software timer created to remove the weight from timer interruption.
+************************************************************************************************************************
+*/
+
 typedef uint32_t mod_timer_t;
 
 class STimer
@@ -343,20 +364,22 @@ STimer timerB(1);
 STimer timerSERIAL(1);
 STimer timerLED(1);
 
-// Msg message;
-
 /**************************************************************************************
                                     Functions
 ***************************************************************************************/
 
 
+// this function works on uno (don't know if it works on another arduino, certainly not on due.)
+// it returns the distance in bytes from stack top to used heap memory.
 int freeRam () {
   extern int __heap_start, *__brkval; 
   int v; 
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
-void send(char byte, chain_t* ch=NULL, bool end=false){ // this function sends bytes via swrite
+// this function associates bytes to a chain_t struct, when the message is ready, it calls comm_send so the message
+// is sent in one stroke.
+void send(char byte, chain_t* ch=NULL, bool end=false){
 	static chain_t* ptrchain = NULL;
 	static uint8_t* ptruint = NULL;
 	static int counter = 0;
@@ -372,24 +395,23 @@ void send(char byte, chain_t* ch=NULL, bool end=false){ // this function sends b
 		return;
 	}
 
-	// PRINT(" byte[");
-	// PRINT(byte);
-	// PRINT("]");
-
 	ptruint[counter] = byte;
 	counter++;
 
 }
 
+// this function calls the above function to each byte of a string.
 void send(char* msg, int length){ //same thing for strings
 	for (int i = 0; i < length; ++i){
 		send(msg[i]);		
 	}
 }
 
+// Records, byte by byte, a message to send in case host didn't receive the last one.
 void backUpMessage(char byte, int action){
 	static char backup[MAX_DATA_SIZE];
 	static int i = 0;
+	// if no message was sent yet, this flag indicates that theres no backup to send.
 	static bool has_content = false;
 
 	switch(action){
@@ -413,6 +435,7 @@ void backUpMessage(char byte, int action){
 	}
 }
 
+// calculates a message checksum, its no longer used.
 uint8_t checkSum(char* msg, int length){
 	uint8_t checksum = 0;
 
@@ -423,6 +446,7 @@ uint8_t checkSum(char* msg, int length){
 	return checksum;
 }
 
+// receives an id, spits a pointer to something with that id.
 template<typename T> T* IdToPointer(int id, int counter_limit, T** container){
 	for (int i = 0; i < counter_limit; ++i)
 	{
@@ -434,10 +458,12 @@ template<typename T> T* IdToPointer(int id, int counter_limit, T** container){
 	}
 }
 
+// timer interrupt callback
 void isr_timer(){
 	STimer::static_timer_count++;
 }
 
+// sends an error message.
 void sendError(Str err){
 
 	// u_Word dt_sz(3 + err.length);

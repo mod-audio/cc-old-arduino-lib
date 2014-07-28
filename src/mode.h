@@ -3,11 +3,20 @@
 
 #include "utils.h"
 
+
+/*
+************************************************************************************************************************
+This class retains the information about LV2 modes that an actuator supports.
+************************************************************************************************************************
+*/
 class Mode
 {
 public:
-	uint8_t relevant_properties; 	// defines which lv2 properties are relevant to the parameter
-	uint8_t property_values; 		// defines which state the bits selected above must be set to address something
+	// defines which lv2 properties are relevant to the parameter	
+	uint8_t relevant_properties;
+	// defines which state the bits selected above must be set to address something
+	uint8_t property_values;
+	// mode label.
     Str label;
 
 	Mode(){}
@@ -21,6 +30,7 @@ public:
 		delete p_lab;
 	}
 
+	// This function configures the mode, usually this is called on a actuator subclass constructor.
 	void expects(uint8_t property, bool value) {
 		this->relevant_properties |= property;
 		if (value) {
@@ -28,10 +38,12 @@ public:
 		}
 	}
 
+	// returns the mode descriptor size.
 	uint8_t descriptorSize(){
 		return 2 + 1 + label.length;
 	}
 
+	// sends the mode descriptor.
 	void sendDescriptor(){
 		send(relevant_properties);
 		send(property_values);

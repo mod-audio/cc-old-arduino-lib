@@ -4,6 +4,11 @@
 #include "utils.h"
 #include "mode.h"
 
+/*
+************************************************************************************************************************
+This class holds Scale points information, it's contained on an actuator.
+************************************************************************************************************************
+*/
 class ScalePoint{
 public:
 	Str 	label;
@@ -24,10 +29,15 @@ public:
 
 // SPBank	bank_sp;
 
+/*
+************************************************************************************************************************
+This class holds a parameter assignment information, an actuator can have more than 1 addressing.
+************************************************************************************************************************
+*/
 class Addressing{
 public:
 
-	// Fixed size part
+	// static part
 
 	Mode		mode;
 	uint8_t		port_properties=0;
@@ -38,14 +48,14 @@ public:
 	Word		steps;
 
 	uint8_t 		id;
+	uint8_t			scale_points_counter=0;
+	uint8_t			scale_points_total_count=0;
 
 	// Dynamic part
-
+	// this is the parts that can be allocated and deallocated in execution time.
 	Str*			label;
 	Str*			unit;
 	ScalePoint**	scale_points;
-	uint8_t			scale_points_counter=0;
-	uint8_t			scale_points_total_count=0;
 
 
 	Addressing(int visual_output_level, uint8_t* ctrl_data):
@@ -121,6 +131,7 @@ public:
 		}
 	}
 
+	// associates a pointer of ScalePoint to a list of pointers contained in Actuators class.
 	void addScalePoint(ScalePoint* sp){
 		if(scale_points_counter >= scale_points_total_count){
 			ERROR("Scale points overflow!");
@@ -133,6 +144,7 @@ public:
 		}
 	}
 
+	// This function was used in debbuging time, it sends a readable description of actuator state.
 	void sendDescriptor(){
 		// PRINT("  label  ");
 		// send(label->msg, label->length);
@@ -185,6 +197,11 @@ public:
 
 };
 
+/*
+************************************************************************************************************************
+This class holds a value update information.
+************************************************************************************************************************
+*/
 class ValueUpdate{
 public:
 	uint8_t addressing_id;
@@ -201,6 +218,12 @@ public:
 	}
 };
 
+/*
+************************************************************************************************************************
+This class holds information to send in data request response. It can hold more than one value update and
+more than one addressing request.
+************************************************************************************************************************
+*/
 class Update{
 public:
 	ValueUpdate* updates;
@@ -211,6 +234,7 @@ public:
 		this->addressing_requests = NULL; //TODO implementar isso ai
 	}
 
+	// sends valueupdate description.
 	void sendDescriptor(){
 
 		// PRINT("SD_");
@@ -230,6 +254,11 @@ public:
 	}
 };
 
+/*
+************************************************************************************************************************
+This class models a physical generic actuator.
+************************************************************************************************************************
+*/
 class Actuator{
 public:
 	Str 				name; // name displayed to user on mod-ui
@@ -266,6 +295,9 @@ public:
 		delete[] steps;
 	}
 
+	// These functions are supposed to be implemented in a subclass.
+	/////////////////////////////////////////////////////////////
+
 	virtual void getUpdates(Update* update)=0;
 
 	virtual void calculateValue()=0;
@@ -274,6 +306,9 @@ public:
 
 	virtual void postMessageChanges()=0;
 
+	/////////////////////////////////////////////////////////////
+
+	// associates a pointer to the addressing list contained in actuators class.
 	void address(Addressing* addressing){
  		if(slots_counter >= slots_total_count){
  			ERROR("Maximum parameters addressed already.");
@@ -284,6 +319,7 @@ public:
  		}
 	}
 
+	// frees a parameter slot.
 	void unaddress(uint8_t addressing_id){
 		if(!slots_counter){
  			ERROR("No parameters addressed.");
@@ -300,6 +336,7 @@ public:
 		}
 	}
 
+	// creates a mode with a label.
 	Mode*	supports(char* label){
 		if(modes_counter >= modes_total_count){
 			ERROR("Mode limit overflow!");
@@ -314,6 +351,7 @@ public:
 		}
 	}
 
+	// adds a step density to step list contained on actuators class.
 	void addStep(uint16_t step_number){
 		if(steps_counter >= steps_total_count){
 			ERROR("Step limit overflow!");
@@ -325,6 +363,7 @@ public:
 		}
 	}
 
+	// returns actuators descriptor size
 	uint16_t descriptorSize(){
 		uint16_t count = 0;
 		int i = 0;
@@ -345,6 +384,7 @@ public:
 
 	}
 
+	// checks if the value in the actuator changed.
 	bool checkChange(){
 		float value = getValue();
 
@@ -362,13 +402,15 @@ public:
 			return false;
 	}
 
-
+	// this function runs after the message is sent. It serves to clear the changed flag, which indicates that the actuator
+	// has changed its value.
 	void postMessageRotine(){
 		this->changed = false;
 
 		postMessageChanges();
 	}
 
+	// sends the actuator descriptor.
 	void sendDescriptor(){
 		Word step;
 		

@@ -7,7 +7,7 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 
-#define ACEL_RANGE			1900
+#define ACEL_RANGE			2000
 #define ACEL_MAX			ACEL_RANGE
 #define ACEL_MIN			-ACEL_RANGE
 #define ACEL_ATTENUATION 	1
@@ -20,44 +20,55 @@
 
 MPU6050 accelgyro(0x68); // <-- use for AD0 high
 
+/*
+************************************************************************************************************************
+PINS
+GND = GND
+VCC = 3.3v
+SCL = A5
+SDA	= A4
+************************************************************************************************************************
+*/
+
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 
 class Accele : public LinearSensor {
 public:
-	int max = ACEL_MAX/ACEL_ATTENUATION;
-	int min = ACEL_MIN/ACEL_ATTENUATION;
     int16_t* sensor;
-	float value;
+	float accel_value;
 
-	Accele(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){}
+	Accele(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){
+		maximum = ACEL_MAX/ACEL_ATTENUATION;
+		minimum = -ACEL_MIN/ACEL_ATTENUATION;
+	}
  
 	float getValue( ){
-        static float mean0 = 0;
-        static float mean1 = 0;
-        static float mean2 = 0;
+        // static float mean0 = 0;
+        // static float mean1 = 0;
+        // static float mean2 = 0;
 
         float mean = *sensor, val;
 
-        val = (val + mean0 + mean1 + mean2)/4;
+        // val = (val + mean0 + mean1 + mean2)/4;
 
-        mean2 = mean1;
-        mean1 = mean0;
-        mean0 = val;
+        // mean2 = mean1;
+        // mean1 = mean0;
+        // mean0 = val;
 
 
-		if(*sensor > ACEL_RANGE){// Nao deu certo.
-			val = (float) ACEL_RANGE;
+		if(*sensor > maximum){// Nao deu certo.
+			val = (float) maximum;
 		}
-		else if(*sensor < -ACEL_RANGE){
-			val = (float) -ACEL_RANGE;
+		else if(*sensor < minimum){
+			val = (float) minimum;
 		}
 		else
 			val = (float) *sensor;
 
-        value = asin((float) val/ACEL_RANGE);
+        accel_value = asin((float) val/ACEL_RANGE);
 
-        return ((float)2*ACEL_RANGE*value)/M_PI;
+        return ((float)2*ACEL_RANGE*accel_value)/M_PI;
 
 	}
 
@@ -69,7 +80,7 @@ Actuator* acel_z;
 
 void setup() {
 
-	device = new Device("http://portalmod.com/devices/XP", "Acelerometro", 3/*actuators count*/, 1);
+	device = new Device("http://portalmod.com/devices/accel", "Acelerometro", 3/*actuators count*/, 1);
 	acel_x = new Accele("Accel: x_axis", 1, &ax);
 	acel_y = new Accele("Accel: y_axis", 2, &ay);
 	acel_z = new Accele("Accel: z_axis", 3, &az);

@@ -11,10 +11,11 @@
 
 class Mypot : public LinearSensor {
 public:
-	int max = POT_MAX;
-	int min = POT_MIN;
 
-	Mypot(char* name, uint8_t id):LinearSensor(name, id){}
+	Mypot(char* name, uint8_t id):LinearSensor(name, id){
+		maximum = POT_MAX;
+		minimum = POT_MIN;
+	}
  
 	float getValue( ){
 		return analogRead(POT_PIN);
@@ -24,10 +25,9 @@ public:
 
 class Myswitch : public Button {
 public:
-	int max = 1;
-	int min = 0;
-
 	Myswitch(char* name, uint8_t id):Button(name, id, true){
+		maximum = 1;
+		minimum = 0;
 		pinMode(SWITCH_PIN, INPUT);
 	}
  

@@ -1,5 +1,10 @@
 ### Connection:
+// Expression pedal
 s.write('\xAA\x80\x00\x01\x23\x00\x1Fhttp://portalmod.com/devices/XP\x01\x01\x00\xEF')
+
+// Accelerometer
+s.write('\xaa\x00\x00\x01&\x00"http://portalmod.com/devices/accel\x01\x01\x00\xc5')
+
 
 ### Device Descriptor:
 s.write('\xAA\x80\x00\x02\x00\x00\x2C')

@@ -23,7 +23,7 @@ long Ultrasonic::Timing()
   digitalWrite(Trig_pin, HIGH);
   delayMicroseconds(10);
   digitalWrite(Trig_pin, LOW);
-  duration = pulseIn(Echo_pin,HIGH);
+  duration = pulseIn(Echo_pin,HIGH,2500);
   return duration;
 }
 

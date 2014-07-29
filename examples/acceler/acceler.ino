@@ -7,10 +7,10 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 
-#define ACEL_RANGE			2000
-#define ACEL_MAX			ACEL_RANGE
-#define ACEL_MIN			-ACEL_RANGE
 #define ACEL_ATTENUATION 	1
+#define ACEL_RANGE          2000/ACEL_ATTENUATION
+#define ACEL_MAX            ACEL_RANGE
+#define ACEL_MIN            -ACEL_RANGE
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
@@ -39,22 +39,22 @@ public:
 	float accel_value;
 
 	Accele(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){
-		maximum = ACEL_MAX/ACEL_ATTENUATION;
-		minimum = -ACEL_MIN/ACEL_ATTENUATION;
+		maximum = ACEL_MAX;
+		minimum = ACEL_MIN;
 	}
  
 	float getValue( ){
-        // static float mean0 = 0;
-        // static float mean1 = 0;
-        // static float mean2 = 0;
+        static float mean0 = 0;
+        static float mean1 = 0;
+        static float mean2 = 0;
 
         float mean = *sensor, val;
 
-        // val = (val + mean0 + mean1 + mean2)/4;
+        val = (val + mean0 + mean1 + mean2)/4;
 
-        // mean2 = mean1;
-        // mean1 = mean0;
-        // mean0 = val;
+        mean2 = mean1;
+        mean1 = mean0;
+        mean0 = val;
 
 
 		if(*sensor > maximum){// Nao deu certo.

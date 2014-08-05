@@ -12,6 +12,8 @@
 #define ACEL_MAX            ACEL_RANGE
 #define ACEL_MIN            -ACEL_RANGE
 
+#define MEAN_SAMPLES		4
+
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -44,29 +46,27 @@ public:
 	}
  
 	float getValue( ){
-        static float mean0 = 0;
-        static float mean1 = 0;
-        static float mean2 = 0;
+		// POSSIVEL SAMPLE RATE 781
 
-        float mean = *sensor, val;
+        static float mean[MEAN_SAMPLES] = {0};
 
-        val = (val + mean0 + mean1 + mean2)/4;
-
-        mean2 = mean1;
-        mean1 = mean0;
-        mean0 = val;
+		static float value_hold = 0;
 
 
 		if(*sensor > maximum){// Nao deu certo.
-			val = (float) maximum;
+			mean[0] = (float) maximum;
 		}
 		else if(*sensor < minimum){
-			val = (float) minimum;
+			mean[0] = (float) minimum;
 		}
 		else
-			val = (float) *sensor;
+			mean[0] = (float) *sensor;
 
-        accel_value = asin((float) val/ACEL_RANGE);
+		mean[0] = (3*value_hold + mean[0])/4;
+
+        accel_value = asin((float) mean[0]/ACEL_RANGE);
+
+		value_hold = mean[0];
 
         return ((float)2*ACEL_RANGE*accel_value)/M_PI;
 
@@ -89,7 +89,6 @@ void setup() {
 	device->addActuator(acel_y);
 	device->addActuator(acel_z);
 
-
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -100,15 +99,16 @@ void setup() {
     accelgyro.initialize();
 
     accelgyro.setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
+
 }
 
 void loop() {
- accelgyro.getAcceleration(&ax, &ay, &az);
+
+	accelgyro.getAcceleration(&ax, &ay, &az);
 
 	device->connectDevice();
 
 	device->refreshValues();
-
 }
 
 

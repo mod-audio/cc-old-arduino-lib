@@ -12,6 +12,16 @@
 #define TRIGG_PIN			8
 #define ECHO_PIN			9
 
+/*
+************************************************************************************************************************
+PINS
+VCC = 5v
+GND = GND
+TRIGGER = 8
+ECHO = 9
+************************************************************************************************************************
+*/
+
 
 class DistSensor : public LinearSensor {
 public:
@@ -27,7 +37,6 @@ public:
 
         static float mean0 = 0;
         static float mean1 = 0;
-        static float mean2 = 0;
         float val;
         
 		dist_value = ultrasonic.Ranging(CM);
@@ -43,9 +52,8 @@ public:
 			dist_value = minimum;
 		}
 
-        val = (dist_value + mean0 + mean1 + mean2)/4;
+        val = (dist_value + 3*mean0)/4;
 
-        mean2 = mean1;
         mean1 = mean0;
         mean0 = dist_value;
 
@@ -63,12 +71,15 @@ void setup() {
 
 	device->addActuator(ultrasensor);
 
+	// SBEGIN(115200);
 }
 
 void loop() {
 	device->connectDevice();
 
 	device->refreshValues();
+
+	// Serial.println(ultrasensor->getValue());
 }
 
 

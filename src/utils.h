@@ -96,14 +96,34 @@ extern uint8_t g_device_id;
 #define BYTE_SYNC					'\xAA'
 #define BYTE_ESCAPE					'\x1B'
 
+#define UNASSIG_ACT_ID				POS_DATA_SIZE2+1
+
 /*
 ************************************************************************************************************************
 *           Settings
 ************************************************************************************************************************
 */
 
+#ifndef USER_LED
 #define USER_LED 13
+#endif
+
+#ifndef CONNECTING_LED_PERIOD
 #define CONNECTING_LED_PERIOD 500 // milisseconds
+#endif
+
+#ifndef MAX_STR_SIZE
+#define MAX_STR_SIZE	5 // Max string size that will be accepted
+#endif
+
+#ifndef MAX_STR_N
+#define MAX_STR_N	5 // Max string number the device can handle
+#endif
+
+#ifndef MAX_SCALE_POINTS_N
+#define MAX_SCALE_POINTS_N	0 // Max scale points number the device can handle
+#endif
+
 
 /*
 ************************************************************************************************************************
@@ -112,7 +132,7 @@ extern uint8_t g_device_id;
 */
 
 #ifndef DEBUG_FLAG
-#define DEBUG_FLAG		0
+#define DEBUG_FLAG		1
 #endif
 
 #define VALUE_CHANGE_TOLERANCE   0.01
@@ -158,8 +178,8 @@ extern uint8_t g_device_id;
 #endif
 
 #ifndef ERROR(__str) // error msg
-#define ERROR(__str) sendError(__str);
-// #define ERROR(__str) if(DEBUG_FLAG) {PRINT(F("[ERROR]: << ")); PRINT(F(__str)); PRINT(F(" >> "));} 
+// #define ERROR(__str) sendError(__str);
+#define ERROR(__str) if(DEBUG_FLAG) {PRINT(F("<< ")); PRINT(F(__str)); PRINT(F(" >> "));} 
 #endif
 
 #ifndef WARN(__str) // warning msg
@@ -234,7 +254,8 @@ This class represents a string. It was created to have more control over a strin
 class Str{
 public:
 	char* msg;
-	int length;
+	int length=0;
+	int max_length=0;
 
 	Str(){}
 	Str(const char* msg){ //case it's a normal string like "prefiro o antigo protocolo"
@@ -243,6 +264,7 @@ public:
 		for (; msg[i] != '\0'; ++i);
 	
 		this->length = i;
+		this->max_length = i;
 
 		this->msg = new char[this->length];
 
@@ -251,12 +273,16 @@ public:
 		}
 	}
 
-	Str(char* msg, int length): length(length){ // case it's a serial msg, which includes \0 inside its content
+	Str(char* msg, int length): length(length), max_length(length){ // case it's a serial msg, which includes \0 inside its content
 		this->msg = new char[length];
 
 		for(int i = 0; i < length; i++){
 			this->msg[i] = msg[i];
 		}
+	}
+
+	Str(int length): length(length), max_length(length){
+		this->msg = new char[length];
 	}
 
 	~Str(){
@@ -280,10 +306,20 @@ public:
 		int i = 0;
 
 		for (; msg[i] != '\0'; ++i);
-	
-		this->length = i;
 
-		this->msg = new char[this->length];
+		if(this->length == 0){
+		
+			this->length = i;
+
+			this->msg = new char[this->length];
+			
+		}
+		else{
+			if(i < this->max_length)
+				this->length = i;
+			else
+				this->length = this->max_length;
+		}
 
 		for(i = 0; i < this->length; i++){
 			this->msg[i] = msg[i];
@@ -291,13 +327,120 @@ public:
 	}
 
 	Str & operator=(const Str &msg){
-		this->length = msg.length;
 
-		this->msg = new char[this->length];
+		if(this->length == 0){
+			this->length = msg.length;
+			this->msg = new char[this->length];
+		}
+		else{
+			if(msg.length < this->max_length)
+				this->length = msg.length;
+			else
+				this->length = this->max_length;
+		}
 
 		for(int i = 0; i < this->length; i++){
 			this->msg[i] = msg.msg[i];
 		}
+	}
+
+	void msgEdit(char* msg, int length){
+		if(this->length == 0){
+			this->length = length;
+			this->msg = new char[this->length];
+		}
+		else{
+			if(length < this->max_length)
+				this->length = length;
+			else
+				this->length = this->max_length;
+		}
+
+		for(int i = 0; i < this->length; i++){
+			this->msg[i] = msg[i];
+		}
+	}
+};
+
+Str 	emptyStr(""); // used to be pointed by unused strings
+
+/*
+************************************************************************************************************************
+This class holds a content and a flag stating if it is available.
+************************************************************************************************************************
+*/
+
+template <class P>
+class Packet
+{
+public:
+	P 	key;
+	bool available=true;
+
+	Packet():key(MAX_STR_SIZE){}
+	~Packet(){}
+
+};
+
+/*
+************************************************************************************************************************
+Holds an array of packets and take care of lending or freeing them to whoever requests.
+************************************************************************************************************************
+*/
+
+template <class B>
+class Bank
+{
+public:
+	Packet<B> reserve[MAX_STR_N];
+	int counter=0;
+
+	Bank(){
+
+	}
+	~Bank(){}
+
+	B* allocatePacket(){
+
+		if(counter >= MAX_STR_N){
+			return NULL;
+		}
+		else{
+			Packet<B>* st;
+			if(st = findFreePacket()){
+				st->available = false;
+				counter++;
+
+				return &st->key;
+			}
+			else{
+				return NULL;
+			}
+		}
+	}
+
+	Packet<B>* findFreePacket(){
+		for (int i = 0; i < MAX_STR_N; ++i){	
+			if(reserve[i].available){
+				return &(reserve[i]);
+			}
+		}
+		return NULL;
+	}
+
+	bool freePacket(B* &packet_key ){
+		if(packet_key != NULL && counter > 0){
+			for (int i = 0; i < MAX_STR_N; ++i){
+				if(&(reserve[i].key) == packet_key){
+					reserve[i].available = true;
+					counter--;
+					packet_key = &emptyStr;
+				}
+			}
+			return true;
+		}
+		else
+			return false;
 	}
 };
 
@@ -359,10 +502,12 @@ mod_timer_t STimer::static_timer_count = 0;
                                     Instantiations
 ***************************************************************************************/
 
-STimer timerA(1);
-STimer timerB(1);
-STimer timerSERIAL(1);
-STimer timerLED(1);
+STimer 	timerA(1);
+STimer 	timerB(1);
+STimer 	timerSERIAL(1);
+STimer 	timerLED(1);
+
+Bank<Str>	stringBank;
 
 /**************************************************************************************
                                     Functions
@@ -375,6 +520,18 @@ int freeRam () {
   extern int __heap_start, *__brkval; 
   int v; 
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
+
+// This function was created for debugging purposes
+void dsend(char byte){
+	PRINT(byte);
+}
+
+void dsend(char* msg, int length){
+	for (int i = 0; i < length; ++i)
+	{
+		dsend(msg[i]);
+	}
 }
 
 // this function associates bytes to a chain_t struct, when the message is ready, it calls comm_send so the message

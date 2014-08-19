@@ -100,9 +100,36 @@ void setup() {
 
     accelgyro.setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
 
+    ///voltar
+
+    device->state = WAITING_CONTROL_ADDRESSING;
+    device->id = '\x80';
+    acel_x->visual_output_level = VISUAL_SHOW_LABEL;
+    acel_y->visual_output_level = VISUAL_SHOW_LABEL;
+    acel_z->visual_output_level = VISUAL_SHOW_LABEL;
+
+    device->state = WAITING_CONTROL_ADDRESSING;
+
+    pinMode(A3, INPUT);
+
 }
 
+bool passou = false;
+
 void loop() {
+
+	if(digitalRead(A3) != 0){
+		if(!passou){
+			PRINT(" freeRam ");
+			PRINT(freeRam());
+			PRINT(" ");
+			passou = true;
+		}
+	}
+	else{
+		passou = false;
+	}
+
 
 	accelgyro.getAcceleration(&ax, &ay, &az);
 

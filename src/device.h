@@ -123,6 +123,7 @@ public:
 	// This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
 	void parse(chain_t* chain){ 
 
+
 		// struct containing message
 		this->chain = chain;
 
@@ -150,6 +151,8 @@ public:
 				return;
 		}
 		else{
+
+
 			switch(chain->function){
 				
 				// if already connected and debug flag is on, an error message is sent on serial connection.
@@ -171,6 +174,8 @@ public:
 				break;
 				
 				case FUNC_CONTROL_ASSIGNMENT:
+
+
 					if(this->state != WAITING_CONTROL_ADDRESSING && this->state != WAITING_DATA_REQUEST){
 						ERROR("Not waiting control addressing.");
 					}
@@ -205,9 +210,13 @@ public:
 
 								Addressing* addr;
 
-								addr = new Addressing(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
+								addr = new Addressing();
+								// addr = new Addressing(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
+
+								addr->setup(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
 
 								act->address(addr);
+
 
 								sendMessage(FUNC_CONTROL_ASSIGNMENT, 0);
 								this->state = WAITING_DATA_REQUEST;
@@ -255,9 +264,15 @@ public:
 						ERROR("No control assigned.")
 						return;
 					}
-					// else{
-					// 	if()
-					// }
+					else{
+						for (int i = 0; i < actuators_counter; ++i){
+							PRINT("AEew");
+							if(acts[i]->unaddress(ptr[UNASSIG_ACT_ID])){
+								sendMessage(FUNC_CONTROL_UNASSIGNMENT);
+								return;
+							}
+						}
+					}
 				break;
 				
 				case FUNC_ERROR:

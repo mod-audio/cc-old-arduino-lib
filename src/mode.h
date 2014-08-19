@@ -19,7 +19,7 @@ public:
 	// mode label.
     Str label;
 
-	Mode(){}
+	Mode():label(""){}
 	Mode(char* label):label(label), relevant_properties(0), property_values(0){}
 	Mode(uint8_t relevant_properties, uint8_t property_values):relevant_properties(relevant_properties), property_values(property_values), label(""){}
 	Mode(char* label, uint8_t relevant_properties, uint8_t property_values):label(label), relevant_properties(relevant_properties), property_values(property_values){}
@@ -27,7 +27,8 @@ public:
 		Str* p_lab;
 		p_lab = &label;
 
-		delete p_lab;
+		if(p_lab->msg[0] != NULL)
+			delete p_lab;
 	}
 
 	// This function configures the mode, usually this is called on a actuator subclass constructor.

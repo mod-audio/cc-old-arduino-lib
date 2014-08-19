@@ -58,10 +58,10 @@ public:
 	ScalePoint**	scale_points;
 
 
-	Addressing(int visual_output_level, uint8_t* ctrl_data):
-		mode(ctrl_data[0], ctrl_data[1]),
-		id(ctrl_data[2]),
-		port_properties(ctrl_data[3])
+	Addressing(/*int visual_output_level, uint8_t* ctrl_data*/)
+		// :mode(ctrl_data[0], ctrl_data[1]),
+		// id(ctrl_data[2]),
+		// port_properties(ctrl_data[3])
 		// value( {ctrl_data[5+ctrl_data[4] ], ctrl_data[5+ctrl_data[4] +1], ctrl_data[5+ctrl_data[4] +2], ctrl_data[5+ctrl_data[4] +3]}),
 		// minimum( {ctrl_data[5+ctrl_data[4] +4], ctrl_data[5+ctrl_data[4] +5], ctrl_data[5+ctrl_data[4] +6], ctrl_data[5+ctrl_data[4] +7]}),
 		// maximum( {ctrl_data[5+ctrl_data[4] +8], ctrl_data[5+ctrl_data[4] +9], ctrl_data[5+ctrl_data[4] +10], ctrl_data[5+ctrl_data[4] +11]}),
@@ -69,66 +69,90 @@ public:
 		// steps(ctrl_data[5+ctrl_data[4] +16],ctrl_data[5+ctrl_data[4] +17])
 		{
 
-		uint8_t label_size = ctrl_data[4];
-		uint8_t position = 5 + label_size;
 		
-		this->value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
-		position += 4;
+		// uint8_t label_size = ctrl_data[4];
+		// uint8_t position = 5 + label_size;
 		
-		this->minimum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
-		position += 4;
+		// this->value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		// position += 4;
 		
-		this->maximum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
-		position += 4;
+		// this->minimum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		// position += 4;
 		
-		this->default_value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
-		position += 2;
+		// this->maximum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		// position += 4;
 		
-		this->steps = {ctrl_data[position], ctrl_data[position + 1]};
-		position += 2;
+		// this->default_value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		// position += 4;
+		
+		// this->steps = {ctrl_data[position], ctrl_data[position + 1]};
+		// position += 2;
 
-		uint8_t s_p_count_pos = position + 1 + ctrl_data[position];
+		// uint8_t s_p_count_pos = position + 1 + ctrl_data[position];
 
-		// uint8_t s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
+		// 		// uint8_t s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
 
-		switch(visual_output_level){
-			case VISUAL_NONE:
-				// this->label = "";
-				// this->unit = "";
-			break;
-			case VISUAL_SHOW_LABEL:
-				// this->label = "";
-				// this->unit = "";
-			break;
-		// 	case VISUAL_SHOW_SCALEPOINTS:
-		// 		this->label = "";
-		// 		this->unit = "";
+		// switch(visual_output_level){
+		// 	case VISUAL_NONE:
+		// 		this->label = &emptyStr;
+		// 		this->unit = &emptyStr;
+		// 	break;
+		// 	case VISUAL_SHOW_LABEL:
 
-		// 		if(ctrl_data[s_p_count_pos]){
-											
-		// 			uint8_t s_p_label_size_pos;
-		// 			uint8_t s_p_label_size;
-		// 			uint8_t s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
-
-		// 			ScalePoint* sp;
-
-		// 			for (int i = 0; i < addr->scale_points_total_count; ++i){
-						
-		// 				s_p_label_size_pos = s_p_value_pos+4;
-		// 				s_p_label_size = ctrl_data[s_p_label_size_pos];
-		// 				s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
-
-		// 				send(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size);											
-
-		// 				sp = new ScalePoint(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size,
-		// 									ctrl_data[s_p_value_pos], ctrl_data[s_p_value_pos+1],
-		// 									ctrl_data[s_p_value_pos+2],ctrl_data[s_p_value_pos+3]);
-
-		// 				addr->addScalePoint(sp);
-
-		// 			}
+		// 		if(this->label = stringBank.allocatePacket()){
+		// 			this->label->msgEdit((char*) &(ctrl_data[5]), label_size );
 		// 		}
-		}
+		// 		else{
+		// 			this->label = &emptyStr;
+		// 		}
+		// 		if(this->unit = stringBank.allocatePacket()){
+		// 			this->unit->msgEdit((char*) &(ctrl_data[position+1]), ctrl_data[position]);
+		// 		}
+		// 		else{
+		// 			this->unit = &emptyStr;
+		// 		}
+
+
+
+		// 	break;
+
+			// case VISUAL_SHOW_SCALEPOINTS:
+			// 	this->label = stringBank.allocatePacket();
+			// 	this->unit = stringBank.allocatePacket();
+
+			// 	if(ctrl_data[s_p_count_pos]){
+											
+			// 		uint8_t s_p_label_size_pos;
+			// 		uint8_t s_p_label_size;
+			// 		uint8_t s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
+
+			// 		ScalePoint* sp;
+
+			// 		for (int i = 0; i < addr->scale_points_total_count; ++i){
+						
+			// 			s_p_label_size_pos = s_p_value_pos+4;
+			// 			s_p_label_size = ctrl_data[s_p_label_size_pos];
+			// 			s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
+
+			// 			send(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size);											
+
+			// 			sp = new ScalePoint(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size,
+			// 								ctrl_data[s_p_value_pos], ctrl_data[s_p_value_pos+1],
+			// 								ctrl_data[s_p_value_pos+2],ctrl_data[s_p_value_pos+3]);
+
+			// 			addr->addScalePoint(sp);
+
+			// 		}
+			// 	}
+			// break;
+		// }
+		
+		// sendDescriptor();
+	}
+
+	~Addressing(){
+		stringBank.freePacket(this->label);
+		stringBank.freePacket(this->unit);
 	}
 
 	// associates a pointer of ScalePoint to a list of pointers contained in Actuators class.
@@ -144,52 +168,126 @@ public:
 		}
 	}
 
+	void setup(int visual_output_level, uint8_t* ctrl_data){
+
+		this->mode = {ctrl_data[0], ctrl_data[1]};
+		this->id = ctrl_data[2];
+		this->port_properties = ctrl_data[3];
+
+		uint8_t label_size = ctrl_data[4];
+		uint8_t position = 5 + label_size;
+		
+		this->value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->minimum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->maximum = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->default_value = {ctrl_data[position], ctrl_data[position + 1], ctrl_data[position + 2], ctrl_data[position + 3]};
+		position += 4;
+		
+		this->steps = {ctrl_data[position], ctrl_data[position + 1]};
+		position += 2;
+
+		uint8_t s_p_count_pos = position + 1 + ctrl_data[position];
+
+				// uint8_t s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
+
+		switch(visual_output_level){
+			case VISUAL_NONE:
+				this->label = &emptyStr;
+				this->unit = &emptyStr;
+			break;
+			case VISUAL_SHOW_LABEL:
+
+				if(this->label = stringBank.allocatePacket()){
+					this->label->msgEdit((char*) &(ctrl_data[5]), label_size );
+				}
+				else{
+					this->label = &emptyStr;
+				}
+				if(this->unit = stringBank.allocatePacket()){
+					this->unit->msgEdit((char*) &(ctrl_data[position+1]), ctrl_data[position]);
+				}
+				else{
+					this->unit = &emptyStr;
+				}
+
+
+
+			break;
+
+			// case VISUAL_SHOW_SCALEPOINTS:
+			// 	this->label = stringBank.allocatePacket();
+			// 	this->unit = stringBank.allocatePacket();
+
+			// 	if(ctrl_data[s_p_count_pos]){
+											
+			// 		uint8_t s_p_label_size_pos;
+			// 		uint8_t s_p_label_size;
+			// 		uint8_t s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
+
+			// 		ScalePoint* sp;
+
+			// 		for (int i = 0; i < addr->scale_points_total_count; ++i){
+						
+			// 			s_p_label_size_pos = s_p_value_pos+4;
+			// 			s_p_label_size = ctrl_data[s_p_label_size_pos];
+			// 			s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
+
+			// 			send(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size);											
+
+			// 			sp = new ScalePoint(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size,
+			// 								ctrl_data[s_p_value_pos], ctrl_data[s_p_value_pos+1],
+			// 								ctrl_data[s_p_value_pos+2],ctrl_data[s_p_value_pos+3]);
+
+			// 			addr->addScalePoint(sp);
+
+			// 		}
+			// 	}
+			// break;
+		}
+		
+		sendDescriptor();
+	}
+
 	// This function was used in debbuging time, it sends a readable description of actuator state.
 	void sendDescriptor(){
-		// PRINT("  label  ");
-		// send(label->msg, label->length);
-		// PRINT("  unit  ");
-		// send(unit->msg, unit->length);
-		PRINT("  mode  ");
-		send((int)mode.relevant_properties);
-		send((int)mode.property_values);
-		PRINT("  port_properties  ");
-		send(port_properties);
-		PRINT("  value  ");
-		send(value.c[0]);
-		send(value.c[1]);
-		send(value.c[2]);
-		send(value.c[3]);
-		PRINT("  minimum  ");
-		send(minimum.c[0]);
-		send(minimum.c[1]);
-		send(minimum.c[2]);
-		send(minimum.c[3]);
-		PRINT("  maximum  ");
-		send(maximum.c[0]);
-		send(maximum.c[1]);
-		send(maximum.c[2]);
-		send(maximum.c[3]);
-		PRINT("  default_value  ");
-		send(default_value.c[0]);
-		send(default_value.c[1]);
-		send(default_value.c[2]);
-		send(default_value.c[3]);
-		PRINT("  steps  ");
-		send(steps.data8[0]);
-		send(steps.data8[1]);
+		PRINT(F(" label "));
+		dsend(label->msg, label->length);
+		PRINT(F(" unit "));
+		dsend(unit->msg, unit->length);
+		// PRINT(unit->length);
+		PRINT(F(" mode "));
+		PRINT((int)mode.relevant_properties);
+		PRINT((int)mode.property_values);
+		PRINT(F(" port_properties "));
+		PRINT(port_properties);
+		PRINT(F(" value "));
+		PRINT(value.f);
+		PRINT(F(" minimum "));
+		PRINT(minimum.f);
+		PRINT(F(" maximum "));
+		PRINT(maximum.f);
+		PRINT(F(" default_value "));
+		PRINT(default_value.f);
+		PRINT(F(" steps "));
+		PRINT(steps.data16);
 
 		if(scale_points_counter){
 			for (int i = 0; i < scale_points_counter; ++i){
-				PRINT("||||");
-				PRINT(" scale point ");
+				PRINT(F("||||"));
+				PRINT(F(" scale point "));
 				PRINT(i);
 
-				send(scale_points[i]->label.msg, scale_points[i]->label.length);
+				dsend(scale_points[i]->label.msg, scale_points[i]->label.length);
 				
-				PRINT(" value ");
-				send(scale_points[i]->value.f);
-				PRINT("||||");
+				PRINT(F(" value "));
+				PRINT(scale_points[i]->value.f);
+				PRINT(F("||||"));
 			}
 		}
 	}
@@ -261,12 +359,12 @@ This class models a physical generic actuator.
 */
 class Actuator{
 public:
-	Str 				name; // name displayed to user on mod-ui
+	Str 				name;  // name displayed to user on mod-ui
 	uint8_t				id = 0;
 	Mode** 				modes;
 	uint16_t* 			steps;
 
-	uint8_t 			slots_total_count; //how many parameters the actuator can support simultaneously
+	uint8_t 			slots_total_count;  //how many parameters the actuator can support simultaneously
 	uint8_t 			modes_total_count;  //how many modes the actuator have
 	uint8_t 			steps_total_count;  //size of steps list
 
@@ -320,7 +418,8 @@ public:
 	}
 
 	// frees a parameter slot.
-	void unaddress(uint8_t addressing_id){
+	bool unaddress(uint8_t addressing_id){
+
 		if(!slots_counter){
  			ERROR("No parameters addressed.");
 		}
@@ -329,11 +428,13 @@ public:
 			if(ptr = IdToPointer<Addressing>(addressing_id, slots_counter, addrs)){
 				delete ptr;
 				slots_counter--;
+				return true;
 			}
 			else{
 	 			ERROR("Parameter id not found.");
 			}
 		}
+		return false;
 	}
 
 	// creates a mode with a label.

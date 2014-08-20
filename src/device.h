@@ -123,7 +123,7 @@ public:
 	// This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
 	void parse(chain_t* chain){ 
 
-
+		// PRINT("parse "); //vv
 		// struct containing message
 		this->chain = chain;
 
@@ -208,14 +208,14 @@ public:
 							// if everything is ok, the parameter is assigned to the actuator.
 							else{
 
-								Addressing* addr;
+								static Addressing* addr;
+								addr = act->address();
 
-								addr = new Addressing();
+								// addr = new Addressing();
 								// addr = new Addressing(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
 
 								addr->setup(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
-
-								act->address(addr);
+								// act->address(addr);
 
 
 								sendMessage(FUNC_CONTROL_ASSIGNMENT, 0);
@@ -266,7 +266,7 @@ public:
 					}
 					else{
 						for (int i = 0; i < actuators_counter; ++i){
-							PRINT("AEew");
+							// PRINT("AEew"); //vv
 							if(acts[i]->unaddress(ptr[UNASSIG_ACT_ID])){
 								sendMessage(FUNC_CONTROL_UNASSIGNMENT);
 								return;

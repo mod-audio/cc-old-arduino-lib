@@ -132,7 +132,7 @@ extern uint8_t g_device_id;
 */
 
 #ifndef DEBUG_FLAG
-#define DEBUG_FLAG		1
+#define DEBUG_FLAG		0
 #endif
 
 #define VALUE_CHANGE_TOLERANCE   0.01

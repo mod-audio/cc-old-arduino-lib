@@ -39,6 +39,8 @@ class Accele : public LinearSensor {
 public:
     int16_t* sensor;
 	float accel_value;
+	float mean[MEAN_SAMPLES] = {0};
+	float value_hold = 0;
 
 	Accele(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){
 		maximum = ACEL_MAX;
@@ -48,9 +50,9 @@ public:
 	float getValue( ){
 		// POSSIVEL SAMPLE RATE 781
 
-        static float mean[MEAN_SAMPLES] = {0};
+  //       static float mean[MEAN_SAMPLES] = {0};
 
-		static float value_hold = 0;
+		// static float value_hold = 0;
 
 
 		if(*sensor > maximum){// Nao deu certo.
@@ -114,7 +116,7 @@ void setup() {
 
 }
 
-bool passou = false;
+// bool passou = false;
 
 void loop() {
 

@@ -169,7 +169,7 @@ public:
 						sendMessage(FUNC_DEVICE_DESCRIPTOR);
 						this->state = WAITING_CONTROL_ADDRESSING;
 
-						digitalWrite(USER_LED,LOW);//VOLTAR
+						// digitalWrite(USER_LED,LOW);//vv
 					}
 				break;
 				
@@ -181,7 +181,7 @@ public:
 					}
 					else{
 
-						digitalWrite(USER_LED,HIGH);//VOLTAR
+						// digitalWrite(USER_LED,HIGH);//vv
 
 						Actuator* act;
 
@@ -240,26 +240,29 @@ public:
 						static uint8_t old_data_request_seq = data_request_seq - 1;
 
 						// if the data seq is not right, the last message sent on a data request is repeated.
-						if(data_request_seq != (old_data_request_seq + 1)%256){
-							backUpMessage(0,BACKUP_SEND);
-							// send(0,NULL,true);//VOLTAR
-							old_data_request_seq = data_request_seq;
-						}
-						else{
-							// if the seq is right, then the backup message is reseted and recorded again. Finally, the old dara seq is reassigned as 
-							// the newest data seq.
+						// if(data_request_seq != (old_data_request_seq + 1)%256){
+						// 	backUpMessage(0,BACKUP_SEND);
+						// 	// send(0,NULL,true);//VOLTAR
+						// 	old_data_request_seq = data_request_seq;
+						// }
+						// else{
+						// 	// if the seq is right, then the backup message is reseted and recorded again. Finally, the old dara seq is reassigned as 
+						// 	// the newest data seq.
 							backUpMessage(0,BACKUP_RESET);
 							if(sendMessage(FUNC_DATA_REQUEST)){
 								old_data_request_seq = data_request_seq;
 							}
-						}
+						// }
 
 					}
 					
 				break;
 				
 				// this function empty the addressing slot on a parameter, in case it has a parameter assigned.
-				case FUNC_CONTROL_UNASSIGNMENT://TODO
+				case FUNC_CONTROL_UNASSIGNMENT:
+
+					digitalWrite(USER_LED,LOW);//vv
+				
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("No control assigned.")
 						return;

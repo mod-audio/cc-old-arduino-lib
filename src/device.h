@@ -1,6 +1,7 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#include "defines.h"
 #include "actuator.h"
 #include "utils.h"
 #include "comm.h"
@@ -123,7 +124,8 @@ public:
 	// This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
 	void parse(chain_t* chain){ 
 
-		// PRINT("parse "); //vv
+		static bool state = true;
+
 		// struct containing message
 		this->chain = chain;
 
@@ -152,7 +154,6 @@ public:
 		}
 		else{
 
-
 			switch(chain->function){
 				
 				// if already connected and debug flag is on, an error message is sent on serial connection.
@@ -169,7 +170,6 @@ public:
 						sendMessage(FUNC_DEVICE_DESCRIPTOR);
 						this->state = WAITING_CONTROL_ADDRESSING;
 
-						// digitalWrite(USER_LED,LOW);//vv
 					}
 				break;
 				
@@ -180,8 +180,6 @@ public:
 						ERROR("Not waiting control addressing.");
 					}
 					else{
-
-						// digitalWrite(USER_LED,HIGH);//vv
 
 						Actuator* act;
 
@@ -211,12 +209,7 @@ public:
 								static Addressing* addr;
 								addr = act->address();
 
-								// addr = new Addressing();
-								// addr = new Addressing(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
-
 								addr->setup(act->visual_output_level, &(ptr[CTRLADDR_ACT_ID+1]));
-								// act->address(addr);
-
 
 								sendMessage(FUNC_CONTROL_ASSIGNMENT, 0);
 								this->state = WAITING_DATA_REQUEST;
@@ -228,6 +221,8 @@ public:
 				break;
 				
 				case FUNC_DATA_REQUEST:
+
+
 
 					// checks if the state is not propper to send a data request message.
 					if(this->state != WAITING_DATA_REQUEST){
@@ -261,7 +256,6 @@ public:
 				// this function empty the addressing slot on a parameter, in case it has a parameter assigned.
 				case FUNC_CONTROL_UNASSIGNMENT:
 
-					digitalWrite(USER_LED,LOW);//vv
 				
 					if(this->state != WAITING_DATA_REQUEST){
 						ERROR("No control assigned.")
@@ -269,7 +263,6 @@ public:
 					}
 					else{
 						for (int i = 0; i < actuators_counter; ++i){
-							// PRINT("AEew"); //vv
 							if(acts[i]->unaddress(ptr[UNASSIG_ACT_ID])){
 								sendMessage(FUNC_CONTROL_UNASSIGNMENT);
 								return;
@@ -283,6 +276,7 @@ public:
 				break;
 			}
 		}
+
 	}
 
 	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
@@ -291,6 +285,8 @@ public:
 
 		int changed_actuators = 0;
 		Word data_size;
+
+
 
 
 		switch(function){

@@ -2,6 +2,7 @@
 #define MODE_H
 
 #include "utils.h"
+#include "defines.h"
 
 
 /*

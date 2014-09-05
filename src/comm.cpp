@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 // defines
-enum {SYNC, DESTINATION, ORIGIN, FUNCTION, DATA_SIZE_LSB, DATA_SIZE_MSB, DATA, CHECKSUM};
+enum {STATE_SYNC, STATE_DESTINATION, STATE_ORIGIN, STATE_FUNCTION, STATE_DATA_SIZE_LSB, STATE_DATA_SIZE_MSB, STATE_DATA, STATE_CHECKSUM};
 
 // macros
 #define READ_MODE()     digitalWrite(SERIAL_READ_WRITE_PIN, LOW)
@@ -75,11 +75,11 @@ static bool chain_fsm(uint8_t byte)
     static uint16_t received;
     uint16_t tmp;
 
-    if (g_fsm_state != CHECKSUM) checksum += byte;
+    if (g_fsm_state != STATE_CHECKSUM) checksum += byte;
 
     switch (g_fsm_state)
     {
-        case SYNC:
+        case STATE_SYNC:
             if (byte == CHAIN_SYNC_BYTE)
             {
                 g_chain.data_size = 0;
@@ -89,7 +89,7 @@ static bool chain_fsm(uint8_t byte)
             }
             break;
 
-        case DESTINATION:
+        case STATE_DESTINATION:
             if (g_address == 0 || (g_address == byte && g_address >= CHAIN_FIRST_DEV_ADDR))
             {
                 g_chain.destination = byte;
@@ -97,26 +97,26 @@ static bool chain_fsm(uint8_t byte)
             }
             else
             {
-                g_fsm_state = SYNC;
+                g_fsm_state = STATE_SYNC;
             }
             break;
 
-        case ORIGIN:
+        case STATE_ORIGIN:
             g_chain.origin = byte;
             g_fsm_state++;
             break;
 
-        case FUNCTION:
+        case STATE_FUNCTION:
             g_chain.function = byte;
             g_fsm_state++;
             break;
 
-        case DATA_SIZE_LSB:
+        case STATE_DATA_SIZE_LSB:
             g_chain.data_size = byte;
             g_fsm_state++;
             break;
 
-        case DATA_SIZE_MSB:
+        case STATE_DATA_SIZE_MSB:
             tmp = byte;
             tmp <<= 8;
             g_chain.data_size |= tmp;
@@ -124,13 +124,13 @@ static bool chain_fsm(uint8_t byte)
             if (g_chain.data_size == 0) g_fsm_state++;
             break;
 
-        case DATA:
+        case STATE_DATA:
             g_chain.data[received++] = byte;
-            if (received == g_chain.data_size) g_fsm_state = CHECKSUM;
+            if (received == g_chain.data_size) g_fsm_state = STATE_CHECKSUM;
             break;
 
-        case CHECKSUM:
-            g_fsm_state = SYNC;
+        case STATE_CHECKSUM:
+            g_fsm_state = STATE_SYNC;
             if (byte == checksum) return true;
             break;
     }
@@ -144,7 +144,7 @@ static void rx_cb(uint8_t byte)
 
     // check if is the sync byte before decode it
     // case true, forces the chain fsm to initial state
-    if (byte == CHAIN_SYNC_BYTE) g_fsm_state = SYNC;
+    if (byte == CHAIN_SYNC_BYTE) g_fsm_state = STATE_SYNC;
 
     if (decode(byte, &byte) && chain_fsm(byte))
     {
@@ -157,8 +157,8 @@ static void rx_cb(uint8_t byte)
 
 void comm_setup(void (*parser_cb)(chain_t *chain))
 {
-    Serial.begin(SERIAL_BAUD_RATE);
-    Serial.setRxCompleteCallback(rx_cb);
+    SBEGIN(SERIAL_BAUD_RATE);
+    SRXCALLBACK(rx_cb);
     pinMode(SERIAL_READ_WRITE_PIN, OUTPUT);
     READ_MODE();
 
@@ -188,12 +188,14 @@ void comm_send(chain_t *chain)
     // send data
     uint8_t buffer[2];
     WRITE_MODE();
-    Serial.write(CHAIN_SYNC_BYTE);
+    SWRITE(CHAIN_SYNC_BYTE);
     for (i = 0; i < (chain->data_size + 6); i++)
     {
-        Serial.write(buffer, encode(*raw_data++, buffer));
-        Serial.flush();
+        SWRITE2(buffer, encode(*raw_data++, buffer));
+        SFLUSH();
     }
+
+    // delayMicroseconds(25); //vv
     READ_MODE();
 }
 

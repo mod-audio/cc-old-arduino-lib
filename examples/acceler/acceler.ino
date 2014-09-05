@@ -1,5 +1,6 @@
 #include "math.h"
 #include "utils.h"
+#include "defines.h"
 #include "device.h"
 #include "actuator.h"
 #include "linearsensor.h"

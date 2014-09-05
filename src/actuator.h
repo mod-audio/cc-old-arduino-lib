@@ -2,6 +2,7 @@
 #define ACTUATOR_H
 
 #include "utils.h"
+#include "defines.h"
 #include "mode.h"
 
 /*
@@ -81,9 +82,13 @@ public:
 
 		available = false;
 
-		this->mode = {ctrl_data[0], ctrl_data[1]};
+		// this->mode = {ctrl_data[0], ctrl_data[1]};
+		this->mode.relevant_properties = ctrl_data[0];
+		this->mode.property_values = ctrl_data[1];
+		
 		this->id = ctrl_data[2];
 		this->port_properties = ctrl_data[3];
+
 
 		uint8_t label_size = ctrl_data[4];
 		uint8_t position = 5 + label_size;

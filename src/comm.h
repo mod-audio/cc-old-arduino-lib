@@ -4,6 +4,7 @@
 
 // includes 
 #include <stdint.h>
+#include "defines.h"
 
 // serial definitions
 #define SERIAL_BAUD_RATE        500000

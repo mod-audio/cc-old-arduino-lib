@@ -28,8 +28,11 @@ MPU6050 accelgyro(0x68); // <-- use for AD0 high
 PINS
 GND = GND
 VCC = 3.3v
-SCL = A5
-SDA	= A4
+SCL = A5 (On uno)
+SDA	= A4 (On uno)
+
+SCL = 21 (On Due)
+SDA	= 20 (On Due)
 ************************************************************************************************************************
 */
 

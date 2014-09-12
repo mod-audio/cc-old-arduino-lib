@@ -12,8 +12,8 @@ This class works like a preset to an actuator. It describes a sensor that varies
 
 class LinearSensor: public Actuator{
 public:
-	int 			minimum = 0;
-	int 			maximum = 1023;
+	float 			minimum = 0;
+	float 			maximum = 1023;
 
 	LinearSensor(char* name, uint8_t id): Actuator(name, id, 1 /*slots*/, 1 /*mode counter*/, 3, VISUAL_NONE){
 		Mode *mode = supports("linear");
@@ -39,7 +39,7 @@ public:
 	// this function works with the value got from the sensor, it makes some calculations over this value and
 	// feeds the result to a Update class.
  	void calculateValue(){
-		int sensor = this->getValue();
+		float sensor = this->getValue();
 		
 		float scaleMin, scaleMax;
 

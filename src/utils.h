@@ -241,6 +241,7 @@ public:
 	bool check(){ // tells if the timer reached its period
 		if(working){
 			if((mod_timer_t)(static_timer_count - offset) >= period){
+				offset = static_timer_count;
 				return true;
 			}
 		}
@@ -252,11 +253,6 @@ public:
 	}
 
 	void start(){
-		working = true;
-		offset = static_timer_count;
-	}
-
-	void reset(){
 		working = true;
 		offset = static_timer_count;
 	}

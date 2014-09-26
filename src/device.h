@@ -451,7 +451,6 @@ public:
 	void connectDevice(){
 		static bool ledpos = 0;
 		static bool ledpose = 0;
-		// pinMode(13, OUTPUT);
 		bool timer_flag = false;
 
 		// checks if device is trying to connect yet.
@@ -477,7 +476,7 @@ public:
 				// if the alarm is triggered.
 				if(timer_flag){
 					// timerA Reseted.
-					timerA.reset();
+					// delayMicroseconds(1);
 					sendMessage(FUNC_CONNECTION);
 				}
 				ledpos^=1; // THIS LINE IS A MISTERY, no joke!
@@ -497,7 +496,7 @@ public:
 		if(timerLED.check()){
 			digitalWrite(USER_LED,ledpos);
 			ledpos^= 1;
-			timerLED.reset();
+			timerLED.start();
 		}
 	}
 

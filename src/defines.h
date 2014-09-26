@@ -64,7 +64,8 @@
 // #define BAUD_RATE       57600
 // #define BAUD_RATE       115200
 // #define BAUD_RATE       230400
-#define BAUD_RATE       500000
+// #define BAUD_RATE       460800
+#define BAUD_RATE       1000000
 
 /*
 ************************************************************************************************************************
@@ -132,67 +133,23 @@
 ************************************************************************************************************************
 */
 
-
-// serial related MACROS
-
-#ifndef SERIALPORT // Starts serial with and baud rate. 
-
-#ifdef ARDUINO_ARCH_AVR
-#define SERIALPORT Serial
-#endif
-#ifdef ARDUINO_ARCH_SAM
-#define SERIALPORT Serial1
-#endif
-
-#endif
-
-#ifndef SBEGIN(__baud_rate) // Starts serial with and baud rate. 
-#define SBEGIN(__baud_rate) SERIALPORT.begin(__baud_rate)
-#endif
-
-#ifndef SWRITE(__char) // sends one byte 
-#define SWRITE(__char) SERIALPORT.write(__char)
-#endif
-
-#ifndef SWRITE2(__char, __char2) // sends one byte 
-#define SWRITE2(__char, __char2) SERIALPORT.write(__char, __char2)
-#endif
-
-#ifndef SREAD() //returns next byte in serial's input buffer
-#define SREAD() SERIALPORT.read()
-#endif
-
-#ifndef SBYTESAVAILABLE() //returns how many bytes there are avaible at the serial's input buffer 
-#define SBYTESAVAILABLE() SERIALPORT.available()
-#endif
-
-#ifndef SFLUSH() // Waits for the transmission of outgoing serial data to complete. If the bytes are sent imediately after the sWrite func, then this is useless
-#define SFLUSH() SERIALPORT.flush()
-#endif
-
-#ifndef SRXCALLBACK(__str) // normal printing
-#define SRXCALLBACK(__str) SERIALPORT.setRxCompleteCallback(__str);
-#endif
-
 #ifndef PRINT(__str) // normal printing
-#define PRINT(__str) SERIALPORT.print(__str)
+#define PRINT(__str) //SERIALPORT.print(__str)
 #endif
-
 
 
 // debug msgs
-
 #ifndef DPRINT(__str) // debug printing
-#define DPRINT(__str) if(DEBUG_FLAG) PRINT(__str)
+#define DPRINT(__str) //if(DEBUG_FLAG) PRINT(__str)
 #endif
 
 #ifndef ERROR(__str) // error msg
 // #define ERROR(__str) sendError(__str);
-#define ERROR(__str) if(DEBUG_FLAG) {PRINT(F("<< ")); PRINT(F(__str)); PRINT(F(" >> "));} 
+#define ERROR(__str) //if(DEBUG_FLAG) {PRINT(F("<< ")); PRINT(F(__str)); PRINT(F(" >> "));}
 #endif
 
 #ifndef WARN(__str) // warning msg
-#define WARN(__str) if(DEBUG_FLAG) {PRINT(F("[WARNING]: << ")); PRINT(F(__str)); PRINT(F(" >> "));} 
+#define WARN(__str) //if(DEBUG_FLAG) {PRINT(F("[WARNING]: << ")); PRINT(F(__str)); PRINT(F(" >> "));}
 #endif
 
 /*

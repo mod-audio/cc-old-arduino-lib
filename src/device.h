@@ -45,6 +45,8 @@ public:
 	url_id(url_id), id(0), label(label), actuators_total_count(actuators_total_count),
 	state(CONNECTING), channel(channel), actuators_counter(0){
 
+		this->chain = comm_init(BAUD_RATE, WRITE_READ_PIN, recv_cb);
+
 		this->acts = new Actuator*[actuators_total_count];
 		this->updates = new Update();
 
@@ -64,14 +66,7 @@ public:
 		Timer1.attachInterrupt(isr_timer);
 		#endif
 
-		SBEGIN(BAUD_RATE);
 		pinMode(USER_LED, OUTPUT);
-		pinMode(WRITE_READ_PIN, OUTPUT);
-
-		comm_setup(recv_cb);
-
-		// chain receives an address from chain object already instantiated in comm.cpp
-		this->chain = comm_get_receive_pointer();
 	}
 
 	~Device(){
@@ -464,7 +459,6 @@ public:
 			
 			// this timer takes care of led blinking while the device is not connected.
 			if(!timerLED.working){
-				pinMode(USER_LED, OUTPUT);
 				timerLED.start();
 				timerLED.setPeriod(CONNECTING_LED_PERIOD);
 			}
@@ -482,14 +476,9 @@ public:
 
 				// if the alarm is triggered.
 				if(timer_flag){
-					
 					// timerA Reseted.
 					timerA.reset();
-					
-					// If there are no bytes to read yet.
-					if(!SBYTESAVAILABLE()){ 
-						sendMessage(FUNC_CONNECTION);
-					}
+					sendMessage(FUNC_CONNECTION);
 				}
 				ledpos^=1; // THIS LINE IS A MISTERY, no joke!
 			}

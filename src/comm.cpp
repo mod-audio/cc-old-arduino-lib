@@ -347,3 +347,16 @@ void comm_set_address(uint8_t address)
 {
     g_address = address;
 }
+
+void comm_print(const char* str)
+{
+    CommSerial.print(str);
+}
+void comm_print(int i)
+{
+    CommSerial.print(i);
+}
+void comm_print(float i)
+{
+    CommSerial.print(i);
+}

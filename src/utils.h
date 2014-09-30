@@ -223,7 +223,7 @@ class STimer
 {
 public:
 
-	static mod_timer_t static_timer_count;
+	volatile static mod_timer_t static_timer_count;
 
 	mod_timer_t period = 1; //in ms
 	mod_timer_t offset = 0;
@@ -258,7 +258,7 @@ public:
 	}
 };
 
-mod_timer_t STimer::static_timer_count = 0;
+volatile mod_timer_t STimer::static_timer_count = 0;
 
 /**************************************************************************************
                                     Instantiations

@@ -126,6 +126,7 @@ public:
 
 		uint8_t* ptr = &chain->sync;
 
+
 		// connection response, checks URL and channel to associate address to device id.
 		if(this->state == CONNECTING){
 			if(chain->function == FUNC_CONNECTION){
@@ -133,10 +134,12 @@ public:
 				Str url( (char*) &ptr[POS_DATA_SIZE2+2] , ptr[POS_DATA_SIZE2+1] );
 
 				if( (url == this->url_id) && (ptr[chain->data_size+3] == this->channel) ){
+
 					this->id = ptr[POS_DEST];
 					this->state = WAITING_DESCRIPTOR_REQUEST;
 					comm_set_address(this->id);
 					g_device_id = this->id;
+
 					return;
 				}
 				else{
@@ -451,7 +454,7 @@ public:
 	void connectDevice(){
 		static bool ledpos = 0;
 		static bool ledpose = 0;
-		bool timer_flag = false;
+		static bool timer_flag = true;
 
 		// checks if device is trying to connect yet.
 		if(this->state == CONNECTING){
@@ -466,20 +469,16 @@ public:
 			}
 
 			// This timer sets a random period to send a connecting (or handshaking) message.
-			timerA.setPeriod(random(RANDOM_CONNECT_RANGE_BOTTOM, RANDOM_CONNECT_RANGE_TOP));
+			if(timer_flag){
+				timer_flag = false;
+				timerA.setPeriod(random(RANDOM_CONNECT_RANGE_BOTTOM, RANDOM_CONNECT_RANGE_TOP));
+			}
 
-			// While the timer has not triggered.
-			while(!timer_flag){
-
-				timer_flag = timerA.check();
-
-				// if the alarm is triggered.
-				if(timer_flag){
-					// timerA Reseted.
-					// delayMicroseconds(1);
-					sendMessage(FUNC_CONNECTION);
-				}
-				ledpos^=1; // THIS LINE IS A MISTERY, no joke!
+			// if the alarm is triggered.
+			if(timerA.check()){
+				// timer flag indicates 
+				timer_flag = true;
+				sendMessage(FUNC_CONNECTION);
 			}
 		}
 		else {

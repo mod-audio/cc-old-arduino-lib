@@ -138,12 +138,6 @@
 #define PRINT(__str) //SERIALPORT.print(__str)
 #endif
 
-
-// debug msgs
-#ifndef DPRINT(__str) // debug printing
-#define DPRINT(__str) //if(DEBUG_FLAG) PRINT(__str)
-#endif
-
 #ifndef ERROR(__str) // error msg
 // #define ERROR(__str) sendError(__str);
 #define ERROR(__str) //if(DEBUG_FLAG) {PRINT(F("<< ")); PRINT(F(__str)); PRINT(F(" >> "));}

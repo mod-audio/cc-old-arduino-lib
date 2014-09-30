@@ -1,0 +1,7 @@
+To use this example, you need to have both I2Cdev and MPU6050 libs,
+you can find them (hopefully) on the git project link:
+
+https://github.com/jrowberg/i2cdevlib/tree/master/Arduino
+
+You have to copy the directories I2Cdev and MPU6050 to arduino libraries folder.
+(HINT: You can copy the directories from this folder too. Much easier =)!)

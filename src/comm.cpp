@@ -37,13 +37,11 @@ void HwSerial::_rx_complete_irq(void)
     }
 }
 
-// write one byte to register and it to be send
+// write one byte to register and wait until it to be send
 size_t HwSerial::write(uint8_t c)
 {
-    // Wait for empty transmit buffer
-    while (!bit_is_set(*_ucsra, UDRE0));
-
     *_udr = c;
+    while (bit_is_clear(*_ucsra, TXC0));
     sbi(*_ucsra, TXC0);
 
     return 1;
@@ -97,11 +95,11 @@ public:
         UARTClass(pUart, dwIrq, dwId, pRx_buffer) {}
 
     void IrqHandler(void);
-    size_t write(const uint8_t c);
+    virtual size_t write(const uint8_t c);
     using UARTClass::write;
 };
 
-static UARTClass CommSerial(UART, UART_IRQn, ID_UART, &rx_buffer);
+static HwSerial CommSerial(UART, UART_IRQn, ID_UART, &rx_buffer);
 
 void HwSerial::IrqHandler( void )
 {
@@ -120,12 +118,9 @@ void HwSerial::IrqHandler( void )
     }
 }
 
-// write one byte to register and it to be send
+// write one byte to register and wait until it to be send
 size_t HwSerial::write(const uint8_t c)
 {
-    while ((_pUart->UART_SR & UART_SR_TXRDY) != UART_SR_TXRDY);
-
-    // Send character
     _pUart->UART_THR = c;
     while ((_pUart->UART_SR & UART_SR_TXEMPTY) == 0);
 

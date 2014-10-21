@@ -5,37 +5,52 @@
 int main(){
 
 	Addressing assig;
+	// Addressing assig2;
+	// Addressing assig3;
+	// Addressing assig4;
 
 	char buffer[16];
 	char buffer2[16];
 
-	const uint8_t msg[] = {0x02,0x00,0x01,0x03,0x04,'G','a','i','n',0x00,0x00,0x80,0x3F,0x00,0x00,0x00,0x00,0x00,0x00,0x80,0x3F,0x00,0x00,0x00,0x00,0x21,0x00,0x02,'d','B',0x00,0x19};
+	// assig.allocScalePointList(3);
+	// assig2.allocScalePointList(3);
+	// assig3.allocScalePointList(3);
 
-	assig.setup(1, msg);
+	// printf("===================================================================================================\n");
 
-	printf("mode2: %i\n",assig.mode.relevant_properties);
+	// assig2.freeScalePointList();
+
+	// printf("===================================================================================================\n");
+
+	// assig4.allocScalePointList(4);
+
+	const uint8_t msg[] = {0x00, 0x00, 0x0f, 0x00, 0x04, 0x4d, 0x41, 0x4e, 0x4f, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0xbf, 0x37, 0x00, 0x07, 0x50, 0x4f, 0x52, 0x43, 0x45, 0x4e, 0x54, 0x03, 0x03, 0x4f, 0x6e, 0x65, 0x00, 0x00, 0x80, 0x3f, 0x03, 0x54, 0x77, 0x6f, 0x00, 0x00, 0x00, 0x40, 0x05, 0x54, 0x52, 0x45, 0x49, 0x53, 0x00, 0x00, 0x40, 0x40, 0x32};
+
+	assig.setup(msg, 2);
+
+	printf("available: %i\n\n",assig.available);
+
 	printf("mode1: %i\n",assig.mode.property_values);
-	printf("id: %i\n",assig.id);
-	printf("port_properties: %i\n",assig.port_properties);
+	printf("mode2: %i\n",assig.mode.relevant_properties);
+	printf("assign id: %i\n",assig.id);
+	printf("port_properties: %i\n\n",assig.port_properties);
 
 	printf("value: %f\n",assig.value);
 	printf("minimum: %f\n",assig.minimum);
 	printf("maximum: %f\n",assig.maximum);
-	printf("default_value: %f\n",assig.default_value);
+	printf("default_value: %f\n\n",assig.default_value);
 
-	printf("steps: %i\n",assig.steps);
-	// printf("scale_points_counter: %f\n",assig.scale_points_counter);
-	// printf("scale_points_total_count: %f\n",assig.scale_points_total_count);
-	printf("available: %i\n",assig.available);
+	printf("steps: %i\n\n",assig.steps);
 
 	assig.label.getText(buffer);
 	buffer[assig.label.getLength()]=0;
-	printf("label: %s\n",buffer);
+	printf("label: %s\n\n",buffer);
 
-	// printf("unit: %i%i \n",assig.unit.text[0], assig.unit.text[1]);
 	assig.unit.getText(buffer2);
 	buffer2[assig.unit.getLength()]=0;
 	printf("unit: %s\n",buffer2);
+
+	assig.printScalePoints();
 
 	return 0;
 }

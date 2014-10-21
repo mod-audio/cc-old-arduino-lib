@@ -1,42 +1,47 @@
+#include <iostream>
+using namespace std;
+#include "stdio.h"
 #include "addressing.h"
 #include "scalepoint.h"
 
-class Bank
+class ScalePointBank
 {
 public:
 	ScalePoint bank[MAX_SCALE_POINTS];
 	bool occupied[MAX_SCALE_POINTS];
 	int  free_space;
 
-	Bank(){
+	ScalePointBank(){
 		for (int i = 0; i < MAX_SCALE_POINTS; ++i){
 			occupied[i] = false;
 		}
 		free_space = MAX_SCALE_POINTS;
 	}
-	~Bank(){}
+	~ScalePointBank(){}
 
-	float* allocFloat(){
+	ScalePoint* allocSP(){
 		for(int i = 0; i < MAX_SCALE_POINTS; ++i){
 			if(!occupied[i]){
 				occupied[i] = true;
+				bank[i].allocScalePoint();
 				free_space--;
-				return (float*) &bank[i];
+				return (ScalePoint*) &bank[i];
 			}
 		}
 		return 0;
 	}
 
-	void freeFloat(float* value){
-		int index;
+	void freeSP(ScalePoint* ptr){
+		long int index;
 
-		if(!value){
+		if(!ptr){
 			return;
 		}
 
-		index = (value-&bank[0])/sizeof(float);
+		index = (ptr-bank);
 
 		if(index >= 0 && index < MAX_SCALE_POINTS){
+			bank[index].freeScalePoint();
 			occupied[index] = false;
 			free_space++;
 		}
@@ -46,8 +51,9 @@ public:
  	int getFreeSpace(){
  		return free_space;
  	}
+
 };
-static Bank spBank;
+static ScalePointBank spBank;
 
 
 Addressing::Addressing(){
@@ -56,25 +62,14 @@ Addressing::Addressing(){
 	scale_points_total_count=0;
  	available=true;
 
+ 	this->sp_list_ptr = 0;
+ 	this->list_aux = 0;
  	sp_list_size = 0;
 }
 
 Addressing::~Addressing(){}
 
-// associates a pointer of ScalePoint to a list of pointers contained in Actuators class.
-// void Addressing::addScalePoint(ScalePoint* sp){
-// 	if(scale_points_counter >= scale_points_total_count){
-// 		ERROR("Scale points overflow!");
-// 		return;
-// 	}
-// 	else{
-// 		scale_points[scale_points_counter] = sp;
-
-// 		scale_points_counter++;
-// 	}
-// }
-
-void Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
+bool Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 
 	available = false;
 
@@ -83,7 +78,6 @@ void Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 
 	this->id = ctrl_data[2];
 	this->port_properties = ctrl_data[3];
-
 
 	uint8_t label_size = ctrl_data[4];
 	uint8_t idx = 5 + label_size;
@@ -103,9 +97,6 @@ void Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 	this->steps = *((uint16_t*)(&ctrl_data[idx]));
 	idx += sizeof(uint16_t);
 
-	// uint8_t s_p_count_pos = idx + 1 + ctrl_data[idx];
-
-			// uint8_t s_p_count_pos = ctrl_data[5+ctrl_data[4] +18] + 1 /*unit label size*/ + ctrl_data[ctrl_data[5+ctrl_data[4] +18]];
 
 	switch(visual_output_level){
 		case VISUAL_SHOW_LABEL:
@@ -119,93 +110,103 @@ void Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 
 		break;
 
-		// case VISUAL_SHOW_SCALEPOINTS:
-		// 	this->label = stringBank.allocatePacket();
-		// 	this->unit = stringBank.allocatePacket();
+		case VISUAL_SHOW_SCALEPOINTS:
 
-		// 	if(ctrl_data[s_p_count_pos]){
+			if(this->label.allocStr()){
+				this->label.setText((char*) &(ctrl_data[5]), label_size );
+			}
+			if(this->unit.allocStr()){
+				this->unit.setText((char*) &(ctrl_data[idx+1]), ctrl_data[idx]);
+			}
 
-		// 		uint8_t s_p_label_size_pos;
-		// 		uint8_t s_p_label_size;
-		// 		uint8_t s_p_value_pos = s_p_count_pos - 3; // thinking that 4 will be summed
+			idx = idx + 1 /*string begin position*/ + ctrl_data[idx] /*string size*/ ; //scale point counter position
 
-		// 		ScalePoint* sp;
+			this->sp_list_size = ctrl_data[idx];
 
-		// 		for (int i = 0; i < addr->scale_points_total_count; ++i){
+			if( allocScalePointList(this->sp_list_size) ){
 
-		// 			s_p_label_size_pos = s_p_value_pos+4;
-		// 			s_p_label_size = ctrl_data[s_p_label_size_pos];
-		// 			s_p_value_pos = s_p_label_size_pos + 1 + s_p_label_size;
+				idx++; //scale point label size position;
 
-		// 			send(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size);
+				for (int i = 0; i < this->sp_list_size; ++i){
 
-		// 			sp = new ScalePoint(&(ctrl_data[s_p_label_size_pos+1]),s_p_label_size,
-		// 								ctrl_data[s_p_value_pos], ctrl_data[s_p_value_pos+1],
-		// 								ctrl_data[s_p_value_pos+2],ctrl_data[s_p_value_pos+3]);
+					this->sp_list_ptr->setLabel(((char*) &ctrl_data[idx+1]),ctrl_data[idx]);
+					idx = idx + 1 /*string begin position*/ + ctrl_data[idx] /*string size*/ ; //scale point value position
+					this->sp_list_ptr->setValue(&ctrl_data[idx]);
+					idx = idx + sizeof(float); //next scale point label size position
 
-		// 			addr->addScalePoint(sp);
-
-		// 		}
-		// 	}
-		// break;
+					if(this->sp_list_ptr->getNext())
+						this->sp_list_ptr = this->sp_list_ptr->getNext();
+				}
+				pointToHead();
+			}
+			else{
+				return false;
+			}
+		break;
 	}
-
-	// sendDescriptor();
+	return true;
 }
 
 void Addressing::reset(){
 	this->label.freeStr();
 	this->unit.freeStr();
+	this->freeScalePointList();
 	available = true;
 }
 
-bool allocScalePointList(int size){
-	if(size >= spBank.getFreeSpace()){
+void Addressing::pointToHead(){
+	while(this->sp_list_ptr->getPrevious()){
+		this->sp_list_ptr = this->sp_list_ptr->getPrevious();
+	}
+}
+
+bool Addressing::allocScalePointList(int size){
+	if(size > spBank.getFreeSpace()){
 		return false;
 	}
 	else{
-		while(size){
-			/
-			size--;
+		while(size--){
+			this->sp_list_ptr = spBank.allocSP();
+
+			this->sp_list_ptr->setNext(this->list_aux);
+			if(this->list_aux)
+				this->list_aux->setPrevious(this->sp_list_ptr);
+
+			this->list_aux = this->sp_list_ptr;
 		}
+		this->list_aux = 0; // here, this->sp_list_ptr will be pointing to the head.
+		return true;
 	}
 
 }
 
-// This function was used in debbuging time, it sends a readable description of actuator state.
-// void Addressing::sendDescriptor(){
-// 	PRINT(F(" label "));
-// 	dsend(label->msg, label->length);
-// 	PRINT(F(" unit "));
-// 	dsend(unit->msg, unit->length);
-// 	// PRINT(unit->length);
-// 	PRINT(F(" mode "));
-// 	PRINT((int)mode.relevant_properties);
-// 	PRINT((int)mode.property_values);
-// 	PRINT(F(" port_properties "));
-// 	PRINT(port_properties);
-// 	PRINT(F(" value "));
-// 	PRINT(value.f);
-// 	PRINT(F(" minimum "));
-// 	PRINT(minimum.f);
-// 	PRINT(F(" maximum "));
-// 	PRINT(maximum.f);
-// 	PRINT(F(" default_value "));
-// 	PRINT(default_value.f);
-// 	PRINT(F(" steps "));
-// 	PRINT(steps.data16);
+void Addressing::freeScalePointList(){
+	if(!this->sp_list_ptr){
+		return;
+	}
+	else{
+		pointToHead();
+		while(this->sp_list_ptr){
+			this->list_aux = this->sp_list_ptr->getNext();
+			spBank.freeSP(this->sp_list_ptr);
+			this->sp_list_ptr = this->list_aux;
+		}
+		this->sp_list_ptr = 0;
+		this->list_aux = 0;
+	}
+}
 
-// 	if(scale_points_counter){
-// 		for (int i = 0; i < scale_points_counter; ++i){
-// 			PRINT(F("||||"));
-// 			PRINT(F(" scale point "));
-// 			PRINT(i);
-
-// 			dsend(scale_points[i]->label.msg, scale_points[i]->label.length);
-
-// 			PRINT(F(" value "));
-// 			PRINT(scale_points[i]->value.f);
-// 			PRINT(F("||||"));
-// 		}
-// 	}
-// }
+void Addressing::printScalePoints(){ //vv
+	char buff[10];
+	int size;
+	ScalePoint* ptr = this->sp_list_ptr;
+	pointToHead();
+	while(ptr){
+		size = ptr->getLabel(buff);
+		for (int i = 0; i < size; ++i){
+			cout << buff[i];
+		}
+		cout << ": " << ptr->getValue() << endl;
+		ptr = ptr->getNext();
+	}
+}

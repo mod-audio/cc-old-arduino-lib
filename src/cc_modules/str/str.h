@@ -1,7 +1,7 @@
 #ifndef STR_H
 #define STR_H
 
-#define MAX_STRING_COUNT 10
+#define MAX_STRING_COUNT 20
 #define MAX_STRING_SIZE 10
 
 class Str{

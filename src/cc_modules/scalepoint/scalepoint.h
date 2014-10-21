@@ -26,9 +26,9 @@ public:
 
 	bool setLabel(const char* text, int length);
 
-	void setValue(uint8_t* first_byte);
+	void setValue(const uint8_t* first_byte);
 
-	int getLabel(char* buffer, int buffer_size);
+	int getLabel(char* buffer, int buffer_size=0);
 
 	float getValue();
 

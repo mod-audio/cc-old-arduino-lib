@@ -1,19 +1,21 @@
+#include <iostream>
+using namespace std;
 #include <stdint.h>
 #include "str.h"
 #include "scalepoint.h"
 
-class Bank
+class FloatBank
 {
 public:
 	float bank[MAX_FLOAT_COUNT];
 	bool occupied[MAX_FLOAT_COUNT];
 
-	Bank(){
+	FloatBank(){
 		for (int i = 0; i < MAX_FLOAT_COUNT; ++i){
 			occupied[i] = false;
 		}
 	}
-	~Bank(){}
+	~FloatBank(){}
 
 	float* allocFloat(){
 		for(int i = 0; i < MAX_FLOAT_COUNT; ++i){
@@ -32,7 +34,7 @@ public:
 			return;
 		}
 
-		index = (value-&bank[0])/sizeof(float);
+		index = (value-&bank[0]);
 
 		if(index >= 0 && index < MAX_FLOAT_COUNT){
 			occupied[index] = false;
@@ -41,7 +43,7 @@ public:
  	}
 
 };
-static Bank floatBank;
+static FloatBank floatBank;
 
 
 ScalePoint::ScalePoint(){
@@ -55,6 +57,8 @@ ScalePoint::~ScalePoint(){}
 bool ScalePoint::allocScalePoint(){
 	this->label.allocStr();
 	this->value = floatBank.allocFloat();
+
+
 	if(this->value)
 		return true;
 	return false;
@@ -69,7 +73,7 @@ bool ScalePoint::setLabel(const char* text, int length){
 	return this->label.setText(text, length);
 }
 
-void ScalePoint::setValue(uint8_t* first_byte){
+void ScalePoint::setValue(const uint8_t* first_byte){
 	*(this->value) = (float) *((float*) (first_byte));
 }
 

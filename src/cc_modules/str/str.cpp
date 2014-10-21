@@ -1,17 +1,19 @@
+#include <iostream>
+using namespace std;
 #include "str.h"
 
-class Bank
+class STRBank
 {
 public:
 	char bank[MAX_STRING_COUNT][MAX_STRING_SIZE];
 	bool occupied[MAX_STRING_COUNT];
 
-	Bank(){
+	STRBank(){
 		for (int i = 0; i < MAX_STRING_COUNT; ++i){
 			occupied[i] = false;
 		}
 	}
-	~Bank(){}
+	~STRBank(){}
 
 	char* allocStr(){
 		for(int i = 0; i < MAX_STRING_COUNT; ++i){
@@ -38,9 +40,10 @@ public:
 
 		text = 0; //NULL
  	}
+
 };
 
-static Bank strBank;
+static STRBank strBank;
 
 
 Str::Str(){

@@ -23,7 +23,7 @@ public:
 		return 0;
 	}
 
-	void freeStr(char* text){
+	void freeStr(char* &text){
 		int index;
 
 		if(!text){
@@ -36,13 +36,16 @@ public:
 			occupied[index] = false;
 		}
 
+		text = 0; //NULL
  	}
-
 };
+
 static Bank strBank;
 
 
-Str::Str(){}
+Str::Str(){
+	this->text = 0; //NULL
+}
 
 Str::~Str(){}
 
@@ -55,19 +58,28 @@ bool Str::allocStr(){
 }
 
 void Str::freeStr(){
-	strBank.freeStr(text);
+	strBank.freeStr(this->text);
 }
 
-void Str::setText(char* text, int length){
+bool Str::setText(const char* text, int length){
+
+	if(!this->text){
+		return false;
+	}
 
 	this->length = (length < MAX_STRING_SIZE)?length:MAX_STRING_SIZE;
 
 	for(int i = 0; i < this->length; i++){
 		this->text[i] = text[i];
 	}
+	return true;
 }
 
 int Str::getText(char* buffer, int buffer_size){
+
+	if(!this->text){
+		return -1;
+	}
 
 	int len;
 

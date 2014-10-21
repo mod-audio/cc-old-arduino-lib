@@ -30,9 +30,10 @@ int main(void)
 	stri3.allocStr();
 
 	stri3 = "porra";
+
 	int i3 = stri3.getText(buff,8);
-	cout << buff << endl;
 	buff[i3] = 0;
+	cout << buff << endl;
 
     return 0;
 }

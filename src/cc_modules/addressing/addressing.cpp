@@ -1,4 +1,54 @@
 #include "addressing.h"
+#include "scalepoint.h"
+
+class Bank
+{
+public:
+	ScalePoint bank[MAX_SCALE_POINTS];
+	bool occupied[MAX_SCALE_POINTS];
+	int  free_space;
+
+	Bank(){
+		for (int i = 0; i < MAX_SCALE_POINTS; ++i){
+			occupied[i] = false;
+		}
+		free_space = MAX_SCALE_POINTS;
+	}
+	~Bank(){}
+
+	float* allocFloat(){
+		for(int i = 0; i < MAX_SCALE_POINTS; ++i){
+			if(!occupied[i]){
+				occupied[i] = true;
+				free_space--;
+				return (float*) &bank[i];
+			}
+		}
+		return 0;
+	}
+
+	void freeFloat(float* value){
+		int index;
+
+		if(!value){
+			return;
+		}
+
+		index = (value-&bank[0])/sizeof(float);
+
+		if(index >= 0 && index < MAX_SCALE_POINTS){
+			occupied[index] = false;
+			free_space++;
+		}
+
+ 	}
+
+ 	int getFreeSpace(){
+ 		return free_space;
+ 	}
+};
+static Bank spBank;
+
 
 Addressing::Addressing(){
 	port_properties=0;
@@ -6,6 +56,7 @@ Addressing::Addressing(){
 	scale_points_total_count=0;
  	available=true;
 
+ 	sp_list_size = 0;
 }
 
 Addressing::~Addressing(){}
@@ -23,7 +74,7 @@ Addressing::~Addressing(){}
 // 	}
 // }
 
-void Addressing::setup(int visual_output_level, const uint8_t* ctrl_data){
+void Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 
 	available = false;
 
@@ -106,6 +157,19 @@ void Addressing::reset(){
 	this->label.freeStr();
 	this->unit.freeStr();
 	available = true;
+}
+
+bool allocScalePointList(int size){
+	if(size >= spBank.getFreeSpace()){
+		return false;
+	}
+	else{
+		while(size){
+			/
+			size--;
+		}
+	}
+
 }
 
 // This function was used in debbuging time, it sends a readable description of actuator state.

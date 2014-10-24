@@ -1,5 +1,5 @@
 # PROG=`basename $(PWD)`
-PROG=test
+PROG=test.bin
 
 # compiler
 CC = g++

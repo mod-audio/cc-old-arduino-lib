@@ -6,9 +6,9 @@
 #include "str.h"
 #include "scalepoint.h"
 
+// size of scalepoint bank
 #define MAX_SCALE_POINTS 10
 
-// visual output level. This indicates if the device can or cannot display a information.
 enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};
 
 class Addressing{
@@ -38,22 +38,29 @@ public:
 
 	~Addressing();
 
-	bool allocScalePointList(int size);
-
-	void freeScalePointList();
-
-	void pointToHead();
-	// associates a pointer of ScalePoint to a list of pointers contained in Actuators class.
-	// void addScalePoint(ScalePoint* sp);
-
-	bool setup(const uint8_t* ctrl_data, int visual_output_level);
-
+	// free label, unit and scalepoints and set state to available
 	void reset();
 
-	// This function was used in debbuging time, it sends a readable description of actuator state.
-	// void sendDescriptor();
+	// allocate some scalepoints from scalepoint bank, in case the bank runs low of scalepoints,
+	// returns 0, otherwise, returns 1.
+	bool allocScalePointList(int size);
 
-	void printScalePoints();
+	// free those scalepoints
+	void freeScalePointList();
+
+	// Makes sp_list_ptr points to first scale point.
+	void pointToListHead();
+
+	// receives a pointer to msg begin and reads necessary data, assigning to its attributes.
+	// visual_output_level regards to which strings you may wanna save in your addressing
+	// VISUAL_NONE label, unit and scalepoints are ignored
+	// VISUAL_SHOW_LABEL scalepoints are ignored
+	// VISUAL_SHOW_SCALEPOINTS everything is assigned to addressing attributes
+	// if there is not enough scalepoints to alloc from bank, returns false.
+	bool setup(const uint8_t* ctrl_data, int visual_output_level);
+
+	// This function was used addressing module test, it sends a readable description of its scalepoints.
+	void printScalePoints(); //vv
 
 };
 

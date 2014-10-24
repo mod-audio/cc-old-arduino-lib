@@ -69,6 +69,14 @@ Addressing::Addressing(){
 
 Addressing::~Addressing(){}
 
+void Addressing::reset(){
+	this->label.freeStr();
+	this->unit.freeStr();
+	this->freeScalePointList();
+	available = true;
+
+}
+
 bool Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 
 	available = false;
@@ -137,7 +145,7 @@ bool Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 					if(this->sp_list_ptr->getNext())
 						this->sp_list_ptr = this->sp_list_ptr->getNext();
 				}
-				pointToHead();
+				pointToListHead();
 			}
 			else{
 				return false;
@@ -147,14 +155,8 @@ bool Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 	return true;
 }
 
-void Addressing::reset(){
-	this->label.freeStr();
-	this->unit.freeStr();
-	this->freeScalePointList();
-	available = true;
-}
 
-void Addressing::pointToHead(){
+void Addressing::pointToListHead(){
 	while(this->sp_list_ptr->getPrevious()){
 		this->sp_list_ptr = this->sp_list_ptr->getPrevious();
 	}
@@ -185,22 +187,27 @@ void Addressing::freeScalePointList(){
 		return;
 	}
 	else{
-		pointToHead();
+		pointToListHead();
 		while(this->sp_list_ptr){
 			this->list_aux = this->sp_list_ptr->getNext();
 			spBank.freeSP(this->sp_list_ptr);
 			this->sp_list_ptr = this->list_aux;
 		}
+		this->sp_list_size = 0;
 		this->sp_list_ptr = 0;
 		this->list_aux = 0;
 	}
 }
 
 void Addressing::printScalePoints(){ //vv
+	if(!sp_list_size){
+		return;
+	}
+
 	char buff[10];
 	int size;
 	ScalePoint* ptr = this->sp_list_ptr;
-	pointToHead();
+	pointToListHead();
 	while(ptr){
 		size = ptr->getLabel(buff);
 		for (int i = 0; i < size; ++i){
@@ -209,4 +216,5 @@ void Addressing::printScalePoints(){ //vv
 		cout << ": " << ptr->getValue() << endl;
 		ptr = ptr->getNext();
 	}
+	cout << endl;
 }

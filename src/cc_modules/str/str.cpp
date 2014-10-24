@@ -81,7 +81,7 @@ bool Str::setText(const char* text, int length){
 int Str::getText(char* buffer, int buffer_size){
 
 	if(!this->text){
-		return -1;
+		return 0;
 	}
 
 	int len;

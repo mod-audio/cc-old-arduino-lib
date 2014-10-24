@@ -10,7 +10,6 @@ int main(void)
 	Str stri3;
 
 	stri.allocStr();
-	stri2.allocStr();
 
 	char buff[10];
 

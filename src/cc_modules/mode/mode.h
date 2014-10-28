@@ -31,7 +31,7 @@ This class retains the information about LV2 modes that an actuator supports.
 class Mode
 {
 public:
-	// defines which lv2 properties are relevant to the parameter	
+	// defines which lv2 properties are relevant to the parameter.
 	uint8_t relevant_properties;
 
 	// defines which state the bits selected above must be set to address something

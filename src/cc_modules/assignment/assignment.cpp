@@ -1,7 +1,7 @@
 #include <iostream>
 using namespace std;
 #include "stdio.h"
-#include "addressing.h"
+#include "assignment.h"
 #include "scalepoint.h"
 
 class ScalePointBank
@@ -56,7 +56,7 @@ public:
 static ScalePointBank spBank;
 
 
-Addressing::Addressing(){
+Assignment::Assignment(){
 	port_properties=0;
  	this->sp_list_ptr = 0;
  	this->list_aux = 0;
@@ -65,9 +65,9 @@ Addressing::Addressing(){
  	available=true;
 }
 
-Addressing::~Addressing(){}
+Assignment::~Assignment(){}
 
-void Addressing::reset(){
+void Assignment::reset(){
 	this->label.freeStr();
 	this->unit.freeStr();
 	this->freeScalePointList();
@@ -75,7 +75,7 @@ void Addressing::reset(){
 
 }
 
-bool Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
+bool Assignment::setup(const uint8_t* ctrl_data, int visual_output_level){
 
 	available = false;
 
@@ -154,13 +154,13 @@ bool Addressing::setup(const uint8_t* ctrl_data, int visual_output_level){
 }
 
 
-void Addressing::pointToListHead(){
+void Assignment::pointToListHead(){
 	while(this->sp_list_ptr->getPrevious()){
 		this->sp_list_ptr = this->sp_list_ptr->getPrevious();
 	}
 }
 
-bool Addressing::allocScalePointList(int size){
+bool Assignment::allocScalePointList(int size){
 	if(size > spBank.getFreeSpace()){
 		return false;
 	}
@@ -180,7 +180,7 @@ bool Addressing::allocScalePointList(int size){
 
 }
 
-void Addressing::freeScalePointList(){
+void Assignment::freeScalePointList(){
 	if(!this->sp_list_ptr){
 		return;
 	}
@@ -197,7 +197,7 @@ void Addressing::freeScalePointList(){
 	}
 }
 
-void Addressing::printScalePoints(){ //vv
+void Assignment::printScalePoints(){ //vv
 	if(!sp_list_size){
 		return;
 	}

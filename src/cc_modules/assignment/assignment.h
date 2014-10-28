@@ -16,7 +16,7 @@ enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};
 This class holds a parameter assignment information, an actuator can have more than 1 addressing.
 ************************************************************************************************************************
 */
-class Addressing{
+class Assignment{
 public:
 
 	Mode		mode;				// Mode at which the assignment will work in.
@@ -37,9 +37,9 @@ public:
 	ScalePoint	*list_aux;			// List pointer auxiliar.
 	int			sp_list_size;		// Size of SP list.
 
-	Addressing();
+	Assignment();
 
-	~Addressing();
+	~Assignment();
 
 	// free label, unit and scalepoints and set state to available
 	void reset();
@@ -55,7 +55,7 @@ public:
 	void pointToListHead();
 
 	// receives a pointer to msg begin and reads necessary data, assigning to its attributes.
-	// visual_output_level regards to which strings you may wanna save in your addressing
+	// visual_output_level regards to which strings you may wanna save in your assignment
 	// VISUAL_NONE label, unit and scalepoints are ignored
 	// VISUAL_SHOW_LABEL scalepoints are ignored
 	// VISUAL_SHOW_SCALEPOINTS everything is assigned to addressing attributes

@@ -1,11 +1,11 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdint.h>
-#include "addressing.h"
+#include "assignment.h"
 
 using namespace std;
 
-void printAssig(Addressing assig){
+void printAssig(Assignment assig){
 
 	char buffer[16];
 	char buffer2[16];
@@ -39,7 +39,7 @@ void printAssig(Addressing assig){
 
 int main(){
 
-	Addressing assig;
+	Assignment assig;
 	/*
 		act_id 1,
 		mode1 4,

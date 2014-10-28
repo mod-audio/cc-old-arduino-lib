@@ -5,59 +5,6 @@
 
 /*
 ************************************************************************************************************************
-This class holds Scale points information, it's contained on an actuator.
-************************************************************************************************************************
-*/
-
-ScalePoint::ScalePoint(char* label, int length, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3):label(label,length), value{v0,v1,v2,v3}{}
-
-
-void Addressing::reset(){
-	available = true;
-	stringBank.freePacket(this->label);
-	stringBank.freePacket(this->unit);
-}
-
-// This function was used in debbuging time, it sends a readable description of actuator state.
-void Addressing::sendDescriptor(){
-	PRINT(F(" label "));
-	dsend(label->msg, label->length);
-	PRINT(F(" unit "));
-	dsend(unit->msg, unit->length);
-	// PRINT(unit->length);
-	PRINT(F(" mode "));
-	PRINT((int)mode.relevant_properties);
-	PRINT((int)mode.property_values);
-	PRINT(F(" port_properties "));
-	PRINT(port_properties);
-	PRINT(F(" value "));
-	PRINT(value.f);
-	PRINT(F(" minimum "));
-	PRINT(minimum.f);
-	PRINT(F(" maximum "));
-	PRINT(maximum.f);
-	PRINT(F(" default_value "));
-	PRINT(default_value.f);
-	PRINT(F(" steps "));
-	PRINT(steps.data16);
-
-	if(scale_points_counter){
-		for (int i = 0; i < scale_points_counter; ++i){
-			PRINT(F("||||"));
-			PRINT(F(" scale point "));
-			PRINT(i);
-
-			dsend(scale_points[i]->label.msg, scale_points[i]->label.length);
-			
-			PRINT(F(" value "));
-			PRINT(scale_points[i]->value.f);
-			PRINT(F("||||"));
-		}
-	}
-}
-
-/*
-************************************************************************************************************************
 This class holds a value update information.
 ************************************************************************************************************************
 */
@@ -253,7 +200,7 @@ void Actuator::postMessageRotine(){
 // sends the actuator descriptor.
 void Actuator::sendDescriptor(){
 	Word step;
-	
+
 	send(this->id);
 
 	send(this->name.length);
@@ -277,7 +224,7 @@ void Actuator::sendDescriptor(){
 		send(step.data8[0]);
 
 		send(step.data8[1]);
-	
+
 	}
 
 }

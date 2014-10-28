@@ -58,13 +58,11 @@ static ScalePointBank spBank;
 
 Addressing::Addressing(){
 	port_properties=0;
- 	scale_points_counter=0;
-	scale_points_total_count=0;
- 	available=true;
-
  	this->sp_list_ptr = 0;
  	this->list_aux = 0;
  	sp_list_size = 0;
+
+ 	available=true;
 }
 
 Addressing::~Addressing(){}

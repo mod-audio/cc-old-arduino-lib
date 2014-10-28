@@ -7,8 +7,8 @@ using namespace std;
 class FloatBank
 {
 public:
-	float bank[MAX_FLOAT_COUNT];
-	bool occupied[MAX_FLOAT_COUNT];
+	float bank[MAX_FLOAT_COUNT]; // array containing all floats used by scalepoints in the program.
+	bool occupied[MAX_FLOAT_COUNT]; // array stating which float is occupied.
 
 	FloatBank(){
 		for (int i = 0; i < MAX_FLOAT_COUNT; ++i){

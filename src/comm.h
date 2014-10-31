@@ -5,16 +5,12 @@
 // includes 
 #include <stdint.h>
 
-// serial definitions
-#define SERIAL_BAUD_RATE        500000
-#define SERIAL_READ_WRITE_PIN   2
-
 // control chain definitions
 #define CHAIN_SYNC_BYTE         0xAA
 #define CHAIN_ESCAPE_BYTE       0x1B
-#define CHAIN_BUFFER_SIZE       128
-// #define CHAIN_BUFFER_SIZE       256
+#define CHAIN_BUFFER_SIZE       256
 #define CHAIN_FIRST_DEV_ADDR    0x80
+
 
 // data definitions
 typedef struct __attribute__((__packed__)) CHAIN_T {
@@ -25,9 +21,16 @@ typedef struct __attribute__((__packed__)) CHAIN_T {
 } chain_t;
 
 // functions prototypes
-void comm_setup(void (*parser_cb)(chain_t *chain));
+
+// initializes the communication and returns the receiver struct
+chain_t* comm_init(uint32_t baud_rate, uint8_t oe_pin, void (*parser_cb)(chain_t *chain));
+// receives a chain struct and sends it byte to byte, this function is blocking
 void comm_send(chain_t *chain);
+// define the address, after defined the communication layer will only accept data coming from the specified address
 void comm_set_address(uint8_t address);
-chain_t* comm_get_receive_pointer(void);
+
+void comm_print(const char* str);
+void comm_print(int i);
+void comm_print(float i);
 
 #endif

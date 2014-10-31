@@ -57,12 +57,15 @@ static ScalePointBank spBank;
 
 
 Assignment::Assignment(){
-	port_properties=0;
+	this->port_properties = 0;
  	this->sp_list_ptr = 0;
  	this->list_aux = 0;
- 	sp_list_size = 0;
+ 	this->sp_list_size = 0;
 
- 	available=true;
+ 	this->next = 0;
+ 	this->previous = 0;
+
+ 	this->available = true;
 }
 
 Assignment::~Assignment(){}
@@ -215,4 +218,19 @@ void Assignment::printScalePoints(){ //vv
 		ptr = ptr->getNext();
 	}
 	cout << endl;
+}
+
+
+void Assignment::setNext(Assignment* next){
+	this->next = next;
+}
+Assignment* Assignment::getNext(){
+	return this->next;
+}
+
+void Assignment::setPrevious(Assignment* previous){
+	this->previous = previous;
+}
+Assignment* Assignment::getPrevious(){
+	return this->previous;
 }

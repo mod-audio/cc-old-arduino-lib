@@ -1,5 +1,5 @@
-#ifndef SWITCH_H
-#define SWITCH_H
+#ifndef BUTTON_H
+#define BUTTON_H
 
 #include "utils.h"
 #include "actuator.h"
@@ -8,7 +8,12 @@
 #define TOGGLE_MID		1
 #define TOGGLE_HIGH		2
 
-class Button: public Actuator{ // A switch witch does not save state, it can emulate state saver switch
+/*
+************************************************************************************************************************
+This class is like a preset to an actuator. It describes a button that only changes its value when pressed.
+************************************************************************************************************************
+*/
+class Button: public Actuator{ // A button witch does not save state, it can emulate state saver button
 public:
 	int 			minimum = 0;
 	int 			maximum = 1;
@@ -18,6 +23,7 @@ public:
 
 	Button(char* name, uint8_t id, bool default_state): Actuator(name, id, 1, 2, 1, VISUAL_NONE), default_state(default_state){
 
+		// modes the button supports
 		Mode *mode = supports("toggle"); // saves state
 		// mode->expects(PROPERTY_INTEGER, false);
 		// mode->expects(PROPERTY_LOGARITHM, false);
@@ -38,10 +44,13 @@ public:
 		// mode2->expects(PROPERTY_TAP_TEMPO, false);
 		// mode2->expects(PROPERTY_BYPASS, false);
 
+		// steplist the button supports
 		addStep(2);
 
 	}
 
+	// this function works with the value got from the sensor, it makes some calculations over this value and
+	// feeds the result to a Update class.
  	void calculateValue(){
 
  		static bool trigger = false;
@@ -104,6 +113,7 @@ public:
 	 //    }
  	}
 
+ 	// Possible rotine to be executed after the message is sent.
  	void postMessageChanges(){
 		// if ((this->addressing->port_properties & modes[1]->relevant_properties) == modes[1]->property_values) { // trigger
 
@@ -111,10 +121,12 @@ public:
 	 //    }
  	}
 
+ 	// associate to the pointer a parameter id and a value associated to this parameter.
 	void getUpdates(Update* update){
 		update->updates->setup(this->addrs[0]->id, this->value);
 	}
 
+	// this function needs to be implemented by the user.
 	virtual float getValue()=0;
 
 };

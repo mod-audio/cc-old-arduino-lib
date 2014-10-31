@@ -37,6 +37,9 @@ public:
 	ScalePoint	*list_aux;			// List pointer auxiliar.
 	int			sp_list_size;		// Size of SP list.
 
+	Assignment* next;
+	Assignment* previous;
+
 	Assignment();
 
 	~Assignment();
@@ -64,6 +67,12 @@ public:
 
 	// This function was used addressing module test, it sends a readable description of its scalepoints.
 	void printScalePoints(); //vv
+
+	void setNext(Assignment* next);
+	Assignment* getNext();
+
+	void setPrevious(Assignment* previous);
+	Assignment* getPrevious();
 
 };
 

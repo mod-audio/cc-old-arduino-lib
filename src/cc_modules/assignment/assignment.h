@@ -7,7 +7,7 @@
 #include "scalepoint.h"
 
 // size of scalepoint bank
-#define MAX_SCALE_POINTS 10
+#define MAX_SCALE_POINTS 100
 
 enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};
 
@@ -74,6 +74,8 @@ public:
 	void setPrevious(Assignment* previous);
 	Assignment* getPrevious();
 
+	uint8_t getId();
+	bool getAvailable();
 };
 
 #endif

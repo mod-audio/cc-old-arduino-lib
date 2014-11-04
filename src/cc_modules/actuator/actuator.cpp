@@ -1,8 +1,26 @@
+#include "stdio.h"
 #include "actuator.h"
-// #include "utils.h"
-// #include "defines.h"
-// #include "mode.h"
 
+Assignment* IdToPointer(int id, Assignment* list_ptr /*starts at list head*/){
+	Assignment* head = list_ptr;
+	do{
+		if(list_ptr->getId() == id){
+			return list_ptr;
+		}
+		else
+			list_ptr = list_ptr->getNext();
+	}while(list_ptr != head);
+	return 0;
+}
+
+void Actuator::printList(Assignment* begin, Assignment* end){
+	do{
+		printf("%i %i\n", begin->id, begin->available);
+		// begin->printScalePoints();
+		begin = begin->getNext();
+	}while(begin != end->getNext()/* && !begin->getAvailable()*/);
+
+}
 
 // Since all chunks of assignments will be allocated consecutively, I simplified this bank.
 // There is no need to a free an assignment.
@@ -24,14 +42,22 @@ public:
 	}
 	~AssignmentBank(){}
 
-	// this will return a pointer to the head of a linked list of assignments.
+	// this will return a pointer to the head of a double-circular-linked list of assignments.
 	// In case of not enough free space, returns null.
 	Assignment* allocAssignmentList(int chunk_size){
 
-		if(free_space){
+		if(free_space >= chunk_size){
 			free_space -= chunk_size;
-			bank[MAX_ASSIGNMENTS - (free_space+1)].setNext(0);
+
+			// set list head as next of list tail.
+			bank[MAX_ASSIGNMENTS - (free_space+1)].setNext((Assignment*) &bank[MAX_ASSIGNMENTS - (free_space + chunk_size)]);
+
+			// set list tail as previous of list head.
+			bank[MAX_ASSIGNMENTS - (free_space + chunk_size)].setPrevious((Assignment*) &bank[MAX_ASSIGNMENTS - (free_space+1)]);
+
+			// next chunk head has its previous pointing to NULL.
 			bank[MAX_ASSIGNMENTS - free_space].setPrevious(0);
+
 			return (Assignment*) &bank[MAX_ASSIGNMENTS - (free_space + chunk_size)];
 		}
 
@@ -81,7 +107,14 @@ Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, uint8_
 
 	this->visual_output_level = visual_output_level;
 
-	this->assig_list_ptr = assignBank.allocAssignmentList(num_assignments);
+	this->current_assig = 0 ;
+	this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
+
+	if(!this->assig_list_head){
+		// ERROR("Can't use this actuator.");
+		num_assignments = 0;
+		return;
+	}
 
 	// this->modes = new Mode*[modes_total_count];
 	// this->steps = new uint16_t[steps_total_count];
@@ -92,31 +125,42 @@ Actuator::~Actuator(){
 	// delete[] steps;
 }
 
-void Actuator::pointToListHead(){
-	while(this->assig_list_ptr->getPrevious()){
-		this->assig_list_ptr = this->assig_list_ptr->getPrevious();
-	}
+Assignment* Actuator::getListHead(){
+	// while(this->current_assig->getPrevious()){
+	// 	this->current_assig = this->current_assig->getPrevious();
+	// }
+	return this->assig_list_head;
 }
 
-void Actuator::pointToListTail(){
-	while(this->assig_list_ptr->getNext()){
-		this->assig_list_ptr = this->assig_list_ptr->getNext();
-	}
+Assignment* Actuator::getListTail(){
+	// while(this->current_assig->getNext()){
+	// 	this->current_assig = this->current_assig->getNext();
+	// }
+	return this->assig_list_head->getPrevious();
 }
 
 // associates a pointer to the Assignment list contained in actuators class.
 bool Actuator::assign(const uint8_t* ctrl_data){
-	if(assignments_occupied < num_assignments){
-		pointToListHead();
-		while(this->assig_list_ptr->getNext()){
+	Assignment* assig_ptr;
+	if(this->current_assig)
+		assig_ptr = this->current_assig;
+	else
+		assig_ptr = this->assig_list_head;
 
-			if(this->assig_list_ptr->available){
-				this->assig_list_ptr->setup(ctrl_data, visual_output_level);
+	if(assignments_occupied < num_assignments){
+		do{
+			if(assig_ptr->getAvailable()){
+				assig_ptr->setup(ctrl_data, visual_output_level);
+
+				// Now, current_assig has a valid assignment to point.
+				this->current_assig = assig_ptr;
+
 	 			assignments_occupied++;
+				printList(getListHead(), getListTail());
 				return true;
 			}
-			this->assig_list_ptr = this->assig_list_ptr->getNext();
-		}
+			assig_ptr = assig_ptr->getNext();
+		}while(assig_ptr != getListHead());
 	}
 	else{
 		// ERROR("Maximum parameters addressed already.");
@@ -124,7 +168,7 @@ bool Actuator::assign(const uint8_t* ctrl_data){
 	return false;
 }
 
-// frees a parameter slot.
+// frees a actuator assignment space.
 bool Actuator::unassign(uint8_t assignment_id){
 
 	if(!assignments_occupied){
@@ -132,28 +176,39 @@ bool Actuator::unassign(uint8_t assignment_id){
 	}
 	else{
 		Assignment* ptr;
-		//////// if(ptr = IdToPointer<Assignment>(assignment_id, assignments_occupied, assig_list_ptr)){
+		if(ptr = IdToPointer(assignment_id, assig_list_head)){
+			if(ptr == this->current_assig){
+				// If current_assig is the last assignment being used, it will point to null then.
+				if(assignments_occupied > 1)
+					this->current_assig = this->current_assig->getPrevious();
+				else
+					this->current_assig = 0;
+			}
 			ptr->reset();
 
+			// If ptr is pointing to the head, then ptr->next will be the new head.
+			if(ptr == this->assig_list_head)
+				this->assig_list_head = ptr->getNext();
+
 			// removes the node from the list.
-			if(ptr->getPrevious())
-				ptr->getPrevious()->setNext(ptr->getNext());
-			if(ptr->getNext())
-				ptr->getNext()->setPrevious(ptr->getPrevious());
+			ptr->getPrevious()->setNext(ptr->getNext());
+			ptr->getNext()->setPrevious(ptr->getPrevious());
 
-			// goes to the tail of the list
-			pointToListTail();
+			// excluded node is the new tail.
+			ptr->setPrevious(assig_list_head->getPrevious());
+			ptr->setNext(assig_list_head);
 
-			assig_list_ptr->setNext(ptr); // tails next is the excluded node.
-			ptr->setNext(0); // points to null.
-			ptr->setPrevious(assig_list_ptr); // excluded node set previous to the former list tail.
+			// Making ptr visible to old tail and head.
+			ptr->getPrevious()->setNext(ptr);
+			assig_list_head->setPrevious(ptr);
 
 			assignments_occupied--;
+			printList(getListHead(), getListTail());
 			return true;
-		//////// }
-		//////// else{
- 			//////// ERROR("Parameter id not found.");
-		//////// }
+		}
+		else{
+ 			// ERROR("Parameter id not found.");
+		}
 	}
 	return false;
 }

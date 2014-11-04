@@ -149,6 +149,7 @@ bool Assignment::setup(const uint8_t* ctrl_data, int visual_output_level){
 				pointToListHead();
 			}
 			else{
+				this->sp_list_size = 0;
 				return false;
 			}
 		break;
@@ -233,4 +234,12 @@ void Assignment::setPrevious(Assignment* previous){
 }
 Assignment* Assignment::getPrevious(){
 	return this->previous;
+}
+
+uint8_t Assignment::getId(){
+	return this->id;
+}
+
+bool Assignment::getAvailable(){
+	return this->available;
 }

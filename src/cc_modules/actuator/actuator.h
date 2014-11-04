@@ -34,15 +34,18 @@ public:
 	float 				old_value;
 	float 				value;
 
-	Assignment*			assig_list_ptr; /// VAI FUNCIONAR NO ESQUEMA DE BANCO, o ponteiro aponta pra um endereçamento, os assignments terão ponteiro pra next e previous, como os scalepoints;
+	Assignment*			current_assig;
+	Assignment*			assig_list_head;
 
 	Actuator(const char* name, uint8_t id, uint8_t num_assignments, uint8_t modes_total_count, uint8_t steps_total_count, uint8_t visual_output_level);
 
 	~Actuator();
 
-	void pointToListHead();
+	Assignment* getListHead();
 
-	void pointToListTail();
+	Assignment* getListTail();
+
+	void printList(Assignment* begin, Assignment* end);
 
 	// associates a pointer to the assignment list contained in actuators class.
 	bool assign(const uint8_t* ctrl_data);/// Deve verificar se o numero de endereçamentos ultrapassa o numero de slots;

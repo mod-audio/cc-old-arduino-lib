@@ -1,10 +1,10 @@
-
 #ifndef MODE_H
 #define MODE_H
 
 #include <stdint.h>
 
-#define MODE_MAX_LABEL_SIZE		10
+#define MAX_MODE_COUNT			4
+#define MAX_MODE_LABEL_SIZE		10
 
 
 /*
@@ -41,16 +41,16 @@ public:
     const char* label;
     uint8_t label_length;
 
-	Mode(const char* label=0, uint8_t relevant_properties=0, uint8_t property_values=0);
+	Mode();
 
-	// This function configures the mode, usually this is called on a actuator subclass constructor.
-	void expects(uint8_t property, bool value);
+	// This function register a mode into mode_array and returns its pointer OR returns a pointer to an equivalent already registered mode.
+	static Mode* registerMode(const char* label, uint8_t relevant_properties, uint8_t property_values);
 
 	// returns the mode descriptor size.
 	uint8_t descriptorSize();
 
-	// get the mode descriptor serialized.
-	void getDescriptor(uint8_t *buffer);
+	// get the mode descriptor serialized, returns number of written bytes.
+	int getDescriptor(uint8_t *buffer);
 };
 
 #endif

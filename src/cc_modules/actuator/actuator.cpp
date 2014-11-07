@@ -64,26 +64,9 @@ public:
 		return 0;
 	}
 
-	// void freeAssignment(Assignment* ptr){
-	// 	long int index;
-
-	// 	if(!ptr){
-	// 		return;
-	// 	}
-
-	// 	index = (ptr-bank);
-
-	// 	if(index >= 0 && index < MAX_ASSIGNMENTS){
-	// 		bank[index].freeScalePoint();
-	// 		occupied[index] = false;
-	// 		free_space++;
-	// 	}
-
- // 	}
-
- 	int getFreeSpace(){
- 		return free_space;
- 	}
+ 	// int getFreeSpace(){
+ 	// 	return free_space;
+ 	// }
 
 };
 static AssignmentBank assignBank;
@@ -93,17 +76,18 @@ static AssignmentBank assignBank;
 This class models a physical generic actuator.
 ************************************************************************************************************************
 // */
-Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, uint8_t modes_total_count, uint8_t steps_total_count, uint8_t visual_output_level){
-	this->name = (char*) name;
+Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps, uint8_t visual_output_level){
+	this->name = name;
+
+	for (this->name_length = 0; name[this->name_length]; this->name_length++);
+
 	this->id = id;
 
 	this->num_assignments = num_assignments;
-	this->modes_total_count = modes_total_count;
-	this->steps_total_count = steps_total_count;
+	this->num_modes = num_modes;
+	this->num_steps = num_steps;
 
 	this->assignments_occupied = 0;
-	this->modes_counter = 0;
-	this->steps_counter = 0;
 
 	this->visual_output_level = visual_output_level;
 
@@ -111,31 +95,23 @@ Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, uint8_
 	this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
 
 	if(!this->assig_list_head){
-		// ERROR("Can't use this actuator.");
+		// ERROR("Actuator with no assignment slots.");
 		num_assignments = 0;
 		return;
 	}
 
-	// this->modes = new Mode*[modes_total_count];
-	// this->steps = new uint16_t[steps_total_count];
+	this->modes = modes; // this pointer array is declared on subclass.
+	this->steps = steps; // this steps array is declared on subclass.
 }
 
 Actuator::~Actuator(){
-	// delete[] modes;
-	// delete[] steps;
 }
 
 Assignment* Actuator::getListHead(){
-	// while(this->current_assig->getPrevious()){
-	// 	this->current_assig = this->current_assig->getPrevious();
-	// }
 	return this->assig_list_head;
 }
 
 Assignment* Actuator::getListTail(){
-	// while(this->current_assig->getNext()){
-	// 	this->current_assig = this->current_assig->getNext();
-	// }
 	return this->assig_list_head->getPrevious();
 }
 
@@ -172,7 +148,7 @@ bool Actuator::assign(const uint8_t* ctrl_data){
 bool Actuator::unassign(uint8_t assignment_id){
 
 	if(!assignments_occupied){
-			// ERROR("No parameters addressed.");
+		// ERROR("No parameters addressed.");
 	}
 	else{
 		Assignment* ptr;
@@ -213,34 +189,6 @@ bool Actuator::unassign(uint8_t assignment_id){
 	return false;
 }
 
-// // creates a mode with a label.
-// Mode*	Actuator::supports(char* label){
-// 	if(modes_counter >= modes_total_count){
-// 		// ERROR("Mode limit overflow!");
-// 		return NULL;
-// 	}
-// 	else{
-// 		modes[modes_counter] = new Mode(label);
-
-// 		modes_counter++;
-
-// 		return modes[modes_counter-1];
-// 	}
-// }
-
-// // adds a step density to step list contained on actuators class.
-// void Actuator::addStep(uint16_t step_number){
-// 	if(steps_counter >= steps_total_count){
-// 		// ERROR("Step limit overflow!");
-// 	}
-// 	else{
-// 		steps[steps_counter] = step_number;
-
-// 		steps_counter++;
-// 	}
-// }
-
-
 // // checks if the value in the actuator changed.
 // bool Actuator::checkChange(){
 // 	float value = getValue();
@@ -267,58 +215,63 @@ bool Actuator::unassign(uint8_t assignment_id){
 // 	postMessageChanges();
 // }
 
-// // returns actuators descriptor size
-// uint16_t Actuator::descriptorSize(){
-// 	uint16_t count = 0;
-// 	int i = 0;
+// returns actuators descriptor size
+uint16_t Actuator::descriptorSize(){
+	uint16_t count = 0;
 
-// 	count += 1; //id
-// 	count += 1; //name size explicit
-// 	count += this->name.length; //name size
-// 	count += 1; //modes count
-// 	for (; i < modes_counter; ++i){
-// 		count += this->modes[i]->descriptorSize(); //modes count
-// 	}
-// 	count += 1; //slots number
-// 	count += 1; //step list size
+	count += 1; 									//id.
+	count += 1; 									//name size explicit.
+	count += this->name_length; 					//name size.
+	count += 1; 									//modes count.
+	for (int i = 0; i < num_modes; ++i){
+		count += this->modes[i]->descriptorSize(); 	//modes descriptors.
+	}
+	count += 1; 									//slots number
+	count += 1; 									//step list size
 
-// 	count += steps_counter*2; //modes count
+	count += num_steps*2; 						//steps
 
-// 	return count;
+	return count;
 
-// }
+}
 
-// // sends the actuator descriptor.
-// void Actuator::sendDescriptor(){
-// 	Word step;
+int Actuator::getDescriptor(uint8_t* buffer){
+	uint8_t* step_ptr;
+	int i = 0;
 
-// 	send(this->id);
 
-// 	send(this->name.length);
+	buffer[i++] = this->id;
 
-// 	send(this->name.msg, this->name.length);
+	buffer[i++] = this->name_length;
 
-// 	send(this->modes_counter);
+	for (int j = 0; j < this->name_length; ++j){
+		buffer[i++] = this->name[j];
+	}
 
-// 	for (int i = 0; i < modes_counter; ++i){
-// 		this->modes[i]->sendDescriptor();
-// 	}
+	buffer[i++] = this->num_modes;
 
-// 	send(this->num_assignments);
 
-// 	send(this->steps_counter);
+	for (int j = 0; j < num_modes; ++j){
+		i += this->modes[j]->getDescriptor(&buffer[i]);
+	}
 
-// 	for (int i = 0; i < steps_counter; ++i){
+	buffer[i++] = this->num_assignments;
 
-// 		step.data16 = steps[i];
+	buffer[i++] = this->num_steps;
 
-// 		send(step.data8[0]);
+	for (int j = 0; j < num_steps; ++j){
 
-// 		send(step.data8[1]);
+		step_ptr = (uint8_t*) &steps[j];
 
-// 	}
+		buffer[i++] = *step_ptr++;
 
-// }
+		buffer[i++] = *step_ptr;
+
+	}
+
+	return i;
+
+}
 
 // // These functions are supposed to be implemented in a subclass.
 // /////////////////////////////////////////////////////////////

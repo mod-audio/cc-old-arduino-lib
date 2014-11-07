@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <stdio.h>
 #include "mode.h"
@@ -9,14 +8,49 @@ int main(void)
 {
     uint8_t desc[16];
 
-    Mode m("0123");
-    m.expects(MODE_PROPERTY_BYPASS, true);
-    m.expects(MODE_PROPERTY_TAP_TEMPO, false);
-    m.getDescriptor(desc);
+    Mode *m, *m2, *m3, *m4;
 
-    cout << "descriptorSize " << (int) m.descriptorSize() << endl;
+    m = Mode::registerMode("Linear",0,0);
+    m2 = Mode::registerMode("Log",MODE_PROPERTY_LOGARITHM,MODE_PROPERTY_LOGARITHM);
+    m3 = Mode::registerMode("Trigger",MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER,MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER);
+    // should point to the same Mode m3 points.
+    m4 = Mode::registerMode("Trigger2",MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER,MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER);
 
-    for (int i = 0; i < m.descriptorSize(); ++i)
+    m->getDescriptor(desc);
+
+    cout << "descriptorSize " << (int) m->descriptorSize() << endl;
+
+    for (int i = 0; i < m->descriptorSize(); ++i)
+    {
+        printf("%02X ", desc[i]);
+    }
+    cout << endl;
+
+    m2->getDescriptor(desc);
+
+    cout << "descriptorSize " << (int) m2->descriptorSize() << endl;
+
+    for (int i = 0; i < m2->descriptorSize(); ++i)
+    {
+        printf("%02X ", desc[i]);
+    }
+    cout << endl;
+
+    m3->getDescriptor(desc);
+
+    cout << "descriptorSize " << (int) m3->descriptorSize() << endl;
+
+    for (int i = 0; i < m3->descriptorSize(); ++i)
+    {
+        printf("%02X ", desc[i]);
+    }
+    cout << endl;
+
+    m4->getDescriptor(desc);
+
+    cout << "descriptorSize " << (int) m4->descriptorSize() << endl;
+
+    for (int i = 0; i < m4->descriptorSize(); ++i)
     {
         printf("%02X ", desc[i]);
     }

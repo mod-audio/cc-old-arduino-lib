@@ -2,11 +2,13 @@
 #define ACTUATOR_H
 
 #include <stdint.h>
-#include "assignment.h"
 #include "update.h"
 #include "mode.h"
+#include "assignment.h"
 
 #define MAX_ASSIGNMENTS 10
+
+// class Update;
 
 /*
 ************************************************************************************************************************
@@ -69,16 +71,16 @@ public:
 	// ///////////////////////////////////////////////////////////
 
 	// // receives the update as an output parameter and writes the assign's info in it.
-	// virtual void getUpdates(Update* update)=0;
+	virtual void getUpdates(Update* update)=0;
 
 	// // process value read in getValue using the assingment mode as reference.
-	// virtual void calculateValue()=0;
+	virtual void calculateValue()=0;
 
 	// // reads analog or digital value
-	// virtual float getValue()=0;
+	virtual float getValue()=0;
 
 	// // This function will run after message has been sent.
-	// virtual void postMessageChanges()=0;
+	virtual void postMessageChanges()=0;
 
 	// /////////////////////////////////////////////////////////////
 

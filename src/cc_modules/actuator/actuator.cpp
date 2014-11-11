@@ -272,16 +272,3 @@ int Actuator::getDescriptor(uint8_t* buffer){
 	return i;
 
 }
-
-// // These functions are supposed to be implemented in a subclass.
-// /////////////////////////////////////////////////////////////
-
-// virtual void Actuator::getUpdates(Update* update)=0;
-
-// virtual void Actuator::calculateValue()=0;
-
-// virtual float Actuator::getValue()=0;
-
-// virtual void Actuator::postMessageChanges()=0;
-
-// /////////////////////////////////////////////////////////////

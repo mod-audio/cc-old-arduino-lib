@@ -7,9 +7,6 @@ void AssignUpdate::setup(uint8_t assignment_id, float value){
 	this->value = value;
 }
 
-
-
-
 Update::Update():update_list_size(0){}
 
 // sends complete Update description.

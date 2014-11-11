@@ -1,5 +1,5 @@
-#ifndef ACTUATOR_H
-#define ACTUATOR_H
+#ifndef UPDATE_H
+#define UPDATE_H
 
 #include <stdint.h>
 

@@ -17,7 +17,7 @@ This class models a physical generic actuator.
 */
 class Actuator{
 public:
-	const char*				name;  			// name displayed to user on mod-ui.
+	const char*			name;  			// name displayed to user on mod-ui.
 	uint8_t				name_length;  		// name size.
 	uint8_t				id;
 	Mode** 				modes;
@@ -53,6 +53,8 @@ public:
 
 	// frees a parameter slot.
 	bool unassign(uint8_t assignment_id);
+
+	bool supportMode(uint8_t relevant_properties, uint8_t property_values);
 
 	// // checks if the value in the actuator changed.
 	// bool checkChange();

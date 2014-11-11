@@ -13,11 +13,10 @@ using namespace std;
 
 #include "stimer.h"
 
-void event_handler (int signum) // 1ms interrupt
-{
-    if (signum == SIGALRM)
-    {
-        STimer::static_timer_count++;        
+void event_handler (int signum){ // 1ms interrupt
+
+    if (signum == SIGALRM){
+        STimer::static_timer_count++;
     }
 }
 #endif
@@ -39,14 +38,24 @@ int main(void)
 
     // how to use STimer
 
-    STimer alarm(1000);
+    int counter = 0;
+    STimer alarm;
 
+    alarm.setPeriod(100);
     alarm.start();
 
     while(1){
-        if (alarm.check()){
-            cout << "BOOYA" << endl;
-        }   
+        if (counter >= 0){
+            if(alarm.check()){
+                cout << "BOOYA" << endl;
+                counter++;
+            }
+        }
+        if (counter == 10){
+            alarm.stop();
+            cout << "STOP" << endl;
+            break;
+        }
     }
 
     return 0;

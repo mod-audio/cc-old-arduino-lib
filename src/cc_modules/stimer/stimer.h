@@ -15,7 +15,7 @@ public:
 	counter_t offset;
 	bool working;
 
-	STimer(counter_t period);
+	STimer();
 
 	void setPeriod(counter_t period);
 
@@ -25,7 +25,7 @@ public:
 
 	void start();
 
-	inline void clock(){
+	inline static void clock(){
 		static_timer_count++;
 	}
 };

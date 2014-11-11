@@ -71,11 +71,7 @@ public:
 };
 static AssignmentBank assignBank;
 
-/*
-************************************************************************************************************************
-This class models a physical generic actuator.
-************************************************************************************************************************
-// */
+
 Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps, uint8_t visual_output_level){
 	this->name = name;
 
@@ -184,6 +180,16 @@ bool Actuator::unassign(uint8_t assignment_id){
 		}
 		else{
  			// ERROR("Parameter id not found.");
+		}
+	}
+	return false;
+}
+
+bool Actuator::supportMode(uint8_t relevant_properties, uint8_t property_values){
+	for (int i = 0; i < num_modes; ++i){
+		if(modes[i]->relevant_properties == relevant_properties &&
+			modes[i]->property_values == property_values){
+			return true;
 		}
 	}
 	return false;

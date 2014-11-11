@@ -2,21 +2,19 @@
 
 volatile counter_t STimer::static_timer_count = 0;
 
-STimer::STimer(counter_t period){ //period in milisseconds
-	this->period = period;
-	offset = 0;
-	working = false;
+STimer::STimer(){ //period in milisseconds
+	this->offset = 0;
+	this->working = false;
 }
 
 void STimer::setPeriod(counter_t period){
 	this->period = period;
-	offset = static_timer_count;
 }
 
 bool STimer::check(){ // tells if the timer reached its period
-	if(working){
-		if((counter_t)(static_timer_count - offset) >= period){
-			offset = static_timer_count;
+	if(this->working){
+		if((counter_t)(STimer::static_timer_count - this->offset) >= this->period){
+			this->offset = STimer::static_timer_count;
 			return true;
 		}
 	}
@@ -29,5 +27,5 @@ void STimer::stop(){
 
 void STimer::start(){
 	working = true;
-	offset = static_timer_count;
+	offset = STimer::static_timer_count;
 }

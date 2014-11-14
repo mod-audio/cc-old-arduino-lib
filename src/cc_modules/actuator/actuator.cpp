@@ -195,31 +195,36 @@ bool Actuator::supportMode(uint8_t relevant_properties, uint8_t property_values)
 	return false;
 }
 
-// // checks if the value in the actuator changed.
-// bool Actuator::checkChange(){
-// 	float value = getValue();
+// checks if the value in the actuator changed.
+bool Actuator::checkChange(){
+	float value = getValue();
+	float value_diff = old_value - value;
 
-// 	if(assignments_occupied){
-// 		if(fabs(old_value - value) < VALUE_CHANGE_TOLERANCE){
-// 			return false;
-// 		}
-// 		else{
-// 			old_value = value;
-// 			this->changed = true;
-// 			return true;
-// 		}
-// 	}
-// 	else
-// 		return false;
-// }
+	if(value_diff < 0){
+		value_diff = - value_diff;
+	}
 
-// // this function runs after the message is sent. It serves to clear the changed flag, which indicates that the actuator
-// // has changed its value.
-// void Actuator::postMessageRotine(){
-// 	this->changed = false;
+	if(assignments_occupied){
+		if(value_diff < VALUE_CHANGE_TOLERANCE){
+			return false;
+		}
+		else{
+			old_value = value;
+			this->changed = true;
+			return true;
+		}
+	}
+	else
+		return false;
+}
 
-// 	postMessageChanges();
-// }
+// this function runs after the message is sent. It serves to clear the changed flag, which indicates that the actuator
+// has changed its value.
+void Actuator::postMessageRotine(){
+	this->changed = false;
+
+	postMessageChanges();
+}
 
 // returns actuators descriptor size
 uint16_t Actuator::descriptorSize(){

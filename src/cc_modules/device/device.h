@@ -1,8 +1,25 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#include "config.h"
 #include "stimer.h"
 #include "actuator.h"
+
+/*
+************************************************************************************************************************
+User defines
+************************************************************************************************************************
+*/
+
+#ifndef MAX_ACTUATORS
+#define MAX_ACTUATORS 	1 // max number of actuators
+#endif
+
+/*
+************************************************************************************************************************
+Device defines
+************************************************************************************************************************
+*/
 
 // Byte possition and its meaning on a message header until POS_DATA_SIZE2. After that only HEADER_SIZE is used.
 enum{POS_SYNC, POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2, NOT_USABLE_CHECKSUM, HEADER_SIZE}; // msg buffer positions
@@ -16,12 +33,12 @@ enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ASSIGNMENT, WAI
 // device addressing
 enum{DESTINATION = 1, ORIGIN};
 
-#ifndef DIGITAL_WRITE
-#define DIGITAL_WRITE(pin, value) ;
-#endif
-
 #ifndef SET_PIN_MODE
 #define SET_PIN_MODE(pin, mode) ;
+#endif
+
+#ifndef DIGITAL_WRITE
+#define DIGITAL_WRITE(pin, value) ;
 #endif
 
 #ifndef RANDOM_FUNCTION
@@ -36,9 +53,11 @@ enum{DESTINATION = 1, ORIGIN};
 #define LOW 	0
 #define HIGH 	1
 
+#define HOST_ADDRESS	00
 #define USER_LED 		13 // max number of actuators
 
-#define MAX_ACTUATORS 	3 // max number of actuators
+#define PROTOCOL_VERSION_BYTE1 01
+#define PROTOCOL_VERSION_BYTE2 00
 
 #define CONNECTING_LED_PERIOD 	500 // in ms
 
@@ -54,8 +73,6 @@ enum{DESTINATION = 1, ORIGIN};
 #define DEVICE_TIMEOUT_PERIOD		32*POLLING_PERIOD
 #define RANDOM_CONNECT_RANGE_BOTTOM	32
 #define RANDOM_CONNECT_RANGE_TOP	320
-
-// uint8_t g_device_id;
 
 /*
 ************************************************************************************************************************
@@ -86,7 +103,9 @@ public:
 	STimer		timer_connecting;		// take care of holding a random intervals to send connecting message.
 	STimer		timer_led;				// holds led's blinking period.
 
-	Device(const char* url_id, const char* label, uint8_t channel);
+	uint8_t* 	message_out;			// state in which the device is, protocol-wise
+
+	Device(const char* url_id, const char* label, uint8_t channel, uint8_t* message_out);
 
 	~Device();
 
@@ -113,7 +132,7 @@ public:
 	void timeoutReset();
 
 	// This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
-	void parse(uint8_t* message);
+	void parse(uint8_t* message_in);
 
 	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
 	// The integer returned in this function indicates if the message was sent or not.
@@ -126,8 +145,5 @@ public:
 	void checkConnectLED();
 
 };
-
-// Only device object needed.
-// Device* device;
 
 #endif

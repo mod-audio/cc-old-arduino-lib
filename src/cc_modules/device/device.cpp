@@ -1,6 +1,6 @@
+#include <iostream>
+using namespace std;
 #include "device.h"
-
-Device* device;
 
 bool stringComp(const char* str1, uint8_t str1_size, const char* str2, uint8_t str2_size){
 	if(str1_size == str2_size){
@@ -14,7 +14,7 @@ bool stringComp(const char* str1, uint8_t str1_size, const char* str2, uint8_t s
 	return false;
 }
 
-Device::Device(const char* url_id, const char* label, uint8_t channel){
+Device::Device(const char* url_id, const char* label, uint8_t channel, uint8_t* message_out){
 
 	this->label = label;
 	for (label_size = 0; label[label_size]; ++label_size);
@@ -27,6 +27,11 @@ Device::Device(const char* url_id, const char* label, uint8_t channel){
 
 	this->num_actuators = MAX_ACTUATORS;
 	this->state = CONNECTING;
+
+	this->message_out = message_out;
+	this->message_out[POS_SYNC] = '\xAA';
+	this->message_out[POS_DEST] = HOST_ADDRESS;
+	this->message_out[POS_ORIG] = this->id;
 
 	// this->chain = comm_init(BAUD_RATE, WRITE_READ_PIN, parse); //comm
 
@@ -98,18 +103,20 @@ void Device::refreshValues(){
 ************************************************************************************************************************
 */
 // This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
-void Device::parse(uint8_t* message){
+// receives an output parameter (message_out) where it will write the response message.
+void Device::parse(uint8_t* message_in){
 
 	// connection response, checks URL and channel to associate address to device id.
 	if(this->state == CONNECTING){
-		if(message[POS_FUNC] == FUNC_CONNECTION){
+		if(message_in[POS_FUNC] == FUNC_CONNECTION){
 
 			uint16_t* data_size;
-			data_size = (uint16_t*) &message[POS_DATA_SIZE1];
+			data_size = (uint16_t*) &message_in[POS_DATA_SIZE1];
 
-			if( stringComp((const char*)&message[POS_DATA_SIZE2+2] , message[POS_DATA_SIZE2+1], this->url_id, this->url_size) && (message[*data_size+3] == this->channel) ){
+			if( stringComp((const char*)&message_in[POS_DATA_SIZE2+2] , message_in[POS_DATA_SIZE2+1], this->url_id, this->url_size) && (message_in[*data_size+3] == this->channel) ){
 
-				this->id = message[POS_DEST];
+				this->id = message_in[POS_DEST];
+				this->message_out[POS_ORIG] = this->id;
 				this->state = WAITING_DESCRIPTOR_REQUEST;
 				// comm_set_address(this->id); //comm
 				// g_device_id = this->id;
@@ -126,7 +133,7 @@ void Device::parse(uint8_t* message){
 	}
 	else{
 
-		switch(message[POS_FUNC]){
+		switch(message_in[POS_FUNC]){
 
 			// if already connected and debug flag is on, an error message is sent on serial connection.
 			case FUNC_CONNECTION:
@@ -156,7 +163,7 @@ void Device::parse(uint8_t* message){
 
 					// Since actuator ID and index on the vector 'acts' are not necessarily the same, this function returns a pointer to
 					// the ID placed as parameter.
-					if(!(act = searchActuator(message[CTRLADDR_ACT_ID]))){
+					if(!(act = searchActuator(message_in[CTRLADDR_ACT_ID]))){
 						ERROR("Actuator does not exist.");
 						return;
 					}
@@ -164,7 +171,7 @@ void Device::parse(uint8_t* message){
 					else{
 
 						// Checks if the mode is not supported on the device.
-						if(!(act->supportMode(message[CTRLADDR_CHOSEN_MASK1], message[CTRLADDR_CHOSEN_MASK2]))){
+						if(!(act->supportMode(message_in[CTRLADDR_CHOSEN_MASK1], message_in[CTRLADDR_CHOSEN_MASK2]))){
 							ERROR("Mode not supported in this actuator.");
 							sendMessage(FUNC_CONTROL_ASSIGNMENT, -1);
 							return;
@@ -176,7 +183,7 @@ void Device::parse(uint8_t* message){
 						}
 						// if everything is ok, the parameter is assigned to the actuator.
 						else{
-							if( act->assign( &(message[CTRLADDR_ACT_ID+1]) ) ){
+							if( act->assign( &(message_in[CTRLADDR_ACT_ID+1]) ) ){
 								sendMessage(FUNC_CONTROL_ASSIGNMENT, 0);
 								this->state = WAITING_DATA_REQUEST;
 							}
@@ -214,7 +221,7 @@ void Device::parse(uint8_t* message){
 				}
 				else{
 					for (int i = 0; i < num_actuators; ++i){
-						if(acts[i]->unassign(message[UNASSIG_ACT_ID])){
+						if(acts[i]->unassign(message_in[UNASSIG_ACT_ID])){
 							sendMessage(FUNC_CONTROL_UNASSIGNMENT);
 							return;
 						}
@@ -229,145 +236,145 @@ void Device::parse(uint8_t* message){
 // The integer returned in this function indicates if the message was sent or not.
 int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg){
 
-	// int error_size;
-	// int changed_actuators = 0;
-	// uint16_t data_size;
+	int i;
+	int msg_idx = POS_FUNC;
 
-	// switch(function){
-	// 	case FUNC_CONNECTION:
-	// 		// url_id size (1) + url_id (n bytes) + channel (1) + version(2 bytes)
-	// 		data_size = this->url_size + 4;
-	// 	break;
+	int error_size;
+	int changed_actuators = 0;
+	uint16_t data_size;
+	uint8_t* uint8_ptr = (uint8_t*) data_size;
 
-	// 	case FUNC_DEVICE_DESCRIPTOR:
-	// 		//labelsize (1) + label(n) + num_actuators(n) + num_actuators(n) * actuators_description_sizes(n)
-	// 		data_size = 1 + this->label_size + 1;
-	// 		for (int i = 0; i < num_actuators; ++i){
-	// 			data_size += acts[i]->descriptorSize();
-	// 		}
+	switch(function){
+		case FUNC_CONNECTION:
+			// url_id size (1) + url_id (n bytes) + channel (1) + version(2 bytes)
+			data_size = this->url_size + 4;
+		break;
 
-	// 	break;
+		case FUNC_DEVICE_DESCRIPTOR:
+			//labelsize (1) + label(n) + num_actuators(n) + num_actuators(n) * actuators_description_sizes(n)
+			data_size = 1 + this->label_size + 1;
+			for (i = 0; i < num_actuators; ++i){
+				data_size += acts[i]->descriptorSize();
+			}
 
-	// 	case FUNC_DATA_REQUEST:
+		break;
 
-	// 		for (int i = 0; i < num_actuators; ++i){
-	// 			if(acts[i]->checkChange()){
-	// 				changed_actuators++;
-	// 			}
-	// 		}
+		case FUNC_DATA_REQUEST:
 
-	// 		// (param id (1) + param value (4)) * changed params (n) + params count (1) + addr request count (1) + addr requests(n)
-	// 		data_size = changed_actuators*5 + 2;
+			for (i = 0; i < num_actuators; ++i){
+				if(acts[i]->checkChange()){
+					changed_actuators++;
+				}
+			}
 
-	// 			// TODO	implementar o pedido de parametro (que ja foi endereçado mas não esta sendo usado) através do ID
+			// (param id (1) + param value (4)) * changed params (n) + params count (1) + addr request count (1) + addr requests(n)
+			data_size = changed_actuators*5 + 2;
 
-	// 	break;
+				// TODO	implementar o pedido de parametro (que ja foi endereçado mas não esta sendo usado) através do ID
 
-	// 	case FUNC_ERROR:
-	// 		// string (n bytes) + string size (1 byte) + error code (1 byte) + error function (1 byte)
-	// 		for (error_size = 0; error_msg[error_size]; ++error_size);
-	// 		data_size = error_size + 3;
+		break;
 
-	// 	break;
+		case FUNC_ERROR:
+			// string (n bytes) + string size (1 byte) + error code (1 byte) + error function (1 byte)
+			for (error_size = 0; error_msg[error_size]; ++error_size);
+			data_size = error_size + 3;
 
-	// 	case FUNC_CONTROL_ASSIGNMENT:
-	// 		// response bytes
-	// 		data_size = 2;
-	// 	break;
+		break;
 
-	// 	case FUNC_CONTROL_UNASSIGNMENT:
-	// 		data_size = 0;
-	// 	break;
-	// }
+		case FUNC_CONTROL_ASSIGNMENT:
+			// response bytes
+			data_size = 2;
+		break;
 
+		case FUNC_CONTROL_UNASSIGNMENT:
+			data_size = 0;
+		break;
+	}
 
-	// // MESSAGE HEADER
+	// MESSAGE HEADER
 
-	// send(BYTE_SYNC, this->chain); //comm
-	// send(HOST_ADDRESS); //comm
-	// send(this->id); //comm
-	// send(function); //comm
-	// send(data_size.data8[0]); //comm
-	// send(data_size.data8[1]); //comm
+	this->message_out[msg_idx++] = function;
+	this->message_out[msg_idx++] = *uint8_ptr++;
+	this->message_out[msg_idx++] = *uint8_ptr;
 
-	// switch(function){
-	// 	case FUNC_CONNECTION:
+	switch(function){
+		case FUNC_CONNECTION:
 
-	// 		send(this->url_id.length); //comm
-	// 		send(this->url_id.msg, this->url_id.length); //comm
-	// 		send(this->channel); //comm
-	// 		send(PROTOCOL_VERSION_BYTE1); //comm
-	// 		send(PROTOCOL_VERSION_BYTE2); //comm
+			this->message_out[msg_idx++] = this->url_size;
+			for (i = 0; i < url_size; ++i){
+				this->message_out[msg_idx++] = this->url_id[i];
+			}
+			this->message_out[msg_idx++] = this->channel;
+			this->message_out[msg_idx++] = PROTOCOL_VERSION_BYTE1;
+			this->message_out[msg_idx++] = PROTOCOL_VERSION_BYTE2;
 
-	// 	break;
+		break;
 
-	// 	case FUNC_DEVICE_DESCRIPTOR:
+		case FUNC_DEVICE_DESCRIPTOR:
 
-	// 		send(this->label.length); //comm
-	// 		send(this->label.msg, this->label.length); //comm
-	// 		send(this->num_actuators); //comm
+			this->message_out[msg_idx++] = this->label_size;
 
-	// 		for(int i = 0; i < num_actuators; i++){
-	// 			this->acts[i]->sendDescriptor();
-	// 		}
+			for (i = 0; i < label_size; ++i){
+				this->message_out[msg_idx++] = this->label[i];
+			}
+			this->message_out[msg_idx++] = this->num_actuators;
 
-	// 	break;
+			for(i = 0; i < num_actuators; i++){
+				msg_idx += this->acts[i]->getDescriptor(this->message_out);
+			}
 
-	// 	case FUNC_CONTROL_ASSIGNMENT: //control assignment and unassignment
+		break;
 
-	// 		send(status.data8[0]); //comm
-	// 		send(status.data8[1]); //comm
+		case FUNC_CONTROL_ASSIGNMENT: //control assignment and unassignment
 
-	// 	break;
+			uint8_ptr = (uint8_t*) &status;
 
-	// 	case FUNC_DATA_REQUEST:
+			this->message_out[msg_idx++] = *uint8_ptr++;
+			this->message_out[msg_idx++] = *uint8_ptr;
 
-	// 		backUpMessage(changed_actuators, BACKUP_RECORD);
-	// 		send(changed_actuators); //comm
+		break;
 
-	// 		for (int i = 0; i < num_actuators; ++i){
-	// 			if(acts[i]->changed && acts[i]->addrs[0] != NULL){
+		case FUNC_DATA_REQUEST:
 
-	// 				this->acts[i]->getUpdates(&this->updates);
-	// 				this->updates.sendDescriptor();
+			this->message_out[msg_idx++] = changed_actuators;
 
-	// 			}
-	// 		}
+			for (i = 0; i < num_actuators; ++i){
+				if(acts[i]->changed){
+					this->acts[i]->getUpdates(&this->updates);
+					msg_idx += this->updates.getDescriptor(this->message_out);
 
-	// 		send(0); // assignment request ( endereçamentos reservados na memória da pedaleira em vez do device) //comm
+				}
+			}
 
-	// 		backUpMessage(0, BACKUP_RECORD);
+			this->message_out[msg_idx++] = 0; // assignment request ( endereçamentos reservados na memória da pedaleira em vez do device)
 
-	// 	break;
+		break;
 
-	// 	case FUNC_CONTROL_UNASSIGNMENT: //control assignment and unassignment
+		case FUNC_CONTROL_UNASSIGNMENT: //control assignment and unassignment
 
-	// 	break;
+		break;
 
-	// 	case FUNC_ERROR: //TODO
-	// 		send(1); // error within function //comm
+		case FUNC_ERROR: //TODO
+			this->message_out[msg_idx++] = 1; // error within function
 
-	// 		send(1); // error code //comm
+			this->message_out[msg_idx++] = 1; // error code
 
-	// 		send(error_msg.length); // error message size //comm
+			this->message_out[msg_idx++] = error_size;
 
-	// 		// send(error_msg.length); // error message size //comm
+			for(i = 0; i < error_size; i++){
+				this->message_out[msg_idx++] = error_msg[i];
+			}
 
-	// 		send(error_msg.msg, error_msg.length); //comm
+		break;
 
-	// 	break;
+	}
 
-	// }
-
-	// // this last send call doesn't send a message, it only notifys the message is over and should be sent by comm struct.
-	// send(0,NULL,true); //comm
-
-	// // this loop runs an a post message rotine. The main purpose of this routine is to clean the 'changed' flag on actuators, specially
-	// // those with a trigger assigned.
-	// for (int i = 0; i < num_actuators; ++i){
-	// 	if(acts[i]->changed)
-	// 		acts[i]->postMessageRotine();
-	// }
+	// this loop runs an a post message rotine. The main purpose of this routine is to clean the 'changed' flag on actuators, specially
+	// those with a trigger assigned.
+	for (int i = 0; i < num_actuators; ++i){
+		if(acts[i]->changed)
+			acts[i]->postMessageRotine();
+	}
 
 	return 1;
 }

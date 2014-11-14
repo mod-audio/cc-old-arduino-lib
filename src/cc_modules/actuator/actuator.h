@@ -8,6 +8,8 @@
 
 #define MAX_ASSIGNMENTS 10
 
+#define VALUE_CHANGE_TOLERANCE 0.01
+
 // class Update;
 
 /*
@@ -56,12 +58,12 @@ public:
 
 	bool supportMode(uint8_t relevant_properties, uint8_t property_values);
 
-	// // checks if the value in the actuator changed.
-	// bool checkChange();
+	// checks if the value in the actuator changed.
+	bool checkChange();
 
-	// // this function runs after the message is sent. It serves to clear the changed flag, which indicates that the actuator
-	// // has changed its value.
-	// void postMessageRotine();
+	// this function runs after the message is sent. It serves to clear the changed flag, which indicates that the actuator
+	// has changed its value.
+	void postMessageRotine();
 
 	// returns actuators descriptor size
 	uint16_t descriptorSize();

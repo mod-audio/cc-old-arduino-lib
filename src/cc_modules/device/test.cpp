@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <stdio.h>
 #include "config.h"
 #include "device.h"
 #include "button.h"
@@ -40,12 +41,30 @@ public:
 
 };
 
+void messagePrint(uint8_t* buff){
+	uint16_t* data_size = (uint16_t*) &buff[POS_DATA_SIZE1];
+
+	printf("\\x%02x ", buff[POS_SYNC]);
+	printf("\\x%02x ", buff[POS_DEST]);
+	printf("\\x%02x ", buff[POS_ORIG]);
+	printf("\\x%02x ", buff[POS_FUNC]);
+	printf("\\x%02x ", buff[POS_DATA_SIZE1]);
+	printf("\\x%02x ", buff[POS_DATA_SIZE2]);
+
+	for (int i = 0; i < *data_size; ++i){
+		printf("\\x%02x ", buff[i+POS_DATA_SIZE2+1]);
+	}
+}
+
 int main(){
 
-	uint8_t message_in[256];
-	uint8_t message_out[256];
+	uint8_t _message_in[256];
+	uint8_t _message_out[256];
 
-	Device dev("http://portalmod.com/devices/TESTING", "Testing Device", 1, message_out);
+	Device dev("http://portalmod.com/devices/XP", "Testing Device", 1);
+
+	dev.setOutBuffer(_message_out);
+	dev.setCallback(messagePrint);
 
 	ASensor act1("Knob", 0);
 	AButton act2("foot", 1);
@@ -67,8 +86,7 @@ int main(){
 			cout << "NAO" << endl;
 	}
 
-	dev.refreshValues();
-
+	dev.sendMessage(FUNC_CONNECTION);
 
 
 	return 0;

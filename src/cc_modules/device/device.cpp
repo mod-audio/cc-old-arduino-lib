@@ -14,7 +14,7 @@ bool stringComp(const char* str1, uint8_t str1_size, const char* str2, uint8_t s
 	return false;
 }
 
-Device::Device(const char* url_id, const char* label, uint8_t channel, uint8_t* message_out){
+Device::Device(const char* url_id, const char* label, uint8_t channel){
 
 	this->label = label;
 	for (label_size = 0; label[label_size]; ++label_size);
@@ -27,11 +27,6 @@ Device::Device(const char* url_id, const char* label, uint8_t channel, uint8_t* 
 
 	this->num_actuators = MAX_ACTUATORS;
 	this->state = CONNECTING;
-
-	this->message_out = message_out;
-	this->message_out[POS_SYNC] = '\xAA';
-	this->message_out[POS_DEST] = HOST_ADDRESS;
-	this->message_out[POS_ORIG] = this->id;
 
 	// this->chain = comm_init(BAUD_RATE, WRITE_READ_PIN, parse); //comm
 
@@ -55,6 +50,17 @@ Device::Device(const char* url_id, const char* label, uint8_t channel, uint8_t* 
 }
 
 Device::~Device(){}
+
+void Device::setCallback(void (*msg_ready_cb)(uint8_t* in_buff)){
+	this->msg_ready_cb = msg_ready_cb;
+}
+
+void Device::setOutBuffer(uint8_t* message_out){
+	this->message_out = message_out;
+	this->message_out[POS_SYNC] = '\xAA';
+	this->message_out[POS_DEST] = HOST_ADDRESS;
+	this->message_out[POS_ORIG] = this->id;
+}
 
 /*
 ************************************************************************************************************************
@@ -241,13 +247,15 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 
 	int error_size;
 	int changed_actuators = 0;
-	uint16_t data_size;
-	uint8_t* uint8_ptr = (uint8_t*) data_size;
+	static uint16_t data_size=0;
+	static uint8_t* byte_ptr=0;
+
 
 	switch(function){
 		case FUNC_CONNECTION:
 			// url_id size (1) + url_id (n bytes) + channel (1) + version(2 bytes)
 			data_size = this->url_size + 4;
+
 		break;
 
 		case FUNC_DEVICE_DESCRIPTOR:
@@ -293,9 +301,11 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 
 	// MESSAGE HEADER
 
+	byte_ptr = (uint8_t*) &data_size;
+
 	this->message_out[msg_idx++] = function;
-	this->message_out[msg_idx++] = *uint8_ptr++;
-	this->message_out[msg_idx++] = *uint8_ptr;
+	this->message_out[msg_idx++] = *byte_ptr++;
+	this->message_out[msg_idx++] = *byte_ptr;
 
 	switch(function){
 		case FUNC_CONNECTION:
@@ -327,10 +337,10 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 
 		case FUNC_CONTROL_ASSIGNMENT: //control assignment and unassignment
 
-			uint8_ptr = (uint8_t*) &status;
+			byte_ptr = (uint8_t*) &status;
 
-			this->message_out[msg_idx++] = *uint8_ptr++;
-			this->message_out[msg_idx++] = *uint8_ptr;
+			this->message_out[msg_idx++] = *byte_ptr++;
+			this->message_out[msg_idx++] = *byte_ptr;
 
 		break;
 
@@ -368,6 +378,8 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 		break;
 
 	}
+
+	msg_ready_cb(this->message_out);
 
 	// this loop runs an a post message rotine. The main purpose of this routine is to clean the 'changed' flag on actuators, specially
 	// those with a trigger assigned.

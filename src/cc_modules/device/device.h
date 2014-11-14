@@ -105,9 +105,15 @@ public:
 
 	uint8_t* 	message_out;			// state in which the device is, protocol-wise
 
-	Device(const char* url_id, const char* label, uint8_t channel, uint8_t* message_out);
+	void (*msg_ready_cb)(uint8_t* in_buff);
+
+	Device(const char* url_id, const char* label, uint8_t channel);
 
 	~Device();
+
+	void setCallback(void (*msg_ready_cb)(uint8_t* in_buff));
+
+	void setOutBuffer(uint8_t* message_out);
 
 /*
 ************************************************************************************************************************

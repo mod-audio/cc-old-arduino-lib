@@ -57,7 +57,7 @@ void Device::setCallback(void (*msg_ready_cb)(uint8_t* in_buff)){
 
 void Device::setOutBuffer(uint8_t* message_out){
 	this->message_out = message_out;
-	this->message_out[POS_SYNC] = '\xAA';
+	this->message_out[POS_SYNC] = BYTE_SYNC;
 	this->message_out[POS_DEST] = HOST_ADDRESS;
 	this->message_out[POS_ORIG] = this->id;
 }
@@ -125,7 +125,6 @@ void Device::parse(uint8_t* message_in){
 				this->message_out[POS_ORIG] = this->id;
 				this->state = WAITING_DESCRIPTOR_REQUEST;
 				// comm_set_address(this->id); //comm
-				// g_device_id = this->id;
 
 				return;
 			}
@@ -240,7 +239,7 @@ void Device::parse(uint8_t* message_in){
 
 // Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
 // The integer returned in this function indicates if the message was sent or not.
-int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg){
+int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg){
 
 	int i;
 	int msg_idx = POS_FUNC;
@@ -259,7 +258,7 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 		break;
 
 		case FUNC_DEVICE_DESCRIPTOR:
-			//labelsize (1) + label(n) + num_actuators(n) + num_actuators(n) * actuators_description_sizes(n)
+			// labelsize (1) + label(n) + num_actuators(n) + num_actuators(n) * actuators_description_sizes(n)
 			data_size = 1 + this->label_size + 1;
 			for (i = 0; i < num_actuators; ++i){
 				data_size += acts[i]->descriptorSize();
@@ -327,10 +326,11 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 			for (i = 0; i < label_size; ++i){
 				this->message_out[msg_idx++] = this->label[i];
 			}
+
 			this->message_out[msg_idx++] = this->num_actuators;
 
 			for(i = 0; i < num_actuators; i++){
-				msg_idx += this->acts[i]->getDescriptor(this->message_out);
+				msg_idx += this->acts[i]->getDescriptor(&this->message_out[msg_idx]);
 			}
 
 		break;
@@ -351,8 +351,7 @@ int Device::sendMessage(uint8_t function, uint16_t status, const char* error_msg
 			for (i = 0; i < num_actuators; ++i){
 				if(acts[i]->changed){
 					this->acts[i]->getUpdates(&this->updates);
-					msg_idx += this->updates.getDescriptor(this->message_out);
-
+					msg_idx += this->updates.getDescriptor(&this->message_out[msg_idx]);
 				}
 			}
 

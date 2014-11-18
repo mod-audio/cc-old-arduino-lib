@@ -1,6 +1,6 @@
 #include "linearsensor.h"
 
-LinearSensor::LinearSensor(const char* name, uint8_t id): Actuator(name, id, 1 /*slots*/, modes, LS_NUM_MODES, steps, LS_NUM_STEPS, 0){
+LinearSensor::LinearSensor(const char* name, uint8_t id): Actuator(name, id, 2 /*slots*/, modes, LS_NUM_MODES, steps, LS_NUM_STEPS, 0){
 	this->minimum = 0;
 	this->maximum = 1023;
 
@@ -44,7 +44,7 @@ void LinearSensor::calculateValue(){
 
 	// associate to the pointer a parameter id and a value associated to this parameter.
 void LinearSensor::getUpdates(Update* update){
-    update->updates->setup(this->current_assig->id, this->value);
+    update->addAssignUpdate(this->current_assig->id, this->value);
 }
 
 // Possible rotine to be executed after the message is sent.

@@ -45,7 +45,7 @@ enum{DESTINATION = 1, ORIGIN};
 #define RANDOM_FUNCTION(bottom, top) 10
 #endif
 
-#define ERROR(str) ;
+#define ERROR(str) sendMessage(FUNC_ERROR, 0, str);
 
 #define INPUT 	0
 #define OUTPUT 	1
@@ -58,6 +58,8 @@ enum{DESTINATION = 1, ORIGIN};
 
 #define PROTOCOL_VERSION_BYTE1 01
 #define PROTOCOL_VERSION_BYTE2 00
+
+#define BYTE_SYNC '\xAA'
 
 #define CONNECTING_LED_PERIOD 	500 // in ms
 
@@ -142,7 +144,7 @@ public:
 
 	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
 	// The integer returned in this function indicates if the message was sent or not.
-	int sendMessage(uint8_t function, uint16_t status = 0 /*control addressing status*/, const char* error_msg = "");
+	int sendMessage(uint8_t function, int16_t status = 0 /*control addressing status*/, const char* error_msg = "");
 
 	// initialize conversation between device and host
 	void connectDevice();

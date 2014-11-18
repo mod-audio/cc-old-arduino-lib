@@ -89,5 +89,5 @@ void Button::postMessageChanges(){
 
 // associate to the pointer a parameter id and a value associated to this parameter.
 void Button::getUpdates(Update* update){
-	update->updates->setup(this->current_assig->id, this->value);
+	update->addAssignUpdate(this->current_assig->id, this->value);
 }

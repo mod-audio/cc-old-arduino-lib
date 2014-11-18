@@ -13,12 +13,13 @@ Assignment* IdToPointer(int id, Assignment* list_ptr /*starts at list head*/){
 	return 0;
 }
 
-void Actuator::printList(Assignment* begin, Assignment* end){
+void Actuator::printList(){
+	Assignment* ptr = getListHead();
 	do{
-		printf("%i %i\n", begin->id, begin->available);
+		printf("%i %i\n", ptr->id, ptr->available);
 		// begin->printScalePoints();
-		begin = begin->getNext();
-	}while(begin != end->getNext()/* && !begin->getAvailable()*/);
+		ptr = ptr->getNext();
+	}while(ptr != getListHead());
 
 }
 
@@ -128,7 +129,6 @@ bool Actuator::assign(const uint8_t* ctrl_data){
 				this->current_assig = assig_ptr;
 
 	 			assignments_occupied++;
-				printList(getListHead(), getListTail());
 				return true;
 			}
 			assig_ptr = assig_ptr->getNext();
@@ -175,7 +175,6 @@ bool Actuator::unassign(uint8_t assignment_id){
 			assig_list_head->setPrevious(ptr);
 
 			assignments_occupied--;
-			printList(getListHead(), getListTail());
 			return true;
 		}
 		else{

@@ -48,7 +48,7 @@ public:
 
 	Assignment* getListTail();
 
-	void printList(Assignment* begin, Assignment* end);//vv
+	void printList();//vv
 
 	// associates a pointer to the assignment list contained in actuators class.
 	bool assign(const uint8_t* ctrl_data);/// Deve verificar se o numero de endereçamentos ultrapassa o numero de slots;

@@ -33,9 +33,6 @@ public:
 
 	bool operator==(const Str &str) const;
 
-	// void operator=(const char* const &text);
-
-	// void operator=(const Str &str);
 };
 
 

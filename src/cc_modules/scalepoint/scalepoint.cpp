@@ -1,5 +1,3 @@
-#include <iostream>
-using namespace std;
 #include <stdint.h>
 #include "str.h"
 #include "scalepoint.h"

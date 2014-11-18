@@ -1,8 +1,4 @@
-#include <iostream>
-using namespace std;
-#include "stdio.h"
 #include "assignment.h"
-#include "scalepoint.h"
 
 class ScalePointBank
 {
@@ -202,23 +198,23 @@ void Assignment::freeScalePointList(){
 }
 
 void Assignment::printScalePoints(){ //vv
-	if(!sp_list_size){
-		return;
-	}
+	// if(!sp_list_size){
+	// 	return;
+	// }
 
-	char buff[10];
-	int size;
-	ScalePoint* ptr = this->sp_list_ptr;
-	pointToListHead();
-	while(ptr){
-		size = ptr->getLabel(buff);
-		for (int i = 0; i < size; ++i){
-			cout << buff[i];
-		}
-		cout << ": " << ptr->getValue() << endl;
-		ptr = ptr->getNext();
-	}
-	cout << endl;
+	// char buff[10];
+	// int size;
+	// ScalePoint* ptr = this->sp_list_ptr;
+	// pointToListHead();
+	// while(ptr){
+	// 	size = ptr->getLabel(buff);
+	// 	for (int i = 0; i < size; ++i){
+	// 		cout << buff[i];
+	// 	}
+	// 	cout << ": " << ptr->getValue() << endl;
+	// 	ptr = ptr->getNext();
+	// }
+	// cout << endl;
 }
 
 

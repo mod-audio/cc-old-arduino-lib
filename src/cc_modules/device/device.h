@@ -5,22 +5,6 @@
 #include "stimer.h"
 #include "actuator.h"
 
-/*
-************************************************************************************************************************
-User defines
-************************************************************************************************************************
-*/
-
-#ifndef MAX_ACTUATORS
-#define MAX_ACTUATORS 	1 // max number of actuators
-#endif
-
-/*
-************************************************************************************************************************
-Device defines
-************************************************************************************************************************
-*/
-
 // Byte possition and its meaning on a message header until POS_DATA_SIZE2. After that only HEADER_SIZE is used.
 enum{POS_SYNC, POS_DEST, POS_ORIG, POS_FUNC, POS_DATA_SIZE1, POS_DATA_SIZE2, NOT_USABLE_CHECKSUM, HEADER_SIZE}; // msg buffer positions
 
@@ -32,6 +16,10 @@ enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ASSIGNMENT, WAI
 
 // device addressing
 enum{DESTINATION = 1, ORIGIN};
+
+#ifndef MAX_ACTUATORS
+#define MAX_ACTUATORS 	1 // max number of actuators
+#endif
 
 #ifndef SET_PIN_MODE
 #define SET_PIN_MODE(pin, mode) ;
@@ -45,23 +33,38 @@ enum{DESTINATION = 1, ORIGIN};
 #define RANDOM_FUNCTION(bottom, top) 10
 #endif
 
+#ifndef ERROR
 #define ERROR(str) sendMessage(FUNC_ERROR, 0, str);
+#endif
 
+#ifndef INPUT
 #define INPUT 	0
-#define OUTPUT 	1
+#endif
 
+#ifndef OUTPUT
+#define OUTPUT 	1
+#endif
+
+#ifndef LOW
 #define LOW 	0
+#endif
+
+#ifndef HIGH
 #define HIGH 	1
+#endif
+
+#ifndef USER_LED
+#define USER_LED 		13 // max number of actuators
+#endif
 
 #define HOST_ADDRESS	00
-#define USER_LED 		13 // max number of actuators
 
 #define PROTOCOL_VERSION_BYTE1 01
 #define PROTOCOL_VERSION_BYTE2 00
 
 #define BYTE_SYNC '\xAA'
 
-#define CONNECTING_LED_PERIOD 	500 // in ms
+#define CONNECTING_LED_PERIOD 		500 // in ms
 
 #define FUNC_CONNECTION				0x01
 #define FUNC_DEVICE_DESCRIPTOR		0x02

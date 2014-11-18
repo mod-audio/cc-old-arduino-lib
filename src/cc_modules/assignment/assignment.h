@@ -1,13 +1,17 @@
 #ifndef ADDRESSING_H
 #define ADDRESSING_H
 
+
+#include "config.h"
 #include <stdint.h>
 #include "mode.h"
 #include "str.h"
 #include "scalepoint.h"
 
 // size of scalepoint bank
+#ifndef MAX_SCALE_POINTS
 #define MAX_SCALE_POINTS 100
+#endif
 
 enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};
 

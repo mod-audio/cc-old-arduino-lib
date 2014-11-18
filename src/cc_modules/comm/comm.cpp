@@ -317,6 +317,10 @@ void comm_send(chain_t *chain)
     uint32_t i;
     uint8_t *raw_data, checksum = 0;
 
+    if(chain->origin){
+        g_address = chain->origin;
+    }
+
     chain->sync = CHAIN_SYNC_BYTE;
     raw_data = (uint8_t *) &(chain->sync);
 

@@ -1,5 +1,3 @@
-#include <iostream>
-using namespace std;
 #include "str.h"
 
 class STRBank
@@ -116,24 +114,3 @@ bool Str::operator==(const Str &str) const {
 		return false;
 
 }
-
-// void Str::operator=(const char* const &text){
-// 	int i = 0;
-
-// 	for (; text[i] != '\0'; ++i);
-
-// 	this->length = (i < MAX_STRING_SIZE)?i:MAX_STRING_SIZE;
-
-// 	for(i = 0; i < this->length; i++){
-// 		this->text[i] = text[i];
-// 	}
-// }
-
-// void Str::operator=(const Str &str){
-
-// 	this->length = str.length;
-
-// 	for(int i = 0; i < this->length; i++){
-// 		this->text[i] = str.text[i];
-// 	}
-// }

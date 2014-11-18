@@ -1,11 +1,14 @@
 #ifndef UPDATE_H
 #define UPDATE_H
 
+#include "config.h"
 #include <stdint.h>
 
 // Determines how many updates the Update class will hold, ideally each actuator should add 1 AssignUpdate
 // so this define must take the NUMBER_OF_ACTUATORS as parameter.
+#ifndef NUMBER_OF_UPDATES
 #define NUMBER_OF_UPDATES 	4
+#endif
 
 /*
 ************************************************************************************************************************

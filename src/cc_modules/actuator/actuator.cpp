@@ -1,4 +1,3 @@
-#include "stdio.h"
 #include "actuator.h"
 
 Assignment* IdToPointer(int id, Assignment* list_ptr /*starts at list head*/){
@@ -14,12 +13,12 @@ Assignment* IdToPointer(int id, Assignment* list_ptr /*starts at list head*/){
 }
 
 void Actuator::printList(){
-	Assignment* ptr = getListHead();
-	do{
-		printf("%i %i\n", ptr->id, ptr->available);
-		// begin->printScalePoints();
-		ptr = ptr->getNext();
-	}while(ptr != getListHead());
+	// Assignment* ptr = getListHead();
+	// do{
+	// 	printf("%i %i\n", ptr->id, ptr->available);
+	// 	// begin->printScalePoints();
+	// 	ptr = ptr->getNext();
+	// }while(ptr != getListHead());
 
 }
 

@@ -1,14 +1,19 @@
 #ifndef ACTUATOR_H
 #define ACTUATOR_H
 
+#include "config.h"
 #include <stdint.h>
 #include "update.h"
 #include "mode.h"
 #include "assignment.h"
 
+#ifndef MAX_ASSIGNMENTS
 #define MAX_ASSIGNMENTS 10
+#endif
 
+#ifndef VALUE_CHANGE_TOLERANCE
 #define VALUE_CHANGE_TOLERANCE 0.01
+#endif
 
 // class Update;
 

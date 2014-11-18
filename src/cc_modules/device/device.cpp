@@ -1,5 +1,3 @@
-#include <iostream>
-using namespace std;
 #include "device.h"
 
 bool stringComp(const char* str1, uint8_t str1_size, const char* str2, uint8_t str2_size){
@@ -124,7 +122,6 @@ void Device::parse(uint8_t* message_in){
 				this->id = message_in[POS_DEST];
 				this->message_out[POS_ORIG] = this->id;
 				this->state = WAITING_DESCRIPTOR_REQUEST;
-				// comm_set_address(this->id); //comm
 
 				return;
 			}
@@ -148,7 +145,7 @@ void Device::parse(uint8_t* message_in){
 			// returns device descriptor
 			case FUNC_DEVICE_DESCRIPTOR:
 				if(this->state != WAITING_DESCRIPTOR_REQUEST && this->state != WAITING_DATA_REQUEST){
-					ERROR("Not waiting descriptor request.")
+					ERROR("Not waiting descriptor request.");
 				}
 				else{
 					sendMessage(FUNC_DEVICE_DESCRIPTOR);
@@ -221,7 +218,7 @@ void Device::parse(uint8_t* message_in){
 
 
 				if(this->state != WAITING_DATA_REQUEST){
-					ERROR("No control assigned.")
+					ERROR("No control assigned.");
 					return;
 				}
 				else{

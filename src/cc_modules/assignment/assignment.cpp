@@ -70,7 +70,8 @@ void Assignment::reset(){
 	this->label.freeStr();
 	this->unit.freeStr();
 	this->freeScalePointList();
-	available = true;
+	this->id = 0;
+	this->available = true;
 
 }
 

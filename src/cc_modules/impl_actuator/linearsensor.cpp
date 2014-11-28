@@ -1,14 +1,14 @@
 #include "linearsensor.h"
 
-LinearSensor::LinearSensor(const char* name, uint8_t id): Actuator(name, id, 2 /*slots*/, modes, LS_NUM_MODES, steps, LS_NUM_STEPS, 0){
+LinearSensor::LinearSensor(const char* name, uint8_t id): Actuator(name, id, 1 /*slots*/, lin_modes, LS_NUM_MODES, lin_steps, LS_NUM_STEPS, 0){
 	this->minimum = 0;
 	this->maximum = 1023;
 
-	this->modes[0] = Mode::registerMode("linear",0,0);
+	this->lin_modes[0] = Mode::registerMode("linear",0,0);
 
-	this->steps[0] = 17;
-	this->steps[1] = 33;
-	this->steps[2] = 56;
+	this->lin_steps[0] = 17;
+	this->lin_steps[1] = 33;
+	this->lin_steps[2] = 56;
 }
 LinearSensor::~LinearSensor(){}
 

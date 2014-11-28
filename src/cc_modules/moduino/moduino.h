@@ -4,10 +4,12 @@
 #include "config.h"
 #include "comm.h"
 #include "device.h"
+
 #include "TimerOne.h"
 #include "DueTimer.h"
 
 class Moduino{
+public:
 	Device* dev;
 	chain_t* chain;
 

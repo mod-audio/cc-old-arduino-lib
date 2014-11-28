@@ -10,7 +10,7 @@
 
 // size of scalepoint bank
 #ifndef MAX_SCALE_POINTS
-#define MAX_SCALE_POINTS 100
+#define MAX_SCALE_POINTS 10
 #endif
 
 enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};

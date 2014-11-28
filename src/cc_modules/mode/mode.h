@@ -1,10 +1,15 @@
 #ifndef MODE_H
 #define MODE_H
 
+#include "config.h"
 #include <stdint.h>
 
-#define MAX_MODE_COUNT			4
-#define MAX_MODE_LABEL_SIZE		10
+#ifndef MAX_MODE_COUNT
+#define MAX_MODE_COUNT			1
+#endif
+#ifndef MAX_MODE_LABEL_SIZE
+#define MAX_MODE_LABEL_SIZE		5
+#endif
 
 
 /*
@@ -41,6 +46,8 @@ public:
     const char* label;
     uint8_t label_length;
 
+    static int modes_occupied;
+
 	Mode();
 
 	// This function register a mode into mode_array and returns its pointer OR returns a pointer to an equivalent already registered mode.
@@ -51,6 +58,7 @@ public:
 
 	// get the mode descriptor serialized, returns number of written bytes.
 	int getDescriptor(uint8_t *buffer);
+
 };
 
 #endif

@@ -1,16 +1,16 @@
 #include "button.h"
 
-Button::Button(const char* name, uint8_t id, bool default_state): Actuator(name, id, 1, modes, BUTTON_NUM_MODES, steps, BUTTON_NUM_STEPS, 0){
+Button::Button(const char* name, uint8_t id, bool default_state): Actuator(name, id, 1, butt_modes, BUTTON_NUM_MODES, butt_steps, BUTTON_NUM_STEPS, 0){
 	this->minimum = 0;
 	this->maximum = 1;
 	this->default_state = default_state;
 
 	// modes the button supports
-	this->modes[0] = Mode::registerMode("toggle", MODE_PROPERTY_TOGGLE /*relevante properties*/, MODE_PROPERTY_TOGGLE /*which bits should be 1*/);
+	this->butt_modes[0] = Mode::registerMode("toggle", MODE_PROPERTY_TOGGLE /*relevante properties*/, MODE_PROPERTY_TOGGLE /*which bits should be 1*/);
 
-	this->modes[1] = Mode::registerMode("trigger", MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER, MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER); //does not save state
+	this->butt_modes[1] = Mode::registerMode("trigger", MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER, MODE_PROPERTY_TOGGLE|MODE_PROPERTY_TRIGGER); //does not save state
 
-	this->steps[0] = 1;
+	this->butt_steps[0] = 1;
 
 	this->trigger = false;
 	this->toggle_state = false;
@@ -30,7 +30,7 @@ void Button::calculateValue(){
 	scaleMin = this->current_assig->minimum;
 	scaleMax = this->current_assig->maximum;
 
-	if ((this->current_assig->port_properties & this->modes[0]->relevant_properties) == this->modes[0]->property_values){ // toggle
+	if ((this->current_assig->port_properties & this->butt_modes[0]->relevant_properties) == this->butt_modes[0]->property_values){ // toggle
 		switch(toggle_state){
 			case TOGGLE_DOWN:
 			if(!(sensor && default_state)){
@@ -63,7 +63,7 @@ void Button::calculateValue(){
 		}
 	}
 	//TODO implementar e testar modo trigger
-	// if ((this->addressing->port_properties & modes[1]->relevant_properties) == modes[1]->property_values) { // trigger
+	// if ((this->addressing->port_properties & butt_modes[1]->relevant_properties) == butt_modes[1]->property_values) { // trigger
 
 		// if(trigger && (default_state && sensor)){
 		// 	trigger = false;
@@ -81,7 +81,7 @@ void Button::calculateValue(){
 
 // Possible rotine to be executed after the message is sent.
 void Button::postMessageChanges(){
-	// if ((this->addressing->port_properties & modes[1]->relevant_properties) == modes[1]->property_values) { // trigger
+	// if ((this->addressing->port_properties & butt_modes[1]->relevant_properties) == butt_modes[1]->property_values) { // trigger
 
 	//    	this->value = 0;
 	// }

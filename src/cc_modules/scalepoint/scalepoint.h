@@ -1,10 +1,13 @@
 #ifndef SCALEPOINT_H
 #define SCALEPOINT_H
 
+#include "config.h"
 #include <stdint.h>
 #include "str.h"
 
+#ifndef MAX_FLOAT_COUNT
 #define MAX_FLOAT_COUNT 100
+#endif
 
 /*
 ************************************************************************************************************************

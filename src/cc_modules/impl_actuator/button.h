@@ -18,12 +18,12 @@ This class is like a preset to an actuator. It describes a button that only chan
 // A button witch does not save state, it can emulate state saver button
 class Button: public Actuator{
 public:
+	Mode*			butt_modes[BUTTON_NUM_MODES];
+	uint16_t		butt_steps[BUTTON_NUM_STEPS];
+
 	int 			minimum;
 	int 			maximum;
 	bool			default_state; // which value the button holds when is not pressed.
-
-	Mode*			modes[BUTTON_NUM_MODES];
-	uint16_t		steps[BUTTON_NUM_STEPS];
 
 	bool			trigger;
 	uint8_t			toggle_state;

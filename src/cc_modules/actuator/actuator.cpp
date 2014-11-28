@@ -12,14 +12,18 @@ Assignment* IdToPointer(int id, Assignment* list_ptr /*starts at list head*/){
 	return 0;
 }
 
+// #include <stdio.h>
 void Actuator::printList(){
-	// Assignment* ptr = getListHead();
+	// Assignment* ptr = assig_list_head;
+	// if(!ptr){
+	// 	return;
+	// }
 	// do{
 	// 	printf("%i %i\n", ptr->id, ptr->available);
 	// 	// begin->printScalePoints();
-	// 	ptr = ptr->getNext();
-	// }while(ptr != getListHead());
 
+	// 	ptr = ptr->getNext();
+	// }while(ptr != assig_list_head);
 }
 
 // Since all chunks of assignments will be allocated consecutively, I simplified this bank.
@@ -73,34 +77,76 @@ static AssignmentBank assignBank;
 
 
 Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps, uint8_t visual_output_level){
+
 	this->name = name;
-
 	for (this->name_length = 0; name[this->name_length]; this->name_length++);
-
 	this->id = id;
-
-	this->num_assignments = num_assignments;
-	this->num_modes = num_modes;
-	this->num_steps = num_steps;
 
 	this->assignments_occupied = 0;
 
 	this->visual_output_level = visual_output_level;
 
+	// this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
+
+	// if(!this->assig_list_head){
+	// 	// ERROR("Actuator with no assignment slots.");
+	// 	num_assignments = 0;
+	// 	return;
+	// }
+	this->num_assignments = num_assignments;
 	this->current_assig = 0 ;
-	this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
 
-	if(!this->assig_list_head){
-		// ERROR("Actuator with no assignment slots.");
-		num_assignments = 0;
-		return;
-	}
+	// if(!modes){
+	// 	this->modes = 0; // this pointer array is declared on subclass.
+	// 	this->num_modes = 0;
+	// }
+	// else{
+		this->modes = modes; // this pointer array is declared on subclass.
+		this->num_modes = num_modes;
+	// }
 
-	this->modes = modes; // this pointer array is declared on subclass.
-	this->steps = steps; // this steps array is declared on subclass.
+	// if(!steps){
+		// this->steps = 0; // this pointer array is declared on subclass.
+		// this->num_steps = 0;
+	// }
+	// else{
+		this->steps = steps; // this steps array is declared on subclass.
+		this->num_steps = num_steps;
+	// }
+
 }
 
 Actuator::~Actuator(){
+}
+
+void Actuator::init(){
+		this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
+
+	// if(!this->assig_list_head){
+		// ERROR("Actuator with no assignment slots.");
+		// num_assignments = 0;
+		// return;
+	// }
+	// this->num_assignments = num_assignments;
+	// this->current_assig = 0 ;
+
+	// if(!modes){
+	// 	this->modes = 0; // this pointer array is declared on subclass.
+	// 	this->num_modes = 0;
+	// }
+	// else{
+	// 	this->modes = modes; // this pointer array is declared on subclass.
+	// 	this->num_modes = num_modes;
+	// }
+
+	// if(!steps){
+	// 	this->steps = 0; // this pointer array is declared on subclass.
+	// 	this->num_steps = 0;
+	// }
+	// else{
+	// 	this->steps = steps; // this steps array is declared on subclass.
+	// 	this->num_steps = num_steps;
+	// }
 }
 
 Assignment* Actuator::getListHead(){
@@ -114,10 +160,14 @@ Assignment* Actuator::getListTail(){
 // associates a pointer to the Assignment list contained in actuators class.
 bool Actuator::assign(const uint8_t* ctrl_data){
 	Assignment* assig_ptr;
+
+
 	if(this->current_assig)
 		assig_ptr = this->current_assig;
 	else
 		assig_ptr = this->assig_list_head;
+
+	if(!num_assignments || !assig_ptr) return false;
 
 	if(assignments_occupied < num_assignments){
 		do{

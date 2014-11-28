@@ -19,8 +19,8 @@ public:
 	float 			minimum;
 	float 			maximum;
 
-	Mode* 			modes[LS_NUM_MODES];
-	uint16_t		steps[LS_NUM_STEPS];
+	Mode* 			lin_modes[LS_NUM_MODES];
+	uint16_t		lin_steps[LS_NUM_STEPS];
 
 	LinearSensor(const char* name, uint8_t id);
 

@@ -1,5 +1,3 @@
-#define MAX_ACTUATORS 2
-
 #include <iostream>
 #include <stdint.h>
 #include <stdio.h>
@@ -7,6 +5,8 @@
 #include "device.h"
 #include "button.h"
 #include "linearsensor.h"
+
+#define SWITCH_PIN A5
 
 using namespace std;
 
@@ -17,6 +17,7 @@ float get_value = 0;
 class ASensor: public LinearSensor{
 public:
 	ASensor(const char* name, uint8_t id):LinearSensor(name, id){
+		cout << "LABEL:" << this->modes[0]->label << endl;
 		// max = 1024;
 		// min = 0;
 	}
@@ -30,7 +31,7 @@ public:
 class AButton : public Button {
 public:
 	AButton(const char* name, uint8_t id):Button(name, id, true){
-		SET_PIN_MODE(SWITCH_PIN, INPUT);
+		// SET_PIN_MODE(SWITCH_PIN, INPUT);
 		// max = 1;
 		// min = 0;
 	}
@@ -81,16 +82,18 @@ int main(){
 	dev.setOutBuffer(_message_out);
 	dev.setCallback(messagePrint);
 
+	Actuator* search;
+
 	ASensor act1("Knob", 1);
 	AButton act2("foot", 2);
-
-	Actuator* search;
+	// AButton act3("foot2", 3);
 
 	cout << dev.label << endl;
 	cout << dev.url_id << endl;
 
 	dev.addActuator((Actuator*) &act1);
 	dev.addActuator((Actuator*) &act2);
+	// dev.addActuator((Actuator*) &act3);
 
 	for (int i = 0; i < MAX_ACTUATORS; ++i){
 		search = dev.searchActuator(i);
@@ -100,6 +103,7 @@ int main(){
 		else
 			cout << "NAO" << endl;
 	}
+
 
 	// dev.sendMessage(FUNC_CONNECTION);
 	// dev.sendMessage(FUNC_DEVICE_DESCRIPTOR);
@@ -115,18 +119,26 @@ int main(){
 	dev.parse(_control_assig1);
 	cout << endl;
 	cout << endl;
-	for(int i =0; i < dev.num_actuators ; i++){dev.acts[i]->printList();}
-
+	for(int i =0; i < dev.act_counter ; i++){
+		cout << dev.acts[i]->name << ": " << endl;
+		dev.acts[i]->printList();
+	}
 
 	dev.parse(_control_assig1_5);
 	cout << endl;
 	cout << endl;
-	for(int i =0; i < dev.num_actuators ; i++){dev.acts[i]->printList();}
+	for(int i =0; i < dev.act_counter ; i++){
+		cout << dev.acts[i]->name << ": " << endl;
+		dev.acts[i]->printList();
+	}
 
 	dev.parse(_control_assig2);
 	cout << endl;
 	cout << endl;
-	for(int i =0; i < dev.num_actuators ; i++){dev.acts[i]->printList();}
+	for(int i =0; i < dev.act_counter ; i++){
+		cout << dev.acts[i]->name << ": " << endl;
+		dev.acts[i]->printList();
+	}
 
 	get_value = 2.2;
 	dev.refreshValues();
@@ -140,6 +152,7 @@ int main(){
 	cout << endl;
 	cout << endl;
 
+
 	dev.refreshValues();
 	dev.parse(_data_req);
 	cout << endl;
@@ -148,12 +161,18 @@ int main(){
 	dev.parse(_control_unassig1);
 	cout << endl;
 	cout << endl;
-	for(int i =0; i < dev.num_actuators ; i++){dev.acts[i]->printList();}
+	for(int i =0; i < dev.act_counter ; i++){
+		cout << dev.acts[i]->name << ": " << endl;
+		dev.acts[i]->printList();
+	}
 
 	dev.parse(_control_unassig1_5);
 	cout << endl;
 	cout << endl;
-	for(int i =0; i < dev.num_actuators ; i++){dev.acts[i]->printList();}
+	for(int i =0; i < dev.act_counter ; i++){
+		cout << dev.acts[i]->name << ": " << endl;
+		dev.acts[i]->printList();
+	}
 
 	return 0;
 }

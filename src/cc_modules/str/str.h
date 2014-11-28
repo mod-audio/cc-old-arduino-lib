@@ -1,8 +1,14 @@
 #ifndef STR_H
 #define STR_H
 
+#include "config.h"
+
+#ifndef MAX_STRING_COUNT
 #define MAX_STRING_COUNT 100 // test with 3.
+#endif
+#ifndef MAX_STRING_SIZE
 #define MAX_STRING_SIZE 10
+#endif
 
 class Str{
 private:

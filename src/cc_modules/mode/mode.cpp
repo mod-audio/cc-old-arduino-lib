@@ -2,7 +2,8 @@
 
 // This array is created aiming avoid information redudancy. Since one mode can be supported by more than one actuator.
 static Mode mode_array[MAX_MODE_COUNT];
-static int mode_counter=0;
+
+int Mode::modes_occupied = 0;
 
 Mode::Mode(){
 	this->relevant_properties = 0;
@@ -11,14 +12,14 @@ Mode::Mode(){
 	this->label_length = 0;
 }
 
-
 Mode* Mode::registerMode(const char* label, uint8_t relevant_properties, uint8_t property_values){
 
-	if(mode_counter == MAX_MODE_COUNT){
+
+	if(modes_occupied == MAX_MODE_COUNT){
 		return 0;
 	}
 
-	for (int i = 0; i < mode_counter; ++i){
+	for (int i = 0; i < modes_occupied; ++i){
 		if( (relevant_properties == mode_array[i].relevant_properties) &&
 			(property_values == mode_array[i].property_values) &&
 			(mode_array[i].label) ){
@@ -34,14 +35,14 @@ Mode* Mode::registerMode(const char* label, uint8_t relevant_properties, uint8_t
 		while (*p_label++ && _label_length < MAX_MODE_LABEL_SIZE) _label_length++;
 	}
 
-	mode_array[mode_counter].relevant_properties = relevant_properties;
-	mode_array[mode_counter].property_values = property_values;
-	mode_array[mode_counter].label = label;
-	mode_array[mode_counter].label_length = _label_length;
+	mode_array[modes_occupied].relevant_properties = relevant_properties;
+	mode_array[modes_occupied].property_values = property_values;
+	mode_array[modes_occupied].label = label;
+	mode_array[modes_occupied].label_length = _label_length;
 
-	mode_counter++;
+	modes_occupied++;
 
-	return &mode_array[mode_counter-1];
+	return &mode_array[modes_occupied-1];
 
 }
 

@@ -1,4 +1,11 @@
 #include "device.h"
+// #include "comm.h"
+
+// int freeRam () {
+//   extern int __heap_start, *__brkval;
+//   int v;
+//   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+// }
 
 bool stringComp(const char* str1, uint8_t str1_size, const char* str2, uint8_t str2_size){
 	if(str1_size == str2_size){
@@ -23,31 +30,28 @@ Device::Device(const char* url_id, const char* label, uint8_t channel){
 	this->id = 0;
 	this->channel = channel;
 
+	this->act_counter = 0;
 	this->num_actuators = MAX_ACTUATORS;
-	this->state = CONNECTING;
 
-	// this->chain = comm_init(BAUD_RATE, WRITE_READ_PIN, parse); //comm
+	for (int i = 0; i < num_actuators; ++i){
+		acts[i] = 0;
+	}
+
+	this->state = CONNECTING;
 
 	timer_led.setPeriod(CONNECTING_LED_PERIOD);
 	timer_led.start();
-
-	//These ifdefs switches between AVR and ARM compatible timers
-	// #ifdef ARDUINO_ARCH_SAM
-	// DueTimer timerDue(1000);
-	// timerDue = DueTimer::getAvailable();
-	// timerDue.start(1000);
-	// timerDue.attachInterrupt(isr_timer);
-	// #endif
-
-	// #ifdef ARDUINO_ARCH_AVR
-	// Timer1.initialize(1000);
-	// Timer1.attachInterrupt(isr_timer);
-	// #endif
 
 	SET_PIN_MODE(USER_LED, OUTPUT); //ard
 }
 
 Device::~Device(){}
+
+void Device::init(){
+	for (int i = 0; i < act_counter; ++i){
+		acts[i]->init();
+	}
+}
 
 void Device::setCallback(void (*msg_ready_cb)(uint8_t* in_buff)){
 	this->msg_ready_cb = msg_ready_cb;
@@ -73,7 +77,6 @@ void Device::timeoutReset(){
 
 // adds an actuator pointer to the pointer vector.
 void Device::addActuator(Actuator* act){
-	static uint8_t act_counter = 0;
 	if(act_counter < num_actuators){
 		acts[act_counter++] = act;
 	}
@@ -84,9 +87,12 @@ void Device::addActuator(Actuator* act){
 
 // receives actuator id (not necessarily equal to actuator's index on acts[]) and returns a pointer to that actuator
 Actuator* Device::searchActuator(int id){
-	for (int i = 0; i < num_actuators; ++i){
-		if(acts[i]->id == id){
-			return acts[i];
+
+	for (int i = 0; i < act_counter; ++i){
+		if(acts[i]){
+			if(acts[i]->id == id){
+				return acts[i];
+			}
 		}
 	}
 	return 0;
@@ -94,7 +100,7 @@ Actuator* Device::searchActuator(int id){
 
 // runs value calculation function on actuator class (or sub class)
 void Device::refreshValues(){
-	for (int i = 0; i < num_actuators; ++i){
+	for (int i = 0; i < act_counter; ++i){
 		if(acts[i]->assignments_occupied){
 			acts[i]->calculateValue();
 		}
@@ -113,6 +119,7 @@ void Device::parse(uint8_t* message_in){
 	// connection response, checks URL and channel to associate address to device id.
 	if(this->state == CONNECTING){
 		if(message_in[POS_FUNC] == FUNC_CONNECTION){
+
 
 			uint16_t* data_size;
 			data_size = (uint16_t*) &message_in[POS_DATA_SIZE1];
@@ -156,6 +163,7 @@ void Device::parse(uint8_t* message_in){
 
 			case FUNC_CONTROL_ASSIGNMENT:
 
+
 				if(this->state != WAITING_CONTROL_ASSIGNMENT && this->state != WAITING_DATA_REQUEST){
 					ERROR("Not waiting control assignment.");
 				}
@@ -165,15 +173,35 @@ void Device::parse(uint8_t* message_in){
 
 					// Since actuator ID and index on the vector 'acts' are not necessarily the same, this function returns a pointer to
 					// the ID placed as parameter.
-					if(!(act = searchActuator(message_in[CTRLADDR_ACT_ID]))){
+					act = searchActuator(message_in[CTRLADDR_ACT_ID]);
+					if(!(act)){
 						ERROR("Actuator does not exist.");
 						return;
 					}
 					// In case the pointer is not NULL.
 					else{
 
+							// comm_print("::");
+							// comm_print((act->modes[0]->label));
+							// comm_print("::");
+							// comm_print((acts[0]->modes[0]->label));
+							// comm_print("::");
+							// comm_print("::");
+							// comm_print((int) act->modes[0]->relevant_properties);
+							// comm_print("::");
+							// comm_print((int) acts[0]->modes[0]->relevant_properties);
+							// comm_print("::");
+
 						// Checks if the mode is not supported on the device.
+						// if(!(act->supportMode(0,0))){
 						if(!(act->supportMode(message_in[CTRLADDR_CHOSEN_MASK1], message_in[CTRLADDR_CHOSEN_MASK2]))){
+
+							// comm_print("__");
+							// for (int idxx = 0; idxx < 50; ++idxx){
+							// 	comm_print((int) message_in[idxx]);
+							// }
+							// comm_print("__");
+
 							ERROR("Mode not supported in this actuator.");
 							sendMessage(FUNC_CONTROL_ASSIGNMENT, -1);
 							return;
@@ -222,7 +250,7 @@ void Device::parse(uint8_t* message_in){
 					return;
 				}
 				else{
-					for (int i = 0; i < num_actuators; ++i){
+					for (int i = 0; i < act_counter; ++i){
 						if(acts[i]->unassign(message_in[UNASSIG_ACT_ID])){
 							sendMessage(FUNC_CONTROL_UNASSIGNMENT);
 							return;
@@ -257,7 +285,7 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 		case FUNC_DEVICE_DESCRIPTOR:
 			// labelsize (1) + label(n) + num_actuators(n) + num_actuators(n) * actuators_description_sizes(n)
 			data_size = 1 + this->label_size + 1;
-			for (i = 0; i < num_actuators; ++i){
+			for (i = 0; i < act_counter; ++i){
 				data_size += acts[i]->descriptorSize();
 			}
 
@@ -265,7 +293,7 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 
 		case FUNC_DATA_REQUEST:
 
-			for (i = 0; i < num_actuators; ++i){
+			for (i = 0; i < act_counter; ++i){
 				if(acts[i]->checkChange()){
 					changed_actuators++;
 				}
@@ -324,9 +352,9 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 				this->message_out[msg_idx++] = this->label[i];
 			}
 
-			this->message_out[msg_idx++] = this->num_actuators;
+			this->message_out[msg_idx++] = this->act_counter;
 
-			for(i = 0; i < num_actuators; i++){
+			for(i = 0; i < act_counter; i++){
 				msg_idx += this->acts[i]->getDescriptor(&this->message_out[msg_idx]);
 			}
 
@@ -345,7 +373,7 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 
 			this->message_out[msg_idx++] = changed_actuators;
 
-			for (i = 0; i < num_actuators; ++i){
+			for (i = 0; i < act_counter; ++i){
 				if(acts[i]->changed){
 					this->acts[i]->getUpdates(&this->updates);
 					msg_idx += this->updates.getDescriptor(&this->message_out[msg_idx]);
@@ -379,7 +407,7 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 
 	// this loop runs an a post message rotine. The main purpose of this routine is to clean the 'changed' flag on actuators, specially
 	// those with a trigger assigned.
-	for (int i = 0; i < num_actuators; ++i){
+	for (int i = 0; i < act_counter; ++i){
 		if(acts[i]->changed)
 			acts[i]->postMessageRotine();
 	}
@@ -424,4 +452,9 @@ void Device::checkConnectLED(){
 		ledpos^= 1;
 		timer_led.start();
 	}
+}
+
+void Device::run(){
+	connectDevice();
+	refreshValues();
 }

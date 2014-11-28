@@ -95,8 +95,8 @@ public:
 	uint8_t		url_size; 				// URL size
 	uint8_t 	id;						// address given by the host
 	uint8_t 	channel; 				// differentiate 2 identical devices
-	uint8_t 	num_actuators;			// quantity of actuators in the device
-	uint8_t 	actuators_counter;		// quantity of actuators in the device
+	uint8_t 	num_actuators;			// adding actuator capacity
+	uint8_t 	act_counter;		// quantity of actuators added to the device
 	uint8_t 	state;					// state in which the device is, protocol-wise
 
 	Actuator*	acts[MAX_ACTUATORS];	// vector which holds all actuators pointers
@@ -116,9 +116,14 @@ public:
 
 	~Device();
 
+	void init();
+
 	void setCallback(void (*msg_ready_cb)(uint8_t* in_buff));
 
 	void setOutBuffer(uint8_t* message_out);
+
+	// Put device to work.
+	void run();
 
 /*
 ************************************************************************************************************************

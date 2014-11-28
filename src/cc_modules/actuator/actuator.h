@@ -8,7 +8,7 @@
 #include "assignment.h"
 
 #ifndef MAX_ASSIGNMENTS
-#define MAX_ASSIGNMENTS 10
+#define MAX_ASSIGNMENTS 2
 #endif
 
 #ifndef VALUE_CHANGE_TOLERANCE
@@ -49,9 +49,12 @@ public:
 
 	~Actuator();
 
+	void init();
+
 	Assignment* getListHead();
 
 	Assignment* getListTail();
+
 
 	void printList();//vv
 

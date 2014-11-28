@@ -220,8 +220,6 @@ void Device::parse(uint8_t* message_in){
 							else{
 								sendMessage(FUNC_CONTROL_ASSIGNMENT, -1);
 							}
-
-
 						}
 					}
 
@@ -267,7 +265,7 @@ void Device::parse(uint8_t* message_in){
 int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg){
 
 	int i;
-	int msg_idx = POS_FUNC;
+	int msg_idx = POS_DEST;
 
 	int error_size;
 	int changed_actuators = 0;
@@ -327,6 +325,8 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 
 	byte_ptr = (uint8_t*) &data_size;
 
+	this->message_out[msg_idx++] = HOST_ADDRESS;
+	this->message_out[msg_idx++] = this->id;
 	this->message_out[msg_idx++] = function;
 	this->message_out[msg_idx++] = *byte_ptr++;
 	this->message_out[msg_idx++] = *byte_ptr;

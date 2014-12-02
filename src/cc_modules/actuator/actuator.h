@@ -79,10 +79,13 @@ public:
 	// writes the actuator descriptor on the buffer.
 	int getDescriptor(uint8_t* buffer);
 
-	// // These functions are supposed to be implemented in a subclass.
-	// ///////////////////////////////////////////////////////////
+	// writes the current assignment id and value on buffer (used in data request).
+	int getUpdate(uint8_t *buffer);
 
-	// // receives the update as an output parameter and writes the assign's info in it.
+	// These functions are supposed to be implemented in a subclass.
+	///////////////////////////////////////////////////////////
+
+	// receives the update as an output parameter and writes the assign's info in it.
 	virtual void getUpdates(Update* update)=0;
 
 	// // process value read in getValue using the assingment mode as reference.
@@ -94,7 +97,7 @@ public:
 	// // This function will run after message has been sent.
 	virtual void postMessageChanges()=0;
 
-	// /////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////
 
 };
 

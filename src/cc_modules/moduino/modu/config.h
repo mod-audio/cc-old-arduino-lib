@@ -1,1 +1,1 @@
-../../device/config.h
+../../config.h

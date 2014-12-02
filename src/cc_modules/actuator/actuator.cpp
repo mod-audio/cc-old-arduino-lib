@@ -12,6 +12,8 @@ Assignment* IdToPointer(int id, Assignment* list_ptr /*starts at list head*/){
 	return 0;
 }
 
+// #include <iostream>
+// using namespace std;
 // #include <stdio.h>
 void Actuator::printList(){
 	// Assignment* ptr = assig_list_head;
@@ -68,9 +70,9 @@ public:
 		return 0;
 	}
 
- 	// int getFreeSpace(){
- 	// 	return free_space;
- 	// }
+ 	int getFreeSpace(){
+ 		return free_space;
+ 	}
 
 };
 static AssignmentBank assignBank;
@@ -86,33 +88,26 @@ Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode**
 
 	this->visual_output_level = visual_output_level;
 
-	// this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
-
-	// if(!this->assig_list_head){
-	// 	// ERROR("Actuator with no assignment slots.");
-	// 	num_assignments = 0;
-	// 	return;
-	// }
 	this->num_assignments = num_assignments;
 	this->current_assig = 0 ;
 
-	// if(!modes){
-	// 	this->modes = 0; // this pointer array is declared on subclass.
-	// 	this->num_modes = 0;
-	// }
-	// else{
-		this->modes = modes; // this pointer array is declared on subclass.
+	if(!modes){
+		this->modes = 0;
+		this->num_modes = 0;
+	}
+	else{
+		this->modes = modes;
 		this->num_modes = num_modes;
-	// }
+	}
 
-	// if(!steps){
-		// this->steps = 0; // this pointer array is declared on subclass.
-		// this->num_steps = 0;
-	// }
-	// else{
-		this->steps = steps; // this steps array is declared on subclass.
+	if(!steps){
+		this->steps = 0;
+		this->num_steps = 0;
+	}
+	else{
+		this->steps = steps;
 		this->num_steps = num_steps;
-	// }
+	}
 
 }
 
@@ -120,33 +115,21 @@ Actuator::~Actuator(){
 }
 
 void Actuator::init(){
+
+	if(assignBank.getFreeSpace() < this->num_assignments){
+		this->num_assignments = assignBank.getFreeSpace();
+	}
+
+	if(this->num_assignments){
 		this->assig_list_head = assignBank.allocAssignmentList(num_assignments);
-
-	// if(!this->assig_list_head){
+	}
+	else{
+		this->assig_list_head = 0;
+		this->current_assig = 0 ;
 		// ERROR("Actuator with no assignment slots.");
-		// num_assignments = 0;
-		// return;
-	// }
-	// this->num_assignments = num_assignments;
-	// this->current_assig = 0 ;
+	}
 
-	// if(!modes){
-	// 	this->modes = 0; // this pointer array is declared on subclass.
-	// 	this->num_modes = 0;
-	// }
-	// else{
-	// 	this->modes = modes; // this pointer array is declared on subclass.
-	// 	this->num_modes = num_modes;
-	// }
 
-	// if(!steps){
-	// 	this->steps = 0; // this pointer array is declared on subclass.
-	// 	this->num_steps = 0;
-	// }
-	// else{
-	// 	this->steps = steps; // this steps array is declared on subclass.
-	// 	this->num_steps = num_steps;
-	// }
 }
 
 Assignment* Actuator::getListHead(){
@@ -242,14 +225,13 @@ bool Actuator::supportMode(uint8_t relevant_properties, uint8_t property_values)
 	}
 	return false;
 }
-
 // checks if the value in the actuator changed.
 bool Actuator::checkChange(){
 	float value = getValue();
 	float value_diff = old_value - value;
 
 	if(value_diff < 0){
-		value_diff = - value_diff;
+		value_diff = -value_diff;
 	}
 
 	if(assignments_occupied){
@@ -262,8 +244,7 @@ bool Actuator::checkChange(){
 			return true;
 		}
 	}
-	else
-		return false;
+	return false;
 }
 
 // this function runs after the message is sent. It serves to clear the changed flag, which indicates that the actuator
@@ -330,4 +311,20 @@ int Actuator::getDescriptor(uint8_t* buffer){
 
 	return i;
 
+}
+
+int Actuator::getUpdate(uint8_t *buffer){
+	int buf_counter=0;
+	uint8_t* float_ptr;
+
+	buffer[buf_counter++] = this->current_assig->id;
+
+	float_ptr = (uint8_t*) &(this->value);
+
+	buffer[buf_counter++] = *float_ptr++;
+	buffer[buf_counter++] = *float_ptr++;
+	buffer[buf_counter++] = *float_ptr++;
+	buffer[buf_counter++] = *float_ptr;
+
+	return buf_counter;
 }

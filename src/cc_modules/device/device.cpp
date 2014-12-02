@@ -1,11 +1,5 @@
+#include "comm.h"
 #include "device.h"
-// #include "comm.h"
-
-// int freeRam () {
-//   extern int __heap_start, *__brkval;
-//   int v;
-//   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-// }
 
 bool stringComp(const char* str1, uint8_t str1_size, const char* str2, uint8_t str2_size){
 	if(str1_size == str2_size){
@@ -181,26 +175,8 @@ void Device::parse(uint8_t* message_in){
 					// In case the pointer is not NULL.
 					else{
 
-							// comm_print("::");
-							// comm_print((act->modes[0]->label));
-							// comm_print("::");
-							// comm_print((acts[0]->modes[0]->label));
-							// comm_print("::");
-							// comm_print("::");
-							// comm_print((int) act->modes[0]->relevant_properties);
-							// comm_print("::");
-							// comm_print((int) acts[0]->modes[0]->relevant_properties);
-							// comm_print("::");
-
 						// Checks if the mode is not supported on the device.
-						// if(!(act->supportMode(0,0))){
 						if(!(act->supportMode(message_in[CTRLADDR_CHOSEN_MASK1], message_in[CTRLADDR_CHOSEN_MASK2]))){
-
-							// comm_print("__");
-							// for (int idxx = 0; idxx < 50; ++idxx){
-							// 	comm_print((int) message_in[idxx]);
-							// }
-							// comm_print("__");
 
 							ERROR("Mode not supported in this actuator.");
 							sendMessage(FUNC_CONTROL_ASSIGNMENT, -1);
@@ -375,8 +351,12 @@ int Device::sendMessage(uint8_t function, int16_t status, const char* error_msg)
 
 			for (i = 0; i < act_counter; ++i){
 				if(acts[i]->changed){
-					this->acts[i]->getUpdates(&this->updates);
-					msg_idx += this->updates.getDescriptor(&this->message_out[msg_idx]);
+					// this->acts[i]->getUpdates(&this->updates);
+					// msg_idx += this->updates.getDescriptor(&this->message_out[msg_idx]);
+					comm_print("value((");
+					comm_print(this->acts[i]->value);
+					comm_print("))");
+					msg_idx += this->acts[i]->getUpdate(&this->message_out[msg_idx]);
 				}
 			}
 

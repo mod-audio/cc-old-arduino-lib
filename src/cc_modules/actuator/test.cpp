@@ -73,12 +73,14 @@ int main(void)
 
 	Actuator act("Knob"/*name*/,
 					 1 /* id*/,
-					 4 /* num_assignments*/,
+					 3 /* num_assignments*/,
 					 modes /* modes_ptr*/,
 					 2 /* num_modes*/,
 					 steps /* steps*/,
 					 3 /* num_steps*/,
 					 2 /* visual_output_level*/);
+
+	act.init();
 
 /*
 ************************************************************************************************************************
@@ -89,9 +91,25 @@ int main(void)
 	if(act.assign(msg)){
 		cout << "assign um" << endl << endl;
 	}
+
+	cout << "current assignment" << act.current_assig->label.text[0];
+	cout << act.current_assig->label.text[1];
+	cout << act.current_assig->label.text[2];
+	cout << act.current_assig->label.text[3];
+	cout << act.current_assig->label.text[4];
+	cout << act.current_assig->label.text[5] << endl;
+
 	if(act.assign(msg2)){
 		cout << "assign dois" << endl << endl;
 	}
+
+	cout << "current assignment" << act.current_assig->label.text[0];
+	cout << act.current_assig->label.text[1];
+	cout << act.current_assig->label.text[2];
+	cout << act.current_assig->label.text[3];
+	cout << act.current_assig->label.text[4];
+	cout << act.current_assig->label.text[5] << endl;
+
 	if(act.assign(msg3)){
 		cout << "assign tres" << endl << endl;
 	}
@@ -120,7 +138,7 @@ int main(void)
 
 	int msg_size;
 
-	cout << act.descriptorSize();
+	cout << "descriptor size: " << act.descriptorSize() << endl;
 
 	msg_size = act.getDescriptor(buffer);
 

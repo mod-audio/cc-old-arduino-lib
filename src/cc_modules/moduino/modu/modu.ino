@@ -5,9 +5,9 @@
 #include "MPU6050.h"
 
 #define ACEL_RANGE			1900
-#define ACEL_MAX			ACEL_RANGE
-#define ACEL_MIN			-ACEL_RANGE
 #define ACEL_ATTENUATION 	1
+#define ACEL_MAX			ACEL_RANGE/ACEL_ATTENUATION
+#define ACEL_MIN			-ACEL_RANGE/ACEL_ATTENUATION
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
@@ -26,8 +26,8 @@ public:
 	float accel_value;
 
 	Accel(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){
-		maximum = ACEL_MAX/ACEL_ATTENUATION;
-		minimum = ACEL_MIN/ACEL_ATTENUATION;
+		maximum = ACEL_MAX;
+		minimum = ACEL_MIN;
 	}
 
 	float getValue( ){
@@ -66,15 +66,15 @@ public:
 Device dev("http://portalmod.com/devices/accel", "Accelerino", 1);
 Moduino moddev;
 Accel act1("Sensor X", 1, &ax);
-Accel act2("Sensor Y", 2, &ay);
-Accel act3("Sensor Z", 3, &az);
+// Accel act2("Sensor Y", 2, &ay);
+// Accel act3("Sensor Z", 3, &az);
 
 
 void setup(){
 	moddev.init(&dev);
 	dev.addActuator((Actuator*)&act1);
-	dev.addActuator((Actuator*)&act2);
-	dev.addActuator((Actuator*)&act3);
+	// dev.addActuator((Actuator*)&act2);
+	// dev.addActuator((Actuator*)&act3);
 	dev.init();
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -95,9 +95,8 @@ void setup(){
 	// comm_print(" ");
 
 
-	// dev.state = WAITING_CONTROL_ASSIGNMENT;
 	// dev.id = '\x80';
-	// dev.message_out[POS_ORIG] = '\x80';
+	// dev.state = WAITING_CONTROL_ASSIGNMENT;
 }
 
 void loop(){

@@ -2,6 +2,7 @@
 #define BUTTON_H
 
 #include "actuator.h"
+#include "stimer.h"
 
 #define TOGGLE_DOWN		0
 #define TOGGLE_MID		1
@@ -9,6 +10,8 @@
 
 #define BUTTON_NUM_MODES 2
 #define BUTTON_NUM_STEPS 1
+
+// #define DEBOUNCE_DELAY   20  // in ms
 
 /*
 ************************************************************************************************************************
@@ -23,13 +26,17 @@ public:
 
 	int 			minimum;
 	int 			maximum;
-	bool			default_state; // which value the button holds when is not pressed.
 
-	bool			trigger;
-	uint8_t			toggle_state;
-	uint8_t			last_toggle_state;
+	bool			button_state;			//Physical stable button sittuation. Considers the pressed button = 1 and released button = 0.
+	bool			last_button_state;		//Last physical state.
 
-	Button(const char* name, uint8_t id, bool default_state);
+	bool			saved_state;			//This variable holds the state of the button depending on the mode its working
+											//e.g. if working as trigger, holds state until the value is sent, if toggle,
+											//holds state until the next change on button
+
+	STimer 			timer_debounce;
+
+	Button(const char* name, uint8_t id, int debounce_delay /*in ms*/);
 
 	~Button();
 

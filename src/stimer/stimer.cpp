@@ -29,3 +29,7 @@ void STimer::start(){
 	working = true;
 	offset = STimer::static_timer_count;
 }
+
+counter_t STimer::getTime(){
+	return static_timer_count - offset;
+}

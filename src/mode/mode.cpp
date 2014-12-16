@@ -63,3 +63,9 @@ int Mode::getDescriptor(uint8_t *buffer){
 
 	return 3 + label_length;
 }
+
+bool Mode::operator==(const Mode &mod) const{
+	if(this->relevant_properties == mod.relevant_properties && this->property_values == mod.property_values)
+		return true;
+	return false;
+}

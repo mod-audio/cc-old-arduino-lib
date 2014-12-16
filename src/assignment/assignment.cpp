@@ -75,7 +75,7 @@ void Assignment::reset(){
 
 }
 
-bool Assignment::setup(const uint8_t* ctrl_data, int visual_output_level){
+bool Assignment::setup(const uint8_t* ctrl_data){
 
 	available = false;
 
@@ -104,52 +104,39 @@ bool Assignment::setup(const uint8_t* ctrl_data, int visual_output_level){
 	idx += sizeof(uint16_t);
 
 
-	switch(visual_output_level){
-		case VISUAL_SHOW_LABEL:
+	if(this->label.allocStr()){
+		this->label.setText((char*) &(ctrl_data[5]), label_size );
+	}
+	if(this->unit.allocStr()){
+		this->unit.setText((char*) &(ctrl_data[idx+1]), ctrl_data[idx]);
+	}
 
-			if(this->label.allocStr()){
-				this->label.setText((char*) &(ctrl_data[5]), label_size );
+	if(MAX_SCALE_POINTS){
+
+		idx = idx + 1 /*string begin position*/ + ctrl_data[idx] /*string size*/ ; //scale point counter position
+
+		this->sp_list_size = ctrl_data[idx];
+
+		if( allocScalePointList(this->sp_list_size) ){
+
+			idx++; //scale point label size position;
+
+			for (int i = 0; i < this->sp_list_size; ++i){
+
+				this->sp_list_ptr->setLabel(((char*) &ctrl_data[idx+1]),ctrl_data[idx]);
+				idx = idx + 1 /*string begin position*/ + ctrl_data[idx] /*string size*/ ; //scale point value position
+				this->sp_list_ptr->setValue(&ctrl_data[idx]);
+				idx = idx + sizeof(float); //next scale point label size position
+
+				if(this->sp_list_ptr->getNext())
+					this->sp_list_ptr = this->sp_list_ptr->getNext();
 			}
-			if(this->unit.allocStr()){
-				this->unit.setText((char*) &(ctrl_data[idx+1]), ctrl_data[idx]);
-			}
-
-		break;
-
-		case VISUAL_SHOW_SCALEPOINTS:
-
-			if(this->label.allocStr()){
-				this->label.setText((char*) &(ctrl_data[5]), label_size );
-			}
-			if(this->unit.allocStr()){
-				this->unit.setText((char*) &(ctrl_data[idx+1]), ctrl_data[idx]);
-			}
-
-			idx = idx + 1 /*string begin position*/ + ctrl_data[idx] /*string size*/ ; //scale point counter position
-
-			this->sp_list_size = ctrl_data[idx];
-
-			if( allocScalePointList(this->sp_list_size) ){
-
-				idx++; //scale point label size position;
-
-				for (int i = 0; i < this->sp_list_size; ++i){
-
-					this->sp_list_ptr->setLabel(((char*) &ctrl_data[idx+1]),ctrl_data[idx]);
-					idx = idx + 1 /*string begin position*/ + ctrl_data[idx] /*string size*/ ; //scale point value position
-					this->sp_list_ptr->setValue(&ctrl_data[idx]);
-					idx = idx + sizeof(float); //next scale point label size position
-
-					if(this->sp_list_ptr->getNext())
-						this->sp_list_ptr = this->sp_list_ptr->getNext();
-				}
-				pointToListHead();
-			}
-			else{
-				this->sp_list_size = 0;
-				return false;
-			}
-		break;
+			pointToListHead();
+		}
+		else{
+			this->sp_list_size = 0;
+			return false;
+		}
 	}
 	return true;
 }

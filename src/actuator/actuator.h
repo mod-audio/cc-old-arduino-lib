@@ -35,7 +35,6 @@ public:
 
 	uint8_t 			assignments_occupied;  //how many assignment slots the actuator have occupied until now.
 
-	uint8_t 			visual_output_level;
 	bool				changed;
 
 	float 				old_value;
@@ -44,7 +43,7 @@ public:
 	Assignment*			current_assig;
 	Assignment*			assig_list_head;
 
-	Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps, uint8_t visual_output_level);
+	Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps);
 
 	~Actuator();
 
@@ -84,14 +83,17 @@ public:
 	// These functions are supposed to be implemented in a subclass.
 	///////////////////////////////////////////////////////////
 
-	// // process value read in getValue using the assingment mode as reference.
+	// process value read in getValue using the assingment mode as reference.
 	virtual void calculateValue()=0;
 
-	// // reads analog or digital value
+	// reads analog or digital value
 	virtual float getValue()=0;
 
-	// // This function will run after message has been sent.
+	// This function will run after message has been sent.
 	virtual void postMessageChanges()=0;
+
+	// This function will run after message has been sent.
+	virtual void assignmentRotine()=0;
 
 	/////////////////////////////////////////////////////////////
 

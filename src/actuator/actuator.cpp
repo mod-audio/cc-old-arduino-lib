@@ -78,15 +78,13 @@ public:
 static AssignmentBank assignBank;
 
 
-Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps, uint8_t visual_output_level){
+Actuator::Actuator(const char* name, uint8_t id, uint8_t num_assignments, Mode** modes, uint8_t num_modes, uint16_t* steps, uint8_t num_steps){
 
 	this->name = name;
 	for (this->name_length = 0; name[this->name_length]; this->name_length++);
 	this->id = id;
 
 	this->assignments_occupied = 0;
-
-	this->visual_output_level = visual_output_level;
 
 	this->num_assignments = num_assignments;
 	this->current_assig = 0 ;
@@ -155,10 +153,12 @@ bool Actuator::assign(const uint8_t* ctrl_data){
 	if(assignments_occupied < num_assignments){
 		do{
 			if(assig_ptr->getAvailable()){
-				assig_ptr->setup(ctrl_data, visual_output_level);
+				assig_ptr->setup(ctrl_data);
 
 				// Now, current_assig has a valid assignment to point.
 				this->current_assig = assig_ptr;
+
+				this->assignmentRotine();
 
 	 			assignments_occupied++;
 				return true;
@@ -227,7 +227,6 @@ bool Actuator::supportMode(uint8_t relevant_properties, uint8_t property_values)
 }
 // checks if the value in the actuator changed.
 bool Actuator::checkChange(){
-	float value = getValue();
 	float value_diff = old_value - value;
 
 	if(value_diff < 0){

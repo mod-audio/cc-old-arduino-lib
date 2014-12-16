@@ -33,6 +33,9 @@ public:
 	// Possible rotine to be executed after the message is sent.
 	void postMessageChanges();
 
+ 	// Rotine that runs when a parameter is assigned to the actuator.
+ 	void assignmentRotine();
+
 	// this function needs to be implemented by the user.
 	virtual float getValue()=0;
 

@@ -25,6 +25,8 @@ public:
 
 	void start();
 
+	counter_t getTime();
+
 	inline static void clock(){
 		static_timer_count++;
 	}

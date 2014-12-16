@@ -37,7 +37,10 @@ public:
 	// returns text length;
 	int getLength();
 
-	bool operator==(const Str &str) const;
+	// bool operator==(const Str &str) const;
+
+	// bool operator==(const char* &str) const;
+
 
 };
 

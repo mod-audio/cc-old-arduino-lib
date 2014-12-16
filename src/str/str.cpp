@@ -102,15 +102,33 @@ int Str::getLength(){
 	return this->length;
 }
 
-bool Str::operator==(const Str &str) const {
-	if(this->length == str.length){
-		for(int i = 0; i < this->length; i++){
-			if(this->text[i] != str.text[i])
-				return false;
-		}
-			return true;
-	}
-	else
-		return false;
+// bool Str::operator==(const Str &str) const {
+// 	if(this->length == str.length){
+// 		for(int i = 0; i < this->length; i++){
+// 			if(this->text[i] != str.text[i])
+// 				return false;
+// 		}
+// 			return true;
+// 	}
+// 	else
+// 		return false;
 
-}
+// }
+
+// bool Str::operator==(const char* &str) const {
+
+// 	int len;
+
+// 	for(len = 0; str[len] != 0; len++);
+
+// 	if(this->length == len){
+// 		for(int i = 0; i < this->length; i++){
+// 			if(this->text[i] != str[i])
+// 				return false;
+// 		}
+// 			return true;
+// 	}
+// 	else
+// 		return false;
+
+// }

@@ -13,7 +13,6 @@
 #define MAX_SCALE_POINTS 10
 #endif
 
-enum{VISUAL_NONE, VISUAL_SHOW_LABEL, VISUAL_SHOW_SCALEPOINTS};
 
 /*
 ************************************************************************************************************************
@@ -62,12 +61,8 @@ public:
 	void pointToListHead();
 
 	// receives a pointer to msg begin and reads necessary data, assigning to its attributes.
-	// visual_output_level regards to which strings you may wanna save in your assignment
-	// VISUAL_NONE label, unit and scalepoints are ignored
-	// VISUAL_SHOW_LABEL scalepoints are ignored
-	// VISUAL_SHOW_SCALEPOINTS everything is assigned to addressing attributes
 	// if there is not enough scalepoints to alloc from bank, returns false.
-	bool setup(const uint8_t* ctrl_data, int visual_output_level);
+	bool setup(const uint8_t* ctrl_data);
 
 	// This function was used addressing module test, it sends a readable description of its scalepoints.
 	void printScalePoints(); //vv

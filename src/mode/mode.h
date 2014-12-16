@@ -59,6 +59,8 @@ public:
 	// get the mode descriptor serialized, returns number of written bytes.
 	int getDescriptor(uint8_t *buffer);
 
+	bool operator==(const Mode &mod) const;
+
 };
 
 #endif

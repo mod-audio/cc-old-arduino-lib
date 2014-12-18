@@ -54,6 +54,9 @@ public:
     // Rotine that runs when a parameter is assigned to the actuator.
     void assignmentRotine();
 
+    // checks if the button state changed doing a debounce.
+    bool debounce();
+
     // this function needs to be implemented by the user.
     virtual float getValue()=0;
 

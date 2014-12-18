@@ -329,9 +329,19 @@ int Actuator::getUpdate(uint8_t *buffer){
 }
 
 void Actuator::nextAssignment(){
+    if(current_assig->available)
+        return;
+
     current_assig = current_assig->next;
+    while(current_assig->available)
+        current_assig = current_assig->next;
 }
 
 void Actuator::previousAssignment(){
+    if(current_assig->available)
+        return;
+
     current_assig = current_assig->previous;
+    while(current_assig->available)
+        current_assig = current_assig->previous;
 }

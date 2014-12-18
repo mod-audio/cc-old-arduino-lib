@@ -5,6 +5,8 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 
+#define BUTTON_PIN      A1
+
 #define ACEL_RANGE			1900
 #define ACEL_ATTENUATION 	1
 #define ACEL_MAX			ACEL_RANGE/ACEL_ATTENUATION
@@ -25,7 +27,7 @@ public:
     int16_t* sensor;
 	float accel_value;
 
-	Accel(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){
+	Accel(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id, 3), sensor(sensor){
 		maximum = ACEL_MAX;
 		minimum = ACEL_MIN;
 	}
@@ -61,18 +63,28 @@ public:
 
 };
 
+class Butt: public Button{
+public:
+
+    Butt(char* name, uint8_t id):Button(name, id, 0 /*num_assignments*/, 50 /*debounce delay, if 0, no debounce.*/){
+        pinMode(BUTTON_PIN, INPUT);
+    }
+
+    float getValue(){
+        return digitalRead(BUTTON_PIN);
+    }
+
+};
 
 
 Device dev("http://portalmod.com/devices/accel", "Accelerino", 1);
 ControlChain moddev;
 Accel act1("Sensor X", 1, &ax);
-
+Butt  act1control("NO_ASSIG", 2);
 
 void setup(){
 	moddev.init(&dev);
 	dev.addActuator(&act1);
-	dev.addActuator(&act2);
-	dev.addActuator(&act3);
 	dev.init();
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -90,5 +102,10 @@ void setup(){
 
 void loop(){
 	accelgyro.getAcceleration(&ax, &ay, &az);
+
+	if(act1control.debounce()){
+		act1.nextAssignment();
+	}
+
 	dev.run();
 };

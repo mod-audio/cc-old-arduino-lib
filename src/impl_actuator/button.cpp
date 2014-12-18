@@ -108,38 +108,14 @@ void Button::calculateValue(){
     scaleMin = this->current_assig->minimum;
     scaleMax = this->current_assig->maximum;
 
-    bool reading = (bool) this->getValue();
-
-    bool changed_button_state = 0;
     counter_t tap_time;
 
-    // Debounce_block.
-    if(this->timer_debounce.period){
-        // Tells if button state has changed.
-        if(reading != this->last_button_state){
-            this->timer_debounce.start();
-        }
+    bool changed_button_state = 0;
 
-        // Tells if the value is stable to be read.
-        if(this->timer_debounce.check()){
-            if(this->button_state != reading){
-                this->button_state = reading;
-
-                if(!this->button_state){
-                    changed_button_state = 1;
-                }
-            }
-        }
-    }
-    else{
-        if(reading != this->last_button_state){
-            changed_button_state = 1;
-        }
-    }
-    this->last_button_state = reading;
-
-    if(changed_button_state)
+    if(debounce()){
+        changed_button_state = 1;
         this->saved_state ^= 1;
+    }
 
 
     if(this->current_assig->mode == *(this->butt_modes[1])){
@@ -218,4 +194,35 @@ void Button::assignmentRotine(){
     else{
         this->saved_state = 0;
     }
+}
+
+bool Button::debounce(){
+        // Debounce_block.
+    bool reading = (bool) this->getValue();
+
+    if(this->timer_debounce.period){
+        // Tells if button state has changed.
+        if(reading != this->last_button_state){
+            this->timer_debounce.start();
+        }
+
+        // Tells if the value is stable to be read.
+        if(this->timer_debounce.check()){
+            if(this->button_state != reading){
+                this->button_state = reading;
+
+                if(this->button_state){
+                    return true;
+                }
+            }
+        }
+    }
+    else{
+        if(reading != this->last_button_state){
+            return true;
+        }
+    }
+    this->last_button_state = reading;
+
+    return false;
 }

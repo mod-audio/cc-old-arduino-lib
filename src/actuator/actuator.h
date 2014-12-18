@@ -80,6 +80,12 @@ public:
     // writes the current assignment id and value on buffer (used in data request).
     int getUpdate(uint8_t *buffer);
 
+    // change current_assignment to next assignment.
+    void nextAssignment();
+
+    // change current_assignment to previous assignment.
+    void previousAssignment();
+
     // These functions are supposed to be implemented in a subclass.
     ///////////////////////////////////////////////////////////
 

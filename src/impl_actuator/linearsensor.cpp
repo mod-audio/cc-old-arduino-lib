@@ -1,6 +1,6 @@
 #include "linearsensor.h"
 
-LinearSensor::LinearSensor(const char* name, uint8_t id): Actuator(name, id, 1 /*slots*/, lin_modes, LS_NUM_MODES, lin_steps, LS_NUM_STEPS){
+LinearSensor::LinearSensor(const char* name, uint8_t id, uint8_t num_assignments): Actuator(name, id, num_assignments, lin_modes, LS_NUM_MODES, lin_steps, LS_NUM_STEPS){
     this->minimum = 0;
     this->maximum = 1023;
 

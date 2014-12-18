@@ -40,7 +40,7 @@ public:
     STimer          timer_debounce;
     STimer          timer_tap;
 
-    Button(const char* name, uint8_t id, int debounce_delay /*in ms*/);
+    Button(const char* name, uint8_t id, uint8_t num_assignments, int debounce_delay /*in ms*/);
 
     ~Button();
 

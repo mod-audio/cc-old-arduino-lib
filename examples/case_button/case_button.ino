@@ -6,7 +6,7 @@
 class Butt: public Button{
 public:
 
-    Butt(char* name, uint8_t id):Button(name, id, 50){
+    Butt(char* name, uint8_t id):Button(name, id, 1 /*num_assignments*/, 50/*debounce delay, if 0, no debounce.*/){
         pinMode(BUTTON_PIN, INPUT);
     }
 

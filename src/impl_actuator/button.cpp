@@ -67,7 +67,7 @@ float convert_from_ms(Str unit_to, float value)
     return 0.0;
 }
 
-Button::Button(const char* name, uint8_t id, int debounce_delay): Actuator(name, id, 1, butt_modes, BUTTON_NUM_MODES, butt_steps, BUTTON_NUM_STEPS){
+Button::Button(const char* name, uint8_t id, uint8_t num_assignments, int debounce_delay): Actuator(name, id, num_assignments, butt_modes, BUTTON_NUM_MODES, butt_steps, BUTTON_NUM_STEPS){
     this->minimum = 0;
     this->maximum = 1;
 

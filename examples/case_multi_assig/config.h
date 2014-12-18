@@ -6,8 +6,8 @@ User configurations
 ************************************************************************************************************************
 */
 
-#define MAX_ACTUATORS   3
-#define MAX_ASSIGNMENTS MAX_ACTUATORS + 0   // max number of assignments you can make, summing from all actuators.
+#define MAX_ACTUATORS   2
+#define MAX_ASSIGNMENTS MAX_ACTUATORS + 3   // max number of assignments you can make, summing from all actuators.
 #define VALUE_CHANGE_TOLERANCE 0.01         // min difference between value and old value to consider a change in actuator.
 
 #define MAX_SCALE_POINTS 0                  // limit size of scale point array.

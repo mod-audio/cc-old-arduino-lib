@@ -327,3 +327,11 @@ int Actuator::getUpdate(uint8_t *buffer){
 
     return buf_counter;
 }
+
+void Actuator::nextAssignment(){
+    current_assig = current_assig->next;
+}
+
+void Actuator::previousAssignment(){
+    current_assig = current_assig->previous;
+}

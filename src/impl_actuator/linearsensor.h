@@ -22,7 +22,7 @@ public:
     Mode*           lin_modes[LS_NUM_MODES];
     uint16_t        lin_steps[LS_NUM_STEPS];
 
-    LinearSensor(const char* name, uint8_t id);
+    LinearSensor(const char* name, uint8_t id, uint8_t num_assignments);
 
     ~LinearSensor();
 

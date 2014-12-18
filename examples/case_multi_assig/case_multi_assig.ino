@@ -1,5 +1,6 @@
 #include "controlchain.h"
 #include "linearsensor.h"
+#include "button.h"
 
 #include "I2Cdev.h"
 #include "MPU6050.h"
@@ -18,14 +19,13 @@
 MPU6050 accelgyro(0x68); // <-- use for AD0 high
 
 int16_t ax, ay, az;
-int16_t gx, gy, gz;
 
 class Accel: public LinearSensor{
 public:
     int16_t* sensor;
 	float accel_value;
 
-	Accel(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id, 1 /*num_assignments*/), sensor(sensor){
+	Accel(char* name, uint8_t id, int16_t* sensor):LinearSensor(name, id), sensor(sensor){
 		maximum = ACEL_MAX;
 		minimum = ACEL_MIN;
 	}
@@ -66,8 +66,6 @@ public:
 Device dev("http://portalmod.com/devices/accel", "Accelerino", 1);
 ControlChain moddev;
 Accel act1("Sensor X", 1, &ax);
-Accel act2("Sensor Y", 2, &ay);
-Accel act3("Sensor Z", 3, &az);
 
 
 void setup(){

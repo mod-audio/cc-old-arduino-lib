@@ -18,7 +18,7 @@ enum{CONNECTING = 1, WAITING_DESCRIPTOR_REQUEST, WAITING_CONTROL_ASSIGNMENT, WAI
 enum{DESTINATION = 1, ORIGIN};
 
 #ifndef MAX_ACTUATORS
-#define MAX_ACTUATORS 	1 // max number of actuators
+#define MAX_ACTUATORS   1 // max number of actuators
 #endif
 
 #ifndef SET_PIN_MODE
@@ -38,46 +38,46 @@ enum{DESTINATION = 1, ORIGIN};
 #endif
 
 #ifndef INPUT
-#define INPUT 	0
+#define INPUT   0
 #endif
 
 #ifndef OUTPUT
-#define OUTPUT 	1
+#define OUTPUT  1
 #endif
 
 #ifndef LOW
-#define LOW 	0
+#define LOW     0
 #endif
 
 #ifndef HIGH
-#define HIGH 	1
+#define HIGH    1
 #endif
 
 #ifndef USER_LED
-#define USER_LED 		13 // max number of actuators
+#define USER_LED        13 // max number of actuators
 #endif
 
-#define HOST_ADDRESS	00
+#define HOST_ADDRESS    00
 
 #define PROTOCOL_VERSION_BYTE1 01
 #define PROTOCOL_VERSION_BYTE2 00
 
 #define BYTE_SYNC '\xAA'
 
-#define CONNECTING_LED_PERIOD 		500 // in ms
+#define CONNECTING_LED_PERIOD       500 // in ms
 
-#define FUNC_CONNECTION				0x01
-#define FUNC_DEVICE_DESCRIPTOR		0x02
-#define FUNC_CONTROL_ASSIGNMENT		0x03
-#define FUNC_DATA_REQUEST			0x04
-#define FUNC_CONTROL_UNASSIGNMENT	0x05
-#define FUNC_ERROR					0xFF
+#define FUNC_CONNECTION             0x01
+#define FUNC_DEVICE_DESCRIPTOR      0x02
+#define FUNC_CONTROL_ASSIGNMENT     0x03
+#define FUNC_DATA_REQUEST           0x04
+#define FUNC_CONTROL_UNASSIGNMENT   0x05
+#define FUNC_ERROR                  0xFF
 
-#define UNASSIG_ACT_ID				POS_DATA_SIZE2+1
-#define POLLING_PERIOD				2
-#define DEVICE_TIMEOUT_PERIOD		32*POLLING_PERIOD
-#define RANDOM_CONNECT_RANGE_BOTTOM	32
-#define RANDOM_CONNECT_RANGE_TOP	320
+#define UNASSIG_ACT_ID              POS_DATA_SIZE2+1
+#define POLLING_PERIOD              2
+#define DEVICE_TIMEOUT_PERIOD       32*POLLING_PERIOD
+#define RANDOM_CONNECT_RANGE_BOTTOM 32
+#define RANDOM_CONNECT_RANGE_TOP    320
 
 /*
 ************************************************************************************************************************
@@ -89,39 +89,39 @@ device and MOD.
 class Device{
 
 public:
-	const char*	label; 					// friendly name
-	uint8_t		label_size; 			// name size
-	const char*	url_id; 				// device URL
-	uint8_t		url_size; 				// URL size
-	uint8_t 	id;						// address given by the host
-	uint8_t 	channel; 				// differentiate 2 identical devices
-	uint8_t 	num_actuators;			// adding actuator capacity
-	uint8_t 	act_counter;		// quantity of actuators added to the device
-	uint8_t 	state;					// state in which the device is, protocol-wise
+    const char* label;                  // friendly name
+    uint8_t     label_size;             // name size
+    const char* url_id;                 // device URL
+    uint8_t     url_size;               // URL size
+    uint8_t     id;                     // address given by the host
+    uint8_t     channel;                // differentiate 2 identical devices
+    uint8_t     num_actuators;          // adding actuator capacity
+    uint8_t     act_counter;        // quantity of actuators added to the device
+    uint8_t     state;                  // state in which the device is, protocol-wise
 
-	Actuator*	acts[MAX_ACTUATORS];	// vector which holds all actuators pointers
+    Actuator*   acts[MAX_ACTUATORS];    // vector which holds all actuators pointers
 
-	STimer		timer_connecting;		// take care of holding a random intervals to send connecting message.
-	STimer		timer_led;				// holds led's blinking period.
+    STimer      timer_connecting;       // take care of holding a random intervals to send connecting message.
+    STimer      timer_led;              // holds led's blinking period.
 
-	uint8_t* 	message_out;			// state in which the device is, protocol-wise
+    uint8_t*    message_out;            // state in which the device is, protocol-wise
 
-	void (*msg_ready_cb)(uint8_t* in_buff);
+    void (*msg_ready_cb)(uint8_t* in_buff);
 
-	Device(const char* url_id, const char* label, uint8_t channel);
+    Device(const char* url_id, const char* label, uint8_t channel);
 
-	~Device();
+    ~Device();
 
-	void init();
+    void init();
 
-	// callback for input message reading.
-	void setCallback(void (*msg_ready_cb)(uint8_t* in_buff));
+    // callback for input message reading.
+    void setCallback(void (*msg_ready_cb)(uint8_t* in_buff));
 
-	// where device will write its output message.
-	void setOutBuffer(uint8_t* message_out);
+    // where device will write its output message.
+    void setOutBuffer(uint8_t* message_out);
 
-	// Put device to work.
-	void run();
+    // Put device to work.
+    void run();
 
 /*
 ************************************************************************************************************************
@@ -129,34 +129,34 @@ public:
 ************************************************************************************************************************
 */
 
-	// adds an actuator pointer to the pointer vector.
-	void addActuator(Actuator* actuator_class);
+    // adds an actuator pointer to the pointer vector.
+    void addActuator(Actuator* actuator_class);
 
-	// receives actuator id (not necessarily equal to actuator's index on acts[]) and returns a pointer to that actuator
-	Actuator* searchActuator(int id);
+    // receives actuator id (not necessarily equal to actuator's index on acts[]) and returns a pointer to that actuator
+    Actuator* searchActuator(int id);
 
-	// runs value calculation function on actuator class (or sub class)
-	void refreshValues();
+    // runs value calculation function on actuator class (or sub class)
+    void refreshValues();
 
 /*
 ************************************************************************************************************************
 *           Communication Related
 ************************************************************************************************************************
 */
-	void timeoutReset();
+    void timeoutReset();
 
-	// This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
-	void parse(uint8_t* message_in);
+    // This function parses the data field (mainly) on a received message, it takes care of all the functions from protocol
+    void parse(uint8_t* message_in);
 
-	// Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
-	// The integer returned in this function indicates if the message was sent or not.
-	int sendMessage(uint8_t function, int16_t status = 0 /*control addressing status*/, const char* error_msg = "");
+    // Its responsible for sending all messages, but don´t send them, it calls another function (send) which will handle that.
+    // The integer returned in this function indicates if the message was sent or not.
+    int sendMessage(uint8_t function, int16_t status = 0 /*control addressing status*/, const char* error_msg = "");
 
-	// initialize conversation between device and host
-	void connectDevice();
+    // initialize conversation between device and host
+    void connectDevice();
 
-	// If timerLED is triggered, the led light is changed to HIGH or LOW, depending on the previous status.
-	void checkConnectLED();
+    // If timerLED is triggered, the led light is changed to HIGH or LOW, depending on the previous status.
+    void checkConnectLED();
 
 };
 

@@ -10,12 +10,12 @@
 
 class ControlChain{
 public:
-	Device* dev;
-	chain_t* chain;
+    Device* dev;
+    chain_t* chain;
 
-	ControlChain();
-	~ControlChain();
-	void init(Device* dev);
+    ControlChain();
+    ~ControlChain();
+    void init(Device* dev);
 };
 
 #endif

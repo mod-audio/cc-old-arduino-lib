@@ -9,27 +9,27 @@ class STimer
 {
 public:
 
-	volatile static counter_t static_timer_count;
+    volatile static counter_t static_timer_count;
 
-	counter_t period; //in ms
-	counter_t offset;
-	bool working;
+    counter_t period; //in ms
+    counter_t offset;
+    bool working;
 
-	STimer();
+    STimer();
 
-	void setPeriod(counter_t period);
+    void setPeriod(counter_t period);
 
-	bool check();
+    bool check();
 
-	void stop();
+    void stop();
 
-	void start();
+    void start();
 
-	counter_t getTime();
+    counter_t getTime();
 
-	inline static void clock(){
-		static_timer_count++;
-	}
+    inline static void clock(){
+        static_timer_count++;
+    }
 };
 
 #endif

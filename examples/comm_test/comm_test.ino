@@ -7,7 +7,7 @@ void recv_cb(chain_t *chain)
 }
 
 void setup() {
-    comm_setup(recv_cb);
+    comm_init(9600, 2, recv_cb);
 
     pinMode(13, OUTPUT);
     digitalWrite(13, LOW);
@@ -16,4 +16,3 @@ void setup() {
 void loop() {
   delay(5000);
 }
-

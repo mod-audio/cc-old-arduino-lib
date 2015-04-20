@@ -98,7 +98,7 @@ public:
     // This function will run after message has been sent.
     virtual void postMessageChanges()=0;
 
-    // This function will run after message has been sent.
+    // This function will run after an assignent has been made.
     virtual void assignmentRotine()=0;
 
     /////////////////////////////////////////////////////////////

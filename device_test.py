@@ -1,109 +1,102 @@
-def encode_cc(buf):
-    return buf.replace('\x1B', '\x1B\x1B').replace('\xAA', '\x1B\x55')
-
-def decode_cc(buf):
-    return buf.replace('\x1B\x55', '\xAA').replace('\x1B\x1B', '\x1B')
-
-# def send(msg,verbose=True):
-#   if verbose:
-#     to_send = 'chain "\xAA' + encode_hmi(encode_cc(msg[1:])) + '"\0'
-#     print repr(to_send)
-#     s.write(to_send)
-
-def checksum(buffer):
-    check = 0
-    for c in buffer:
-        check += ord(c)
-
-    return (check&0xFF)
-
-
-# def run():
-#     print "Serial started!"
-#     s = serial.Serial("/dev/ttyUSB0", 500000, timeout=0.05)
-
-
-#     # s.write('ping\0'); s.readall()
-#     s.write('\xAA\x80\x00\x01\x23\x00\x1Fhttp://portalmod.com/devices/button\x01\x01\x00\xEF')
-#     time.sleep(1); print repr(decode_cc(decode_hmi(s.readall())))
-
-#     s.write('\xAA\x80\x00\x02\x00\x00\x2C')
-#     time.sleep(1); print repr(decode_cc(decode_hmi(s.readall())))
-
-#     s.write('\xAA\x80\x00\x03\x20\x00\x01\x00\x00\x01\x00\x04Gain\x00\x00\x80\x3F\x00\x00\x00\x00\x00\x00\x80\x3F\x00\x00\x00\x00\x21\x00\x02dB\x00\x19')
-#     time.sleep(1); print repr(decode_cc(decode_hmi(s.readall())))
-
-#     # s.write('\xAA\x80\x00\x03\x20\x00\x02\x20\x20\x02\x20\x04Foot\x00\x00\x80\x3F\x00\x00\x00\x00\x00\x00\x80\x3F\x00\x00\x00\x00\x02\x00\x02dB\x00\x75')
-#     # time.sleep(1); print repr(decode_cc(decode_hmi(s.readall())))
-#     print ('-'*48)
-
-    #r = request()
-    #return r
-
-# def request():
-#     seq = 0
-#     check = 0x2F
-#     for i in range(128):
-#         s.write('\xAA\x80\x00\x04\x01\x00%c%c' % (seq, check))
-#         time.sleep(0.2)
-#         #print repr(decode_cc(decode_hmi(s.readall())))
-#         seq += 1
-#         seq &= 0xFF
-#         check += 1
-#         check &= 0xFF
-
-#     received = s.readall()
-#     return received
-
 import serial
 import time
 import sys
 
-s = serial.Serial("/dev/pts/3", baudrate=500000, timeout=0.01)
+class Host:
+    def __init__(self, serial):
+        self.serial = serial
+        self.id = '\x00'
+        self.state = 1;
+        self.header = bytearray()
+        self.header.append('\x80')
+        self.header.append(self.id)
+
+        # States:
+        # 1 - waiting device connection message
+        # 2 - connected, sending device descriptor request.
+        # 3 - descriptor received, sending assignment.
+
+
+    def encode_cc(self, buf):
+        return buf.replace('\x1B', '\x1B\x1B').replace('\xAA', '\x1B\x55')
+
+    def decode_cc(self, buf):
+        return buf.replace('\x1B\x55', '\xAA').replace('\x1B\x1B', '\x1B')
+
+    def checksum(self, buffer):
+        check = 0
+        for c in buffer:
+            check += ord(c)
+
+        return (check&0xFF)
+
+    def send(self, msg,verbose=True):
+        to_send = msg
+        to_send.insert(0, '\xAA') #Adding sync byte
+        to_send.append(self.checksum(str(to_send))) #Calculating checksum
+        to_send[1:] = self.encode_cc(to_send[1:]) #encoding for CC
+        self.serial.write(to_send) #sending message
+        if verbose:
+            print repr(to_send)
+
+    def parse(self, buf):
+        if len(buf) > 7:
+            if buf[3] == 1:
+                url_size = buf[6]
+                url = buf[7:7+url_size]
+
+                msg = bytearray(self.header)
+
+                msg.append(1) #function
+                msg.append(buf[4]) #data size 1
+                msg.append(buf[5]) #data size 2
+                msg.append(url_size)
+                msg.extend(url)
+                msg.extend(buf[7+url_size:10+url_size])
+
+                self.send(msg)
+
+                self.state = 2
+
+            if buf[3] == 2:
+                self.state = 3
+
+            if buf[3] == 3:
+                self.state = 4
+
+    def run(self):
+        if self.serial.inWaiting():
+            data = bytearray(self.serial.readall())
+            if data.find('\xaa') >= 0:
+                data = data[data.find('\xaa'):]
+                self.parse(self.decode_cc(data))
+
+        if self.state == 2:
+            time.sleep(1)
+            descriptor_msg = bytearray(self.header)
+            descriptor_msg.append(2) #device descriptor request function
+            descriptor_msg.append(0) #data size 1
+            descriptor_msg.append(0) #data size 2
+
+            self.send(descriptor_msg)
+            self.state = 3
+
+        if self.state == 3:
+            msg = host_header
+            msg.append(3) #device descriptor request function
+            msg.append(0) #data size 1
+            msg.append(0) #data size 2
+
+ser = serial.Serial("/dev/pts/3", baudrate=500000, timeout=0.01)
 # s = serial.Serial("/dev/ttyUSB0", baudrate=500000, timeout=0.01)
 
-# States:
-# 0 - waiting device connection message
-# 1 - connected, sending device descriptor request.
-# 2 - descriptor received, sending assignment.
-
-host_id = 0;
-device_id = 0x80;
-state = 0; # Waiting device's connection message.
-
-if s:
+if ser:
     print "Serial port is open."
 else:
     print "Couldn't stabilish a connection. Try again."
 
-def parse(buf):
-    if len(buf) > 7:
-        if buf[3] == 1:
-            url_size = buf[6]
-            url = buf[7:7+url_size]
-            to_send = bytearray("\xAA")
-            to_send.append(device_id)
-            to_send.append(host_id)
-            to_send.append(1)
-            to_send.append(buf[4])
-            to_send.append(buf[5])
-            to_send.append(url_size)
-            to_send.extend(url)
-            to_send.extend(buf[7+url_size:10+url_size])
-            to_send.append(checksum(str(to_send)))
-            to_send[1:] = encode_cc(to_send[1:])
-            s.write(to_send)
 
+mod = Host(ser)
 
-def init():
-    while state == 0:
-        if s.inWaiting():
-            data = bytearray(s.readall())
-            if data.find('\xaa') >= 0:
-                data = data[data.find('\xaa'):]
-                parse(data)
-
-
-
-
-init()
+while 1:
+    mod.run()

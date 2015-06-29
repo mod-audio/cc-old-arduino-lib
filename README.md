@@ -1,4 +1,4 @@
-# Arduino ControlChain lib
+# Control Chain Arduino Library
 
 ## Installation
 
